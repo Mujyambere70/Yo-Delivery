@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Order {{ o.number }}{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <nav class="crumbs pt"><a href="{{ url_for('account') }}">Your Account</a> &rsaquo; <a href="{{ url_for('orders') }}">Your Orders</a> &rsaquo; {{ o.number }}</nav>
+    <div class="od-head">
+        <div><h1>Order details</h1><p class="muted">Ordered on {{ o.placed_at|nicedate('%d %B %Y, %I:%M %p') }} &middot; Order# {{ o.number }}</p></div>
+        <div class="btn-row">
+            <a href="{{ url_for('invoice', number=o.number) }}" class="btn btn-outline btn-sm">&#128462; Invoice</a>
+            {% if o.can_cancel %}
+            <form method="post" action="{{ url_for('cancel', number=o.number) }}" onsubmit="return confirmCancel(this)">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-danger btn-sm">Cancel order</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <section class="panel">
+        <h2 class="status s-{{ o.status|lower|replace(' ', '-') }}"><i></i>{{ o.status }}</h2>
+        {% if o.status not in ('Delivered', 'Cancelled') %}<p>Arriving by <b>{{ o.expected|nicedate('%A, %d %B') }}</b></p>{% endif %}
+        <ol class="track {{ 'cancelled' if o.cancelled_at }}">
+            {% for name, t, done in steps %}
+            <li class="{{ 'done' if done }}"><span class="dot"></span><b>{{ name }}</b><small>{{ t|nicedate('%a, %d %b, %I:%M %p') if t else '' }}</small></li>
+            {% endfor %}
+        </ol>
+        {% if o.status not in ('Delivered', 'Cancelled') %}<p class="small muted">Demo store: tracking updates every few minutes so you can watch the order move (Packed &rarr; Shipped &rarr; Out for delivery &rarr; Delivered). Reload the page to refresh.</p>{% endif %}
+    </section>
+
+    <div class="od-grid">
+        <section class="panel">
+            <h3>Shipping address</h3>
+            <p><b>{{ o.ship_name }}</b><br>{{ o.ship_address }}<br>Phone: {{ o.ship_mobile }}</p>
+        </section>
+        <section class="panel">
+            <h3>Payment method</h3>
+            <p><b>{{ o.payment_method }}</b><br><span class="small muted">{{ o.payment_note }}</span></p>
+            {% if o.cancelled_at and o.payment_method != 'Cash on Delivery' %}<p class="ok small">Refund of {{ o.total|rupees }} credited to Yo Pay wallet</p>{% endif %}
+        </section>
+        <section class="panel">
+            <h3>Order summary</h3>
+            <div class="s-row"><span>Item(s) subtotal</span><span>{{ o.mrp_total|rupees }}</span></div>
+            <div class="s-row"><span>Discount</span><span class="ok">&minus;{{ (o.mrp_total - o.items_total)|rupees }}</span></div>
+            {% if o.coupon %}<div class="s-row"><span>Coupon {{ o.coupon }}</span><span class="ok">&minus;{{ o.coupon_discount|rupees }}</span></div>{% endif %}
+            <div class="s-row"><span>Delivery</span><span>{{ o.delivery_fee|rupees if o.delivery_fee else 'FREE' }}</span></div>
+            <div class="s-row total"><span>Grand total</span><span>{{ o.total|rupees }}</span></div>
+        </section>
+    </div>
+
+    <section class="panel">
+        <h3>Items in this order</h3>
+        {% for it in o['items'] %}
+        <div class="oc-item">
+            <img src="{{ url_for('static', filename='images/products/' ~ it.slug ~ '-1.jpg') }}" alt="">
+            <div><a href="{{ url_for('product', slug=it.slug) }}">{{ it.name }}</a><br>
+                <span class="small muted">Sold by YoRetail &middot; Qty {{ it.qty }}</span><br><b>{{ (it.price * it.qty)|rupees }}</b></div>
+            <div class="btn-col">
+                {% if it.product_id in reviewable %}<a href="{{ url_for('review', slug=it.slug) }}" class="btn btn-yellow btn-sm">&#9733; Write a review</a>{% endif %}
+                <form method="post" action="{{ url_for('cart_add') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="product_id" value="{{ it.product_id }}">
+                    <button class="btn btn-outline btn-sm">Buy it again</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+</div>
+{% endblock %}
+{% block scripts %}<script>function confirmCancel(f){ f.querySelector('button').textContent = 'Cancelling...'; return true; }</script>{% endblock %}

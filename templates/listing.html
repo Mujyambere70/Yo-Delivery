@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "macros.html" import card with context %}
+{% block title %}{{ ('"' ~ q ~ '"') if q else (category_name or 'All products') }}{% endblock %}
+{% block content %}
+<div class="wrap listing">
+    <aside class="filters">
+        <form method="get" action="{{ url_for('category', category=category) if category else url_for('search') }}" id="filterForm">
+            {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+            <input type="hidden" name="sort" value="{{ sort }}">
+            <div class="f-head"><h3>Filters</h3><a href="{{ url_for('category', category=category) if category else url_for('search', q=q) }}">Clear all</a></div>
+
+            <div class="f-group">
+                <h4>Category</h4>
+                {% if category %}<a href="{{ url_for('search', q=q) }}" class="f-link">&lsaquo; Any category</a>{% endif %}
+                {% for slug, name, _ in CATEGORIES %}
+                    <a href="{{ url_for('category', category=slug, q=q or None) }}" class="f-link {{ 'on' if slug == category }}">{{ name }}</a>
+                {% endfor %}
+            </div>
+
+            <div class="f-group">
+                <h4>Price</h4>
+                <div class="price-inputs">
+                    <input type="number" name="min" min="0" placeholder="Min ₹" value="{{ args.get('min', '') }}" aria-label="Minimum price">
+                    <span>to</span>
+                    <input type="number" name="max" min="0" placeholder="Max ₹" value="{{ args.get('max', '') }}" aria-label="Maximum price">
+                </div>
+                {% for lo, hi, label in [(None, 500, 'Under ₹500'), (500, 2000, '₹500 - ₹2,000'), (2000, 10000, '₹2,000 - ₹10,000'), (10000, None, 'Over ₹10,000')] %}
+                    <a class="f-link" href="{{ request.base_url }}?{{ ('q=' ~ q ~ '&') if q }}{{ ('min=' ~ lo ~ '&') if lo }}{{ ('max=' ~ hi ~ '&') if hi }}sort={{ sort }}">{{ label }}</a>
+                {% endfor %}
+            </div>
+
+            {% if brands|length > 1 %}
+            <div class="f-group">
+                <h4>Brand</h4>
+                {% for b in brands %}
+                <label class="check"><input type="checkbox" name="brand" value="{{ b }}" {% if b in chosen_brands %}checked{% endif %} onchange="this.form.submit()"> {{ b }}</label>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="f-group">
+                <h4>Customer Ratings</h4>
+                {% for r in ['4', '3'] %}
+                <label class="check"><input type="radio" name="rating" value="{{ r }}" {% if args.get('rating') == r %}checked{% endif %} onchange="this.form.submit()"> {{ r }}&#9733; &amp; above</label>
+                {% endfor %}
+            </div>
+
+            <div class="f-group">
+                <h4>Discount</h4>
+                {% for d in ['20', '40', '60'] %}
+                <label class="check"><input type="radio" name="discount" value="{{ d }}" {% if args.get('discount') == d %}checked{% endif %} onchange="this.form.submit()"> {{ d }}% or more</label>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-orange btn-block">Apply filters</button>
+        </form>
+    </aside>
+
+    <section class="results">
+        <div class="results-head">
+            <div>
+                <nav class="crumbs"><a href="{{ url_for('index') }}">Home</a> &rsaquo; {% if category_name %}<a href="{{ url_for('category', category=category) }}">{{ category_name }}</a>{% else %}Search{% endif %}</nav>
+                <h1>{% if q %}Results for "<span>{{ q }}</span>"{% else %}{{ category_name or 'All products' }}{% endif %}</h1>
+                <p class="muted small">Showing {{ results|length }} product{{ 's' if results|length != 1 }}</p>
+            </div>
+            <div class="sorts">
+                <span class="hide-sm">Sort by</span>
+                {% for key, label in [('relevance', 'Popularity'), ('price_asc', 'Price -- Low to High'), ('price_desc', 'Price -- High to Low'), ('rating', 'Customer Rating'), ('discount', 'Discount'), ('new', 'Newest First')] %}
+                    <a href="{{ request.base_url }}?{% for k in args if k != 'sort' %}{% for v in args.getlist(k) %}{{ k }}={{ v|urlencode }}&{% endfor %}{% endfor %}sort={{ key }}" class="{{ 'on' if sort == key }}">{{ label }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% if results %}
+            <div class="grid">{% for p in results %}{{ card(p, wish_ids) }}{% endfor %}</div>
+        {% else %}
+            <div class="empty">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="">
+                <h2>Sorry, no results found!</h2>
+                <p>Please check the spelling or try searching for something else.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-orange">Continue shopping</a>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

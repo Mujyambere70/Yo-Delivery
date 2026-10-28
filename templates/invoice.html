@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Invoice {{ o.number }} | Yo Delivery</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="invoice-body">
+<div class="invoice">
+    <div class="no-print inv-bar"><a href="{{ url_for('order', number=o.number) }}">&lsaquo; Back to order</a><button onclick="window.print()" class="btn btn-orange btn-sm">&#128424; Print / Save as PDF</button></div>
+    <div class="inv-head">
+        <div class="logo"><img src="{{ url_for('static', filename='images/logo.png') }}" alt=""><span>yo<b>delivery</b></span></div>
+        <div class="right"><h1>Tax Invoice</h1><p class="small">(Original for recipient)</p></div>
+    </div>
+    <div class="inv-grid">
+        <div><b>Sold by:</b><br>YoRetail (demo seller)<br>Warehouse: 12 Mall Road, Ambala Cantt<br>Haryana 133001, India<br><span class="small muted">GSTIN: DEMO-06-NOT-REAL</span></div>
+        <div><b>Billing / Shipping address:</b><br>{{ o.ship_name }}<br>{{ o.ship_address }}<br>Phone: {{ o.ship_mobile }}</div>
+        <div><b>Order number:</b> {{ o.number }}<br><b>Order date:</b> {{ o.placed_at|nicedate }}<br><b>Invoice number:</b> IN-{{ o.number[2:] }}<br><b>Payment:</b> {{ o.payment_method }}</div>
+    </div>
+    <table class="inv-table">
+        <thead><tr><th>#</th><th>Description</th><th class="num">Unit price</th><th class="num">Qty</th><th class="num">Taxable value</th><th class="num">GST</th><th class="num">Total</th></tr></thead>
+        <tbody>
+        {% for l in lines %}
+            <tr><td>{{ loop.index }}</td><td>{{ l.name }}</td><td class="num">{{ l.price|rupees }}</td><td class="num">{{ l.qty }}</td>
+                <td class="num">{{ l.taxable|rupees }}</td><td class="num">{{ l.rate }}%<br><small>{{ l.tax|rupees }}</small></td><td class="num">{{ l.gross|rupees }}</td></tr>
+        {% endfor %}
+        {% if o.coupon_discount %}<tr><td></td><td>Coupon discount ({{ o.coupon }})</td><td colspan="4"></td><td class="num">&minus;{{ o.coupon_discount|rupees }}</td></tr>{% endif %}
+        <tr><td></td><td>Shipping charges</td><td colspan="4"></td><td class="num">{{ o.delivery_fee|rupees if o.delivery_fee else '₹0' }}</td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="6">TOTAL</td><td class="num">{{ o.total|rupees }}</td></tr></tfoot>
+    </table>
+    <p class="small">Amount in words: {{ o.total|rupees }} only. All prices include GST. Whether tax is payable under reverse charge: No.</p>
+    {% if o.cancelled_at %}<p class="err"><b>This order was cancelled on {{ o.cancelled_at|nicedate }}.</b></p>{% endif %}
+    <div class="inv-sign"><span>For YoRetail:</span><b>Authorized Signatory</b></div>
+    <p class="small muted center">Yo Delivery is a demo website for an academic project. This is not a real tax invoice.</p>
+</div>
+</body>
+</html>

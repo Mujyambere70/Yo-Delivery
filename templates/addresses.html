@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Your Addresses{% endblock %}
+{% block content %}
+<div class="wrap acc">
+    {% include "_account_nav.html" %}
+    <div>
+        <h1>Manage addresses</h1>
+        <div class="addr-grid">
+            {% for a in addresses %}
+            <div class="panel addr-card {{ 'default' if a.is_default }}">
+                {% if a.is_default %}<span class="tag">Default</span>{% endif %} <em class="tag">{{ a.kind }}</em>
+                <p><b>{{ a.name }}</b><br>{{ a.line1 }}{% if a.line2 %}<br>{{ a.line2 }}{% endif %}<br>{{ a.city }}, {{ a.state }} {{ a.pincode }}<br>Phone: {{ a.mobile }}</p>
+                <div class="btn-row">
+                    {% if not a.is_default %}
+                    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="default"><input type="hidden" name="address_id" value="{{ a.id }}"><button class="link-btn">Set as default</button></form>
+                    {% endif %}
+                    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="delete"><input type="hidden" name="address_id" value="{{ a.id }}"><button class="link-btn danger">Remove</button></form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <form method="post" class="panel">
+            <h2>+ Add a new address</h2>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% include "_address_form.html" %}
+            <button type="submit" class="btn btn-orange">Save address</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

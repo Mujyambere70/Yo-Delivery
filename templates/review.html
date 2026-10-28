@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Review {{ p.name }}{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <form method="post" class="panel review-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="rf-head"><img src="{{ url_for('static', filename=p.image) }}" alt=""><div><h1>Create review</h1><p>{{ p.name }}</p></div></div>
+        <h3>Overall rating</h3>
+        <div class="star-pick">
+            {% for n in [5, 4, 3, 2, 1] %}<input type="radio" id="r{{ n }}" name="rating" value="{{ n }}" {% if form.get('rating') == n|string %}checked{% endif %} required><label for="r{{ n }}" title="{{ n }} stars">&#9733;</label>{% endfor %}
+        </div>
+        <label for="title">Add a headline</label>
+        <input type="text" id="title" name="title" value="{{ form.get('title', '') }}" maxlength="80" placeholder="What's most important to know?" required>
+        <label for="body">Add a written review</label>
+        <textarea id="body" name="body" rows="5" maxlength="1000" placeholder="What did you like or dislike? How did you use this product?" required>{{ form.get('body', '') }}</textarea>
+        <button type="submit" class="btn btn-orange">Submit review</button>
+    </form>
+</div>
+{% endblock %}

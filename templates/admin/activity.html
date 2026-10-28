@@ -1,0 +1,23 @@
+{% extends "admin/layout.html" %}
+{% block title %}Activity Log{% endblock %}
+{% block heading %}Activity Log{% endblock %}
+{% block content %}
+<form class="panel toolbar" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search customer, order number, IP...">
+    <select name="action" onchange="this.form.submit()"><option value="">All actions</option>{% for a in actions %}<option {% if a == action %}selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+    <button class="btn btn-orange">Filter</button>
+    <a href="{{ url_for('admin_table_csv', table='activity') }}" class="btn btn-outline">&#11015; Export CSV</a>
+</form>
+<section class="panel">
+    <p class="small muted">Showing the latest {{ rows|length }} event{{ 's' if rows|length != 1 }}. Every sign-up, login (and failed login), logout, add-to-cart, order, cancellation, review and admin change is recorded with time and IP address.</p>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Time</th><th>Who</th><th>Action</th><th>Details</th><th>IP address</th></tr></thead>
+        {% for a in rows %}
+        <tr><td class="nowrap">{{ a.at|nicedate('%d %b %Y, %H:%M:%S') }}</td>
+            <td>{% if a.user_id %}<a href="{{ url_for('admin_customer', uid=a.user_id) }}">{{ a.user_name }}</a>{% else %}<span class="muted">Visitor</span>{% endif %}</td>
+            <td><span class="act a-{{ a.action|lower|replace(' ', '-') }}">{{ a.action }}</span></td>
+            <td>{{ a.details }}</td><td class="mono">{{ a.ip }}</td></tr>
+        {% else %}<tr><td colspan="5" class="center muted">No activity found.</td></tr>{% endfor %}
+    </table></div>
+</section>
+{% endblock %}

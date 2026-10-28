@@ -1,0 +1,53 @@
+{% extends "admin/layout.html" %}
+{% block title %}Products{% endblock %}
+{% block heading %}Products{% endblock %}
+{% block content %}
+<form class="panel toolbar" method="get">
+    <a href="{{ url_for('admin_product_new') }}" class="btn btn-orange">+ Add new product</a>
+    <input type="search" name="q" value="{{ q }}" placeholder="Search name or brand">
+    <select name="category" onchange="this.form.submit()"><option value="">All categories</option>{% for c in categories %}<option value="{{ c.slug }}" {% if c.slug == category %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
+    <select name="show" onchange="this.form.submit()">
+        <option value="">All products</option>
+        <option value="low" {% if show == 'low' %}selected{% endif %}>Low stock (10 or less)</option>
+        <option value="hidden" {% if show == 'hidden' %}selected{% endif %}>Hidden products</option>
+    </select>
+    <button class="btn btn-outline">Search</button>
+    <a href="{{ url_for('admin_table_csv', table='products') }}" class="btn btn-outline">&#11015; CSV</a>
+</form>
+<section class="panel">
+    <p class="small muted">{{ products|length }} product{{ 's' if products|length != 1 }}. Quick edit price / MRP / stock and press Save, or click <b>Edit</b> to change everything (name, pictures, description...). Hidden products are not shown in the shop.</p>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Product</th><th>Category</th><th class="num">Rating</th><th class="num">Sold</th><th>Price ₹ / MRP ₹ / Stock</th><th>Actions</th></tr></thead>
+        {% for p in products %}
+        <tr id="p{{ p.id }}" class="{{ 'low-row' if p.stock <= 10 }} {{ 'hidden-row' if not p.active }}">
+            <td><a href="{{ url_for('product', slug=p.slug) }}" target="_blank" class="pname"><img src="{{ url_for('static', filename=p.image) }}" alt=""><span>{{ p.name }}</span></a>
+                {% if not p.active %}<span class="st st-cancelled">hidden</span>{% endif %}{% if p.art == 'upload' %} <span class="st st-packed">added by admin</span>{% endif %}</td>
+            <td>{{ p.category_name }}</td>
+            <td class="num">{{ p.rating if p.rating_count else '-' }}{% if p.rating_count %} &#9733;{% endif %}</td>
+            <td class="num">{{ sold.get(p.id, 0) }}</td>
+            <td>
+                <form method="post" class="inline-edit">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="product_id" value="{{ p.id }}">
+                    <input type="hidden" name="category" value="{{ category }}"><input type="hidden" name="show" value="{{ show }}">
+                    <input type="number" name="price" value="{{ '%g'|format(p.price / 100) }}" min="1" step="0.01" aria-label="Price" title="Price">
+                    <input type="number" name="mrp" value="{{ '%g'|format(p.mrp / 100) }}" min="1" step="0.01" aria-label="MRP" title="MRP">
+                    <input type="number" name="stock" value="{{ p.stock }}" min="0" aria-label="Stock" title="Stock" class="{{ 'low-input' if p.stock <= 10 }}">
+                    <button class="btn btn-orange btn-sm">Save</button>
+                </form>
+            </td>
+            <td class="actions">
+                <a href="{{ url_for('admin_product_edit', pid=p.id) }}" class="btn btn-outline btn-sm">&#9998; Edit</a>
+                <form method="post" action="{{ url_for('admin_product_action', pid=p.id, action='show' if not p.active else 'hide') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ request.full_path }}#p{{ p.id }}">
+                    <button class="btn btn-outline btn-sm">{{ '&#128065; Show'|safe if not p.active else '&#128683; Hide'|safe }}</button>
+                </form>
+                <form method="post" action="{{ url_for('admin_product_action', pid=p.id, action='delete') }}" onsubmit="return confirm('Delete this product for ever? (Products that were ordered can only be hidden.)')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ request.full_path }}">
+                    <button class="btn btn-danger btn-sm" title="Delete">&#128465;</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}<tr><td colspan="6" class="center muted">No products found.</td></tr>{% endfor %}
+    </table></div>
+</section>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+<div class="auth">
+    <div class="auth-side">
+        <h2>Login</h2>
+        <p>Get access to your Orders, Wishlist and Recommendations</p>
+        <img src="{{ url_for('static', filename='images/products/nova-x5-blue-2.jpg') }}" alt="">
+    </div>
+    <form method="post" class="auth-form" autocomplete="on">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+        <h1>Sign in</h1>
+        <label for="login">Email or mobile number</label>
+        <input type="text" id="login" name="login" value="{{ login }}" required autofocus>
+        <label for="password">Password</label>
+        <div class="pw"><input type="password" id="password" name="password" required><button type="button" onclick="const p=document.getElementById('password');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'Show':'Hide'">Show</button></div>
+        <button type="submit" class="btn btn-orange btn-block btn-lg">Continue</button>
+        <p class="small muted">By continuing, you agree to Yo Delivery's Conditions of Use and Privacy Notice.</p>
+        <div class="demo"><b>Demo account:</b> <code>demo@example.com</code> / <code>Demo@1234</code></div>
+        <div class="divider"><span>New to Yo Delivery?</span></div>
+        <a href="{{ url_for('signup', next=request.args.get('next')) }}" class="btn btn-outline btn-block">Create your Yo Delivery account</a>
+    </form>
+</div>
+{% endblock %}

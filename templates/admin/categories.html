@@ -1,0 +1,33 @@
+{% extends "admin/layout.html" %}
+{% block title %}Categories{% endblock %}
+{% block heading %}Categories{% endblock %}
+{% block content %}
+<div class="adm-grid">
+    <section class="panel">
+        <h2>All categories</h2>
+        <p class="small muted">Categories appear in the shop menu, on the home page and in search filters. You can rename them, change the picture, or delete an empty one.</p>
+        {% for c in categories %}
+        <form method="post" enctype="multipart/form-data" class="cat-row">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="slug" value="{{ c.slug }}">
+            <img src="{{ url_for('static', filename='images/' + c.image) }}" alt="">
+            <div class="cat-fields">
+                <input type="text" name="name" value="{{ c.name }}" maxlength="40" required aria-label="Category name">
+                <small class="muted">/c/{{ c.slug }} &middot; {{ c.products }} product{{ 's' if c.products != 1 }}</small>
+                <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp" aria-label="New picture">
+            </div>
+            <div class="btn-col">
+                <button class="btn btn-orange btn-sm" name="action" value="save">Save</button>
+                {% if not c.products %}<button class="btn btn-danger btn-sm" name="action" value="delete" onclick="return confirm('Delete this category?')">Delete</button>{% endif %}
+            </div>
+        </form>
+        {% endfor %}
+    </section>
+    <form method="post" enctype="multipart/form-data" class="panel">
+        <h2>+ Add a category</h2>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="cname">Name</label><input type="text" id="cname" name="name" maxlength="40" placeholder="e.g. Toys & Games" required>
+        <label for="cimg">Picture (optional, JPG/PNG)</label><input type="file" id="cimg" name="image" accept=".jpg,.jpeg,.png,.webp">
+        <button class="btn btn-orange" style="margin-top:12px">Add category</button>
+    </form>
+</div>
+{% endblock %}

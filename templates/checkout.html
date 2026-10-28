@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+<div class="wrap checkout">
+    <div class="co-main">
+        <section class="panel co-step done"><div class="co-title"><span class="step-num">1</span><h2>Login</h2><span class="ok">&#10004;</span></div>
+            <p><b>{{ user.name }}</b> &middot; +91 {{ user.mobile }}</p></section>
+
+        <form method="post" id="placeOrder">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <section class="panel co-step">
+                <div class="co-title"><span class="step-num">2</span><h2>Delivery address</h2></div>
+                {% for a in addresses %}
+                <label class="addr">
+                    <input type="radio" name="address_id" value="{{ a.id }}" {% if loop.first %}checked{% endif %} required>
+                    <span><b>{{ a.name }}</b> <em class="tag">{{ a.kind }}</em> <b>{{ a.mobile }}</b><br>
+                    {{ a.line1 }}{% if a.line2 %}, {{ a.line2 }}{% endif %}, {{ a.city }}, {{ a.state }} &ndash; <b>{{ a.pincode }}</b><br>
+                    <small class="ok">Delivery by {{ delivery_date(a.pincode) if delivery_date is defined else '' }}</small></span>
+                </label>
+                {% else %}<p class="muted">You have no saved address yet. Please add one below.</p>{% endfor %}
+                <details class="add-addr" {% if not addresses %}open{% endif %}>
+                    <summary>+ Add a new address</summary>
+                    <p class="small muted">Fill this form and press "Save address" (below the payment section, the order is not placed yet).</p>
+                </details>
+            </section>
+
+            <section class="panel co-step">
+                <div class="co-title"><span class="step-num">3</span><h2>Order summary</h2></div>
+                {% for p, q in items %}
+                <div class="co-item">
+                    <img src="{{ url_for('static', filename=p.image) }}" alt="">
+                    <div><b>{{ p.name }}</b><br><span class="small muted">Qty: {{ q }}</span>
+                        <div class="price"><strong>{{ (p.price * q)|rupees }}</strong>{% if p.discount %}<s>{{ (p.mrp * q)|rupees }}</s><span class="off">{{ p.discount }}% off</span>{% endif %}</div></div>
+                </div>
+                {% endfor %}
+                <a href="{{ url_for('cart') }}" class="small">Change items in cart</a>
+            </section>
+
+            <section class="panel co-step">
+                <div class="co-title"><span class="step-num">4</span><h2>Payment</h2></div>
+                <label class="pay"><input type="radio" name="payment" value="upi" checked onchange="payChange()">
+                    <span><b>UPI</b><small>Pay with any UPI app (demo &mdash; no real money is taken)</small></span></label>
+                <div class="pay-extra" id="upiBox"><label for="upi_id" class="small">UPI ID</label><input type="text" id="upi_id" name="upi_id" placeholder="yourname@okyo" pattern="[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}"></div>
+                <label class="pay"><input type="radio" name="payment" value="wallet" onchange="payChange()" {% if wallet < s.total %}disabled{% endif %}>
+                    <span><b>Yo Pay Wallet</b><small>Balance: {{ wallet|rupees }}{% if wallet < s.total %} &mdash; not enough for this order{% endif %}</small></span></label>
+                <label class="pay"><input type="radio" name="payment" value="cod" onchange="payChange()">
+                    <span><b>Cash on Delivery</b><small>Pay in cash or UPI when your order arrives</small></span></label>
+                <button type="submit" class="btn btn-orange btn-lg btn-block" {% if not addresses %}disabled title="Add an address first"{% endif %}>Place Order &middot; {{ s.total|rupees }}</button>
+                <p class="small muted center">By placing your order you agree to Yo Delivery's terms. This is a demo store &mdash; nothing is charged or shipped.</p>
+            </section>
+        </form>
+
+        <form method="post" action="{{ url_for('addresses') }}" class="panel co-step" id="newAddress">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="next" value="{{ url_for('checkout') }}">
+            <div class="co-title"><span class="step-num">+</span><h2>Add a new delivery address</h2></div>
+            {% with form = {} %}{% include "_address_form.html" %}{% endwith %}
+            <button type="submit" class="btn btn-outline">Save address</button>
+        </form>
+    </div>
+
+    <aside class="co-side">
+        <div class="panel">{% include "_summary.html" %}</div>
+        <form method="post" action="{{ url_for('cart_coupon') }}" class="panel coupon">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="back" value="checkout">
+            {% if s.coupon %}<p><b class="ok">{{ s.coupon }}</b> applied</p><button name="remove" value="1" class="link-btn">Remove</button>
+            {% else %}<div class="pin-row"><input type="text" name="code" placeholder="Coupon code" aria-label="Coupon code"><button type="submit">Apply</button></div>{% endif %}
+        </form>
+        <div class="panel trust small">&#128274; Safe and secure payments &middot; Easy returns &middot; 100% authentic products</div>
+    </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  function payChange() {
+    const upi = document.querySelector('input[name=payment][value=upi]').checked;
+    document.getElementById('upiBox').style.display = upi ? 'block' : 'none';
+    document.getElementById('upi_id').required = upi;
+  }
+  payChange();
+  document.querySelector('.add-addr summary').addEventListener('click', e => {
+    e.preventDefault(); document.getElementById('newAddress').scrollIntoView({behavior: 'smooth'});
+    document.getElementById('a_line1').focus({preventScroll: true});
+  });
+</script>
+{% endblock %}

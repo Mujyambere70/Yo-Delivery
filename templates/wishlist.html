@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "macros.html" import card with context %}
+{% block title %}My Wishlist{% endblock %}
+{% block content %}
+<div class="wrap">
+    <nav class="crumbs pt"><a href="{{ url_for('account') }}">Your Account</a> &rsaquo; Wishlist</nav>
+    <h1>My Wishlist ({{ items|length }})</h1>
+    {% if items %}<div class="grid">{% for p in items %}{{ card(p, wish_ids) }}{% endfor %}</div>
+    {% else %}<section class="panel empty"><h2>Your wishlist is empty</h2><p>Tap the &#10084; on any product to save it here.</p><a href="{{ url_for('index') }}" class="btn btn-orange">Explore products</a></section>{% endif %}
+</div>
+{% endblock %}

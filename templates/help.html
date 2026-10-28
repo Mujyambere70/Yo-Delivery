@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Help Centre{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <h1>Help Centre</h1>
+    <div class="help-tiles">
+        <a href="{{ url_for('orders') }}" class="panel">&#128230;<b>Track your order</b></a>
+        <a href="#returns" class="panel">&#8634;<b>Returns &amp; refunds</b></a>
+        <a href="{{ url_for('account') }}" class="panel">&#128100;<b>Manage account</b></a>
+        <a href="#contact" class="panel">&#9742;<b>Contact us</b></a>
+    </div>
+    <section class="panel faq">
+        <h2>Frequently asked questions</h2>
+        {% for q, a in [
+            ('How long does delivery take?', 'Ambala and nearby (pincodes starting with 13): next day. Delhi, Haryana, Punjab and Himachal: 2 days. Rest of India: about 4 days. You can check the date on every product page with your pincode.'),
+            ('Is delivery free?', 'Yes, delivery is free for orders of ' ~ (FREE_DELIVERY_FROM|rupees) ~ ' or more. Smaller orders have a ₹40 delivery charge.'),
+            ('Which payment methods can I use?', 'UPI, Yo Pay wallet and Cash on Delivery (up to ₹50,000). This is a demo store, so no real money is taken.'),
+            ('Can I cancel my order?', 'Yes, you can cancel from the order details page until the order is shipped. Wallet and UPI payments are refunded to your Yo Pay wallet immediately.'),
+            ('How do coupons work?', 'Enter the code in the cart. WELCOME100 is for your first order, YO10 gives 10% off (up to ₹200) above ₹999 and BIGSALE gives 15% off above ₹9,999.'),
+            ('Can I write a review?', 'Yes, after a product is delivered to you, open the order and click "Write a review".')] %}
+        <details {% if loop.first %}open{% endif %}><summary>{{ q }}</summary><p>{{ a }}</p></details>
+        {% endfor %}
+    </section>
+    <section class="panel" id="returns"><h2>Returns &amp; replacement</h2><p>Most items can be replaced within 7 days of delivery if they are damaged, defective or different from the description. Grocery items are non-returnable.</p></section>
+    <section class="panel" id="about"><h2>About Yo Delivery</h2><p>Yo Delivery started as a fast local delivery service in Ambala, Haryana and grew into an online store for electronics, fashion, footwear, watches, grocery, home essentials and books.</p>
+        <p class="small muted">This website is a demo built with Python (Flask), HTML and CSS for an academic project. All products, brands and sellers are fictional.</p></section>
+    <section class="panel" id="contact"><h2>Contact us</h2><p>&#9742; 1800-000-9696 (toll free, 8 AM - 10 PM)<br>&#9993; support@yodelivery.example<br>&#128205; 12 Mall Road, Ambala Cantt, Haryana 133001</p></section>
+</div>
+{% endblock %}

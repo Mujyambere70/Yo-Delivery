@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Your Account{% endblock %}
+{% block content %}
+<div class="wrap acc">
+    {% include "_account_nav.html" %}
+    <div>
+        <div class="acc-tiles">
+            <a href="{{ url_for('orders') }}" class="panel"><span>&#128230;</span><b>Your Orders</b><small>{{ orders_count }} order{{ 's' if orders_count != 1 }} &middot; track, return, buy again</small></a>
+            <a href="{{ url_for('addresses') }}" class="panel"><span>&#128205;</span><b>Your Addresses</b><small>Edit addresses for orders</small></a>
+            <a href="{{ url_for('wishlist') }}" class="panel"><span>&#10084;</span><b>Your Wishlist</b><small>{{ wish_ids|length }} saved item{{ 's' if wish_ids|length != 1 }}</small></a>
+            <div class="panel"><span>&#128176;</span><b>Yo Pay Wallet</b><small>Balance {{ user.wallet|rupees }} (demo money)</small></div>
+        </div>
+        <form method="post" class="panel">
+            <h2>Personal information</h2>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-grid">
+                <div class="full"><label for="name">Full name</label><input type="text" id="name" name="name" value="{{ user.name }}" required></div>
+                <div><label for="email">Email address</label><input type="email" id="email" name="email" value="{{ user.email }}" required></div>
+                <div><label for="mobile">Mobile number</label><input type="tel" id="mobile" name="mobile" value="{{ user.mobile }}" pattern="[6-9][0-9]{9}" maxlength="10" required></div>
+            </div>
+            <button type="submit" class="btn btn-orange">Save</button>
+            <p class="small muted">Member since {{ user.created_at|nicedate('%B %Y') }}</p>
+        </form>
+        <form method="post" class="panel">
+            <h2>Change password</h2>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="password">
+            <div class="form-grid">
+                <div class="full"><label for="old">Current password</label><input type="password" id="old" name="old_password" required></div>
+                <div><label for="new1">New password</label><input type="password" id="new1" name="new_password" minlength="8" required></div>
+                <div><label for="new2">Confirm new password</label><input type="password" id="new2" name="new_password2" minlength="8" required></div>
+            </div>
+            <button type="submit" class="btn btn-outline">Change password</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

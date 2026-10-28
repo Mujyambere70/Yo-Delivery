@@ -1,0 +1,11 @@
+<div class="form-grid">
+    <div><label for="a_name">Full name</label><input type="text" id="a_name" name="name" value="{{ form.get('name', user.name if user else '') }}" required></div>
+    <div><label for="a_mobile">Mobile number</label><input type="tel" id="a_mobile" name="mobile" value="{{ form.get('mobile', user.mobile if user else '') }}" pattern="[6-9][0-9]{9}" maxlength="10" required></div>
+    <div class="full"><label for="a_line1">House no., building, street</label><input type="text" id="a_line1" name="line1" value="{{ form.get('line1', '') }}" required></div>
+    <div class="full"><label for="a_line2">Area, landmark (optional)</label><input type="text" id="a_line2" name="line2" value="{{ form.get('line2', '') }}"></div>
+    <div><label for="a_city">City / Town</label><input type="text" id="a_city" name="city" value="{{ form.get('city', '') }}" required></div>
+    <div><label for="a_pin">Pincode</label><input type="text" id="a_pin" name="pincode" value="{{ form.get('pincode', '') }}" pattern="[1-9][0-9]{5}" maxlength="6" inputmode="numeric" required></div>
+    <div><label for="a_state">State</label><select id="a_state" name="state" required>{% for st in states %}<option {% if form.get('state', 'Haryana') == st %}selected{% endif %}>{{ st }}</option>{% endfor %}</select></div>
+    <div><label>Address type</label><div class="radio-row"><label><input type="radio" name="kind" value="Home" checked> Home</label><label><input type="radio" name="kind" value="Work"> Work</label></div></div>
+</div>
+<label class="check"><input type="checkbox" name="is_default" value="yes"> Make this my default address</label>

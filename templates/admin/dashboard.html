@@ -1,0 +1,73 @@
+{% extends "admin/layout.html" %}
+{% block heading %}Dashboard{% endblock %}
+{% block content %}
+<div class="kpis">
+    <div class="kpi"><small>Total sales</small><b>{{ st.revenue|rupees }}</b><span>{{ st.revenue_today|rupees }} today</span></div>
+    <div class="kpi"><small>Orders</small><b>{{ st.orders }}</b><span>{{ st.orders_today }} today &middot; {{ st.cancelled }} cancelled</span></div>
+    <div class="kpi"><small>Average order value</small><b>{{ st.avg_order|rupees }}</b><span>{{ st.items_sold }} items sold</span></div>
+    <div class="kpi"><small>Customers</small><b>{{ st.customers }}</b><span>{{ st.new_customers }} new this week &middot; {{ st.logins_today }} logins today</span></div>
+    <div class="kpi {{ 'warn' if st.low_stock }}"><small>Products</small><b>{{ st.products }}</b><span>{{ st.low_stock }} low on stock</span></div>
+</div>
+
+<div class="adm-grid">
+    <section class="panel">
+        <div class="ph"><h2>Sales - last 14 days</h2><span class="small muted">orders on top of each bar</span></div>
+        {% set mx = [st.chart|map(attribute='sales')|max, 1]|max %}
+        <div class="chart">
+            {% for d in st.chart %}
+            <div class="col" title="{{ d.day }}: {{ d.orders }} order(s), {{ d.sales|rupees }}">
+                <em>{{ d.orders or '' }}</em>
+                <i style="height:{{ (d.sales * 100 / mx)|round(1) }}%"></i>
+                <span>{{ d.day.split()[0] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    <section class="panel">
+        <h2>Top products</h2>
+        <table class="at">
+            <thead><tr><th>Product</th><th class="num">Sold</th><th class="num">Sales</th></tr></thead>
+            {% for t in st.top_products %}
+            <tr><td><a href="{{ url_for('product', slug=t.slug) }}" target="_blank" class="pname"><img src="{{ url_for('static', filename='images/products/' ~ t.slug ~ '-1.jpg') }}" alt=""><span>{{ t.name }}</span></a></td><td class="num">{{ t.qty }}</td><td class="num">{{ t.sales|rupees }}</td></tr>
+            {% endfor %}
+        </table>
+        <h3 class="mt">Sales by category</h3>
+        {% set cmx = [st.by_category|map(attribute='sales')|max, 1]|max %}
+        {% for c in st.by_category %}
+        <div class="hbar"><span>{{ c.category|capitalize }}</span><div><i style="width:{{ (c.sales * 100 / cmx)|round(1) }}%"></i></div><em>{{ c.sales|rupees }}</em></div>
+        {% endfor %}
+        <h3 class="mt">Payment methods</h3>
+        <p class="small">{% for pm in st.payments %}<span class="chip">{{ pm.payment_method }}: <b>{{ pm.n }}</b></span>{% endfor %}</p>
+    </section>
+</div>
+
+<div class="adm-grid">
+    <section class="panel">
+        <div class="ph"><h2>Latest orders</h2><a href="{{ url_for('admin_orders') }}">All orders &rsaquo;</a></div>
+        <table class="at">
+            <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Status</th><th class="num">Total</th></tr></thead>
+            {% for o in recent_orders %}
+            <tr><td><a href="{{ url_for('admin_order', number=o.number) }}">{{ o.number }}</a></td><td>{{ o.customer }}</td>
+                <td class="nowrap">{{ o.placed_at|nicedate('%d %b') }}</td><td>{% with status = o.status %}{% include "admin/_status.html" %}{% endwith %}</td><td class="num">{{ o.total|rupees }}</td></tr>
+            {% endfor %}
+        </table>
+    </section>
+    <section class="panel">
+        <div class="ph"><h2>Live activity</h2><a href="{{ url_for('admin_activity') }}">Full log &rsaquo;</a></div>
+        <ul class="feed">
+            {% for a in recent_activity %}
+            <li><span class="dot a-{{ a.action|lower|replace(' ', '-') }}"></span>
+                <div><b>{{ a.user_name or 'Visitor' }}</b> {{ a.action|lower }}{% if a.details %} <span class="muted">&middot; {{ a.details }}</span>{% endif %}
+                <small>{{ a.at|nicedate('%d %b, %H:%M') }} &middot; IP {{ a.ip or '-' }}</small></div></li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+
+{% if low_stock %}
+<section class="panel warn-panel">
+    <div class="ph"><h2>&#9888; Low stock</h2><a href="{{ url_for('admin_products') }}">Manage stock &rsaquo;</a></div>
+    <div class="low-list">{% for p in low_stock %}<a href="{{ url_for('admin_products', category=p.category) }}#p{{ p.id }}"><img src="{{ url_for('static', filename=p.image) }}" alt="">{{ p.name[:40] }}<b>{{ p.stock }} left</b></a>{% endfor %}</div>
+</section>
+{% endif %}
+{% endblock %}

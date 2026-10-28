@@ -1,0 +1,72 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ c.name }}{% endblock %}
+{% block heading %}{{ c.name }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('admin_customers') }}">&lsaquo; All customers</a></p>
+<div class="kpis">
+    <div class="kpi"><small>Orders</small><b>{{ c.orders }}</b></div>
+    <div class="kpi"><small>Total spent</small><b>{{ c.spent|rupees }}</b></div>
+    <div class="kpi"><small>Yo Pay wallet</small><b>{{ c.wallet|rupees }}</b></div>
+    <div class="kpi"><small>Customer since</small><b>{{ c.created_at|nicedate }}</b></div>
+</div>
+{% if c.blocked %}<div class="flash error">&#128683; This account is <b>blocked</b> - the customer cannot sign in.</div>{% endif %}
+<div class="adm-grid">
+    <form method="post" class="panel">
+        <h2>Edit customer</h2>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="details">
+        <label for="cn">Name</label><input type="text" id="cn" name="name" value="{{ c.name }}" required>
+        <div class="form-grid">
+            <div><label for="ce">Email</label><input type="email" id="ce" name="email" value="{{ c.email }}" required></div>
+            <div><label for="cm">Mobile</label><input type="tel" id="cm" name="mobile" value="{{ c.mobile }}" pattern="[6-9][0-9]{9}" maxlength="10" required></div>
+        </div>
+        <label class="check"><input type="checkbox" name="blocked" value="yes" {% if c.blocked %}checked{% endif %}> Block this account (cannot sign in or buy)</label>
+        <label class="check"><input type="checkbox" name="is_admin" value="yes" {% if c.is_admin %}checked{% endif %}> Admin (can open this admin panel)</label>
+        <button class="btn btn-orange" style="margin-top:10px">Save</button>
+    </form>
+    <div>
+        <form method="post" class="panel">
+            <h2>Yo Pay wallet &middot; {{ c.wallet|rupees }}</h2>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="wallet">
+            <div class="form-grid">
+                <div><label for="wa">Add (+) or remove (&minus;) ₹</label><input type="number" id="wa" name="amount" step="0.01" placeholder="500 or -200" required></div>
+                <div><label for="wr">Reason</label><input type="text" id="wr" name="reason" maxlength="60" placeholder="e.g. refund, gift"></div>
+            </div>
+            <button class="btn btn-outline" style="margin-top:10px">Update wallet</button>
+        </form>
+        <form method="post" class="panel">
+            <h2>Reset password</h2>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="password">
+            <label for="np">New password for this customer</label>
+            <input type="text" id="np" name="new_password" minlength="8" placeholder="At least 8 characters, letters + numbers" required autocomplete="off">
+            <button class="btn btn-outline" style="margin-top:10px">Set new password</button>
+        </form>
+        {% if not c.orders and c.id != user.id %}
+        <form method="post" class="panel" onsubmit="return confirm('Delete this account for ever?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="delete">
+            <h2>Delete account</h2><p class="small muted">Possible only because this customer has no orders.</p>
+            <button class="btn btn-danger">Delete account</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="adm-grid">
+    <section class="panel">
+        <h2>Contact &amp; addresses</h2>
+        <p>&#9993; {{ c.email }}<br>&#9742; +91 {{ c.mobile }}</p>
+        {% for a in addresses %}<p class="addr-box">{% if a.is_default %}<span class="st st-delivered">default</span> {% endif %}<b>{{ a.kind }}:</b> {{ a.line1 }}, {{ a.city }}, {{ a.state }} {{ a.pincode }}</p>{% else %}<p class="muted">No saved address.</p>{% endfor %}
+        <h3 class="mt">In cart now</h3>
+        {% for p, q in cart %}<p class="small">{{ p.name[:50] }} &times; {{ q }}</p>{% else %}<p class="small muted">Cart is empty.</p>{% endfor %}
+        <h3 class="mt">Wishlist</h3>
+        {% for p in wishlist %}<p class="small">{{ p.name[:55] }}</p>{% else %}<p class="small muted">Wishlist is empty.</p>{% endfor %}
+    </section>
+    <section class="panel">
+        <h2>Orders</h2>
+        <table class="at">{% for o in orders %}<tr><td><a href="{{ url_for('admin_order', number=o.number) }}">{{ o.number }}</a></td><td>{{ o.placed_at|nicedate }}</td><td>{% with status = o.status %}{% include "admin/_status.html" %}{% endwith %}</td><td class="num">{{ o.total|rupees }}</td></tr>{% else %}<tr><td class="muted">No orders yet.</td></tr>{% endfor %}</table>
+    </section>
+</div>
+<section class="panel">
+    <h2>Activity history</h2>
+    <ul class="feed">{% for a in activity %}<li><span class="dot a-{{ a.action|lower|replace(' ', '-') }}"></span><div>{{ a.action }}{% if a.details %} <span class="muted">&middot; {{ a.details }}</span>{% endif %}<small>{{ a.at }} &middot; IP {{ a.ip or '-' }}</small></div></li>{% else %}<li class="muted">No activity.</li>{% endfor %}</ul>
+</section>
+{% endblock %}

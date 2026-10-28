@@ -1,0 +1,46 @@
+{% extends "admin/layout.html" %}
+{% block title %}Order {{ o.number }}{% endblock %}
+{% block heading %}Order {{ o.number }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('admin_orders') }}">&lsaquo; All orders</a></p>
+<div class="adm-grid three">
+    <section class="panel"><h3>Customer</h3><p><a href="{{ url_for('admin_customer', uid=o.customer.id) }}"><b>{{ o.customer.name }}</b></a><br>{{ o.customer.email }}<br>+91 {{ o.customer.mobile }}</p></section>
+    <section class="panel"><h3>Ship to</h3><p><b>{{ o.ship_name }}</b><br>{{ o.ship_address }}<br>Phone {{ o.ship_mobile }}</p></section>
+    <section class="panel"><h3>Payment</h3><p><b>{{ o.payment_method }}</b><br><span class="small muted">{{ o.payment_note }}</span>{% if o.coupon %}<br>Coupon <code>{{ o.coupon }}</code> &minus;{{ o.coupon_discount|rupees }}{% endif %}</p></section>
+</div>
+<section class="panel">
+    <div class="ph"><h2>{% with status = o.status %}{% include "admin/_status.html" %}{% endwith %}
+            <small class="muted">{{ '(set by admin)' if o.manual else '(automatic demo tracking)' if o.status != 'Cancelled' else '' }}</small></h2>
+        {% if o.can_cancel %}<form method="post" onsubmit="return confirm('Cancel this order? Stock goes back and paid amounts are refunded to the wallet.')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="cancel"><button class="btn btn-danger btn-sm">Cancel order</button></form>{% endif %}</div>
+    {% if next_steps and not o.cancelled_at %}
+    <form method="post" class="status-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="status">
+        <label for="status">Update delivery status</label>
+        <select id="status" name="status">{% for st in next_steps %}<option>{{ st }}</option>{% endfor %}</select>
+        <input type="text" name="note" maxlength="120" placeholder="Note (optional), e.g. Courier: Rakesh 98xxxxxx" aria-label="Note">
+        <button class="btn btn-orange">Update status</button>
+    </form>
+    {% endif %}
+    <ol class="track {{ 'cancelled' if o.cancelled_at }}">
+        {% for name, t, done in steps %}<li class="{{ 'done' if done }}"><span class="dot"></span><b>{{ name }}</b><small>{{ t|nicedate('%d %b, %H:%M') if t else '' }}</small></li>{% endfor %}
+    </ol>
+</section>
+<section class="panel">
+    <h2>Items</h2>
+    <table class="at">
+        <thead><tr><th>Product</th><th class="num">Price</th><th class="num">MRP</th><th class="num">Qty</th><th class="num">Amount</th></tr></thead>
+        {% for it in o['items'] %}
+        <tr><td><a href="{{ url_for('product', slug=it.slug) }}" target="_blank" class="pname"><img src="{{ url_for('static', filename='images/products/' ~ it.slug ~ '-1.jpg') }}" alt=""><span>{{ it.name }}</span></a></td>
+            <td class="num">{{ it.price|rupees }}</td><td class="num muted">{{ it.mrp|rupees }}</td><td class="num">{{ it.qty }}</td><td class="num">{{ (it.price * it.qty)|rupees }}</td></tr>
+        {% endfor %}
+        <tr><td colspan="4" class="num">Items</td><td class="num">{{ o.items_total|rupees }}</td></tr>
+        {% if o.coupon_discount %}<tr><td colspan="4" class="num">Coupon {{ o.coupon }}</td><td class="num">&minus;{{ o.coupon_discount|rupees }}</td></tr>{% endif %}
+        <tr><td colspan="4" class="num">Delivery</td><td class="num">{{ o.delivery_fee|rupees }}</td></tr>
+        <tr><td colspan="4" class="num"><b>Total</b></td><td class="num"><b>{{ o.total|rupees }}</b></td></tr>
+    </table>
+</section>
+<section class="panel">
+    <h2>Activity for this order</h2>
+    <ul class="feed">{% for a in activity %}<li><span class="dot a-{{ a.action|lower|replace(' ', '-') }}"></span><div><b>{{ a.user_name or 'Visitor' }}</b> {{ a.action|lower }} <span class="muted">&middot; {{ a.details }}</span><small>{{ a.at }} &middot; IP {{ a.ip }}</small></div></li>{% else %}<li class="muted">No activity recorded.</li>{% endfor %}</ul>
+</section>
+{% endblock %}

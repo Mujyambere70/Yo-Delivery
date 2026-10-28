@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="wrap narrow"><section class="panel empty"><div class="err-code">{{ code }}</div><h1>{{ title }}</h1><p>{{ message }}</p><a href="{{ url_for('index') }}" class="btn btn-orange">Go to home page</a></section></div>
+{% endblock %}

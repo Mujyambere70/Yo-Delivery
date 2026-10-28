@@ -1,0 +1,21 @@
+{% extends "admin/layout.html" %}
+{% block title %}Customers{% endblock %}
+{% block heading %}Customers{% endblock %}
+{% block content %}
+<form class="panel toolbar" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search name, email or mobile">
+    <button class="btn btn-orange">Search</button>
+    <a href="{{ url_for('admin_table_csv', table='users') }}" class="btn btn-outline">&#11015; Export CSV</a>
+</form>
+<section class="panel"><div class="tw"><table class="at">
+    <thead><tr><th>Customer</th><th>Mobile</th><th>Joined</th><th>Last activity</th><th class="num">Orders</th><th class="num">Total spent</th><th class="num">Wallet</th></tr></thead>
+    {% for c in customers %}
+    <tr>
+        <td><a href="{{ url_for('admin_customer', uid=c.id) }}" class="cust"><span class="avatar sm">{{ c.name[0] }}</span><span><b>{{ c.name }}</b>{% if c.is_admin %} <span class="st st-admin">admin</span>{% endif %}<br><small class="muted">{{ c.email }}</small></span></a></td>
+        <td>{{ c.mobile }}</td><td class="nowrap">{{ c.created_at|nicedate }}</td>
+        <td class="nowrap">{{ c.last_seen|nicedate('%d %b, %H:%M') if c.last_seen else '-' }}</td>
+        <td class="num">{{ c.orders }}</td><td class="num"><b>{{ c.spent|rupees }}</b></td><td class="num">{{ c.wallet|rupees }}</td>
+    </tr>
+    {% endfor %}
+</table></div></section>
+{% endblock %}

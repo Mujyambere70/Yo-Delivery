@@ -1,0 +1,32 @@
+{% extends "admin/layout.html" %}
+{% block title %}Orders{% endblock %}
+{% block heading %}Orders{% endblock %}
+{% block content %}
+<form class="panel toolbar" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search order number, customer, email, pincode">
+    <select name="status" onchange="this.form.submit()">
+        <option value="">All statuses</option>
+        {% for s in TRACK_STEPS + ['Cancelled'] %}<option {% if s == status %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-orange">Search</button>
+    <a href="{{ url_for('admin_table_csv', table='orders') }}" class="btn btn-outline">&#11015; Export CSV</a>
+</form>
+<section class="panel">
+    <p class="small muted">{{ orders|length }} order{{ 's' if orders|length != 1 }} &middot; total {{ orders|rejectattr('cancelled_at')|map(attribute='total')|sum|rupees }}</p>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Items</th><th>Ship to</th><th>Payment</th><th>Status</th><th class="num">Total</th></tr></thead>
+        {% for o in orders %}
+        <tr>
+            <td><a href="{{ url_for('admin_order', number=o.number) }}"><b>{{ o.number }}</b></a></td>
+            <td class="nowrap">{{ o.placed_at|nicedate('%d %b %Y, %H:%M') }}</td>
+            <td>{{ o.customer }}<br><small class="muted">{{ o.email }}</small></td>
+            <td><div class="thumbs-row">{% for it in o['items'][:4] %}<img src="{{ url_for('static', filename='images/products/' ~ it.slug ~ '-1.jpg') }}" alt="" title="{{ it.name }} x{{ it.qty }}">{% endfor %}</div></td>
+            <td>{{ o.ship_address.split(',')[-1] }}</td>
+            <td>{{ o.payment_method }}</td>
+            <td>{% with status = o.status %}{% include "admin/_status.html" %}{% endwith %}</td>
+            <td class="num"><b>{{ o.total|rupees }}</b></td>
+        </tr>
+        {% else %}<tr><td colspan="8" class="center muted">No orders found.</td></tr>{% endfor %}
+    </table></div>
+</section>
+{% endblock %}

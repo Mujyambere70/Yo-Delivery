@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% from "macros.html" import card, row, stars, price with context %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block content %}
+<div class="wrap">
+    <nav class="crumbs pt"><a href="{{ url_for('index') }}">Home</a> &rsaquo; <a href="{{ url_for('category', category=p.category) }}">{{ p.category_name }}</a> &rsaquo; <a href="{{ url_for('search', q=p.brand, category=p.category) }}">{{ p.brand }}</a></nav>
+    <div class="pdp">
+        <div class="gallery">
+            <div class="thumbs">
+                {% for img in p.images %}
+                <button type="button" class="thumb {{ 'on' if loop.first }}" onclick="pick(this, '{{ url_for('static', filename=img) }}')"><img src="{{ url_for('static', filename=img) }}" alt="View {{ loop.index }}"></button>
+                {% endfor %}
+            </div>
+            <div class="main-img">
+                <img src="{{ url_for('static', filename=p.image) }}" alt="{{ p.name }}" id="mainImg">
+                <form method="post" action="{{ url_for('wishlist_toggle') }}" class="wish-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="product_id" value="{{ p.id }}">
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button class="wish {{ 'on' if p.id in wish_ids }}" aria-label="Wishlist">&#10084;</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="info">
+            <a href="{{ url_for('search', q=p.brand) }}" class="brand-link">Visit the {{ p.brand }} Store</a>
+            <h1>{{ p.name }}</h1>
+            <div class="rating-line">{% if p.rating_count %}{{ stars(p.rating) }} <a href="#reviews">{{ '{:,}'.format(p.rating_count) }} ratings</a>{% else %}<span class="new-badge">New arrival</span> <span class="muted small">No ratings yet</span>{% endif %}
+                {% if p.rating >= 4.3 %}<span class="assured">&#10004; Yo Assured</span>{% endif %}</div>
+            <hr>
+            {% if p.discount >= 30 %}<span class="deal-badge">Limited time deal</span>{% endif %}
+            {{ price(p, True) }}
+            <p class="muted small">Inclusive of all taxes</p>
+
+            <div class="offers">
+                <h3>Available offers</h3>
+                <ul>
+                    {% for code, info in COUPONS.items() %}<li><b>Coupon</b> Use <code>{{ code }}</code> &ndash; {{ info[0] }}</li>{% endfor %}
+                    <li><b>Yo Pay</b> Pay with Yo Pay wallet for instant checkout</li>
+                </ul>
+            </div>
+
+            <div class="services">
+                <div><span>&#128666;</span>{{ 'Free Delivery' if p.price >= FREE_DELIVERY_FROM else 'Delivery ₹40' }}</div>
+                <div><span>&#8634;</span>7 days Replacement</div>
+                <div><span>&#128181;</span>Cash on Delivery</div>
+                <div><span>&#128737;</span>{{ p.specs.get('Warranty', 'Quality checked') }}</div>
+            </div>
+
+            <h3>About this item</h3>
+            <ul class="highlights">{% for line in p.about %}<li>{{ line }}</li>{% endfor %}</ul>
+        </div>
+
+        <aside class="buybox">
+            {{ price(p) }}
+            <div class="delivery">
+                <form method="get" action="#delivery" class="pin-form" id="delivery">
+                    <label for="pin">&#128205; Delivery</label>
+                    <div class="pin-row"><input type="text" id="pin" name="pin" value="{{ delivery.pin if delivery }}" maxlength="6" inputmode="numeric" placeholder="Enter pincode"><button type="submit">Check</button></div>
+                </form>
+                {% if delivery and delivery.error %}<p class="err small">{{ delivery.error }}</p>
+                {% elif delivery %}<p class="small"><b class="ok">{{ 'FREE delivery' if p.price >= FREE_DELIVERY_FROM else 'Delivery ₹40' }}</b> by <b>{{ delivery.date }}</b> to {{ delivery.pin }}{% if delivery.days == 1 %}<br><span class="ok">Order within the next few hours</span>{% endif %}</p>
+                {% else %}<p class="small muted">Enter your pincode to see the delivery date.</p>{% endif %}
+            </div>
+            {% if p.stock == 0 %}<p class="err"><b>Currently unavailable.</b></p>
+            {% else %}
+            <p class="{{ 'low' if p.stock <= 5 else 'ok' }}"><b>{{ ('Only ' ~ p.stock ~ ' left in stock - order soon.') if p.stock <= 5 else 'In stock' }}</b></p>
+            <form method="post" action="{{ url_for('cart_add') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="{{ p.id }}">
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <label for="qty" class="small">Quantity</label>
+                <select name="qty" id="qty">{% for n in range(1, [p.stock, 10]|min + 1) %}<option>{{ n }}</option>{% endfor %}</select>
+                <button type="submit" class="btn btn-yellow btn-block">&#128722; Add to Cart</button>
+                <button type="submit" name="buy_now" value="1" class="btn btn-orange btn-block">&#9889; Buy Now</button>
+            </form>
+            {% endif %}
+            <table class="seller small">
+                <tr><td>Ships from</td><td>Yo Delivery</td></tr>
+                <tr><td>Sold by</td><td>YoRetail (demo seller)</td></tr>
+                <tr><td>Payment</td><td>Secure transaction</td></tr>
+            </table>
+        </aside>
+    </div>
+
+    <section class="panel">
+        <h2>Specifications</h2>
+        <table class="specs">
+            <tr><th>Brand</th><td>{{ p.brand }}</td></tr>
+            {% for k, v in p.specs.items() %}<tr><th>{{ k }}</th><td>{{ v }}</td></tr>{% endfor %}
+            <tr><th>Category</th><td>{{ p.category_name }}</td></tr>
+        </table>
+    </section>
+
+    <section class="panel reviews" id="reviews">
+        <div class="rev-grid">
+            <div>
+                <h2>Ratings &amp; Reviews</h2>
+                {% if p.rating_count %}<div class="big-rating">{{ '%.1f'|format(p.rating) }} <span>&#9733;</span></div>{% else %}<p class="muted">Be the first to review this product after you receive it.</p>{% endif %}
+                <p class="muted">{{ '{:,}'.format(p.rating_count) }} ratings</p>
+                {% set total = breakdown|map(attribute=1)|sum or 1 %}
+                {% for s, n in breakdown %}
+                <div class="bar-row"><span>{{ s }} &#9733;</span><div class="bar"><i class="s{{ s }}" style="width:{{ (n * 100 / total)|round(1) }}%"></i></div><em>{{ '{:,}'.format(n) }}</em></div>
+                {% endfor %}
+                {% if can_review %}<a href="{{ url_for('review', slug=p.slug) }}" class="btn btn-outline btn-block">Write a product review</a>
+                {% else %}<p class="small muted">Only customers who received this product can review it.</p>{% endif %}
+            </div>
+            <div>
+                {% for r in reviews %}
+                <article class="review">
+                    {{ stars(r.rating, None, True) }} <b>{{ r.title }}</b>
+                    <p>{{ r.body }}</p>
+                    <p class="small muted">{{ r.author }} &middot; {% if r.verified %}<span class="ok">&#10004; Certified Buyer</span> &middot; {% endif %}{{ r.created_at|nicedate }}</p>
+                </article>
+                {% else %}<p class="muted">No reviews yet.</p>{% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {{ row('Similar products', similar, wish_ids) }}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  function pick(btn, src) {
+    document.getElementById('mainImg').src = src;
+    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('on'));
+    btn.classList.add('on');
+  }
+</script>
+{% endblock %}

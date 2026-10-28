@@ -1,0 +1,41 @@
+{% extends "admin/layout.html" %}
+{% block title %}Coupons{% endblock %}
+{% block heading %}Coupons{% endblock %}
+{% block content %}
+<section class="panel">
+    <h2>Coupon codes</h2>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Code</th><th>What the customer sees</th><th>Discount</th><th class="num">Min. order</th><th>Rules</th><th>Status</th><th></th></tr></thead>
+        {% for c in coupons %}
+        <tr class="{{ 'hidden-row' if not c.active }}">
+            <td><code>{{ c.code }}</code></td><td>{{ c.description }}</td>
+            <td>{{ ('₹' ~ c.amount) if c.kind == 'flat' else (c.amount ~ '% (max ₹' ~ '{:,}'.format(c.max_off) ~ ')') }}</td>
+            <td class="num">₹{{ '{:,}'.format(c.min_order) }}</td>
+            <td>{{ 'First order only' if c.first_order_only else '-' }}</td>
+            <td>{% if c.active %}<span class="st st-delivered">active</span>{% else %}<span class="st st-cancelled">off</span>{% endif %}</td>
+            <td class="actions">
+                <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="code" value="{{ c.code }}">
+                    <button class="btn btn-outline btn-sm" name="action" value="toggle">{{ 'Turn off' if c.active else 'Turn on' }}</button>
+                    <button class="btn btn-danger btn-sm" name="action" value="delete" onclick="return confirm('Delete coupon {{ c.code }}?')">&#128465;</button></form>
+            </td>
+        </tr>
+        {% else %}<tr><td colspan="7" class="center muted">No coupons yet.</td></tr>{% endfor %}
+    </table></div>
+</section>
+<form method="post" class="panel">
+    <h2>+ Create or update a coupon</h2>
+    <p class="small muted">Using an existing code updates that coupon.</p>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="save">
+    <div class="form-grid three">
+        <div><label for="code">Code</label><input type="text" id="code" name="code" maxlength="20" placeholder="DIWALI200" required style="text-transform:uppercase"></div>
+        <div><label for="kind">Type</label><select id="kind" name="kind"><option value="flat">Flat amount (₹ off)</option><option value="percent">Percent (% off)</option></select></div>
+        <div><label for="amount">Discount (₹ or %)</label><input type="number" id="amount" name="amount" min="1" required></div>
+        <div><label for="max_off">Max. discount ₹ (for %)</label><input type="number" id="max_off" name="max_off" min="0" value="0"></div>
+        <div><label for="min_order">Minimum order ₹</label><input type="number" id="min_order" name="min_order" min="0" value="0"></div>
+        <div><label for="description">Text for customers (optional)</label><input type="text" id="description" name="description" maxlength="100" placeholder="Made automatically if empty"></div>
+    </div>
+    <label class="check"><input type="checkbox" name="first_order_only" value="yes"> Only for a customer's first order</label>
+    <label class="check"><input type="checkbox" name="active" value="yes" checked> Active now</label><input type="hidden" name="active" value="no">
+    <button class="btn btn-orange" style="margin-top:10px">Save coupon</button>
+</form>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% macro stars(rating, count=None, small=False) -%}
+<span class="rating {{ 'sm' if small }}"><b>{{ '%.1f'|format(rating) }} &#9733;</b>{% if count is not none %}<em>({{ '{:,}'.format(count) }})</em>{% endif %}</span>
+{%- endmacro %}
+
+{% macro price(p, big=False) -%}
+<div class="price {{ 'big' if big }}">
+    <strong>{{ p.price|rupees }}</strong>
+    {% if p.discount %}<s>{{ p.mrp|rupees }}</s><span class="off">{{ p.discount }}% off</span>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro card(p, wish_ids) -%}
+<article class="pcard">
+    <form method="post" action="{{ url_for('wishlist_toggle') }}" class="wish-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="product_id" value="{{ p.id }}">
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+        <button type="submit" class="wish {{ 'on' if p.id in wish_ids }}" title="{{ 'Remove from' if p.id in wish_ids else 'Add to' }} wishlist" aria-label="Wishlist">&#10084;</button>
+    </form>
+    <a href="{{ url_for('product', slug=p.slug) }}" class="pcard-link">
+        <div class="pcard-img"><img src="{{ url_for('static', filename=p.image) }}" alt="{{ p.name }}" loading="lazy"></div>
+        <div class="pcard-body">
+            <span class="brand-name">{{ p.brand }}</span>
+            <h3>{{ p.name }}</h3>
+            {% if p.rating_count %}{{ stars(p.rating, p.rating_count, True) }}{% else %}<span class="new-badge">New</span>{% endif %}
+            {{ price(p) }}
+            {% if p.stock <= 5 %}<span class="low">Only {{ p.stock }} left</span>
+            {% elif p.price >= FREE_DELIVERY_FROM %}<span class="free">Free delivery</span>{% endif %}
+        </div>
+    </a>
+</article>
+{%- endmacro %}
+
+{% macro row(title, items, wish_ids, link=None) -%}
+{% if items %}
+<section class="shelf">
+    <div class="shelf-head"><h2>{{ title }}</h2>{% if link %}<a href="{{ link }}" class="see-all">See all &rsaquo;</a>{% endif %}</div>
+    <div class="scroller">{% for p in items %}{{ card(p, wish_ids) }}{% endfor %}</div>
+</section>
+{% endif %}
+{%- endmacro %}

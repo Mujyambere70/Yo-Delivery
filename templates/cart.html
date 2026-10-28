@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Shopping Cart{% endblock %}
+{% block content %}
+<div class="wrap cart-page">
+    {% if items %}
+    <section class="cart-list panel">
+        <div class="cart-head"><h1>Shopping Cart</h1><span class="muted">{{ s.count }} item{{ 's' if s.count != 1 }}</span></div>
+        {% if s.free_delivery_gap %}
+        <div class="ship-bar"><p>Add <b>{{ s.free_delivery_gap|rupees }}</b> more for <b>FREE delivery</b></p>
+            <div class="bar"><i style="width:{{ ((s.items_total - s.coupon_discount) * 100 / FREE_DELIVERY_FROM)|round }}%"></i></div></div>
+        {% else %}<div class="ship-bar ok-bar">&#10004; Your order qualifies for <b>FREE delivery</b>.</div>{% endif %}
+
+        {% for p, q in items %}
+        <div class="cart-item">
+            <a href="{{ url_for('product', slug=p.slug) }}" class="ci-img"><img src="{{ url_for('static', filename=p.image) }}" alt=""></a>
+            <div class="ci-body">
+                <a href="{{ url_for('product', slug=p.slug) }}" class="ci-name">{{ p.name }}</a>
+                <p class="small muted">Seller: YoRetail &middot; {{ p.brand }}</p>
+                <div class="price"><strong>{{ (p.price * q)|rupees }}</strong>{% if p.discount %}<s>{{ (p.mrp * q)|rupees }}</s><span class="off">{{ p.discount }}% off</span>{% endif %}</div>
+                <p class="small {{ 'low' if p.stock <= 5 else 'ok' }}">{{ ('Only ' ~ p.stock ~ ' left') if p.stock <= 5 else 'In stock' }}</p>
+                <div class="ci-actions">
+                    <form method="post" action="{{ url_for('cart_update') }}" class="qty-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="product_id" value="{{ p.id }}">
+                        <button type="submit" name="qty" value="{{ q - 1 }}" class="q-btn" aria-label="Decrease" {% if q <= 1 %}disabled{% endif %}>&minus;</button>
+                        <span class="q-val">{{ q }}</span>
+                        <button type="submit" name="qty" value="{{ q + 1 }}" class="q-btn" aria-label="Increase" {% if q >= [p.stock, 10]|min %}disabled{% endif %}>+</button>
+                    </form>
+                    {% if user %}
+                    <form method="post" action="{{ url_for('save_for_later') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="product_id" value="{{ p.id }}">
+                        <button type="submit" class="link-btn">Save for later</button>
+                    </form>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('cart_update') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="product_id" value="{{ p.id }}">
+                        <button type="submit" name="qty" value="0" class="link-btn">Remove</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="cart-foot"><a href="{{ url_for('checkout') }}" class="btn btn-orange btn-lg">Place Order</a></div>
+    </section>
+
+    <aside class="cart-side">
+        <form method="post" action="{{ url_for('cart_coupon') }}" class="panel coupon">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h3>&#127991; Apply coupon</h3>
+            {% if s.coupon %}
+                <p><b class="ok">{{ s.coupon }}</b> applied &ndash; you save {{ s.coupon_discount|rupees }}</p>
+                <button type="submit" name="remove" value="1" class="link-btn">Remove coupon</button>
+            {% else %}
+                <div class="pin-row"><input type="text" name="code" placeholder="Enter coupon code" aria-label="Coupon code"><button type="submit">Apply</button></div>
+                <ul class="coupon-list">{% for code, info in COUPONS.items() %}<li><code>{{ code }}</code> {{ info[0] }}</li>{% endfor %}</ul>
+            {% endif %}
+        </form>
+        <div class="panel">{% include "_summary.html" %}
+            <a href="{{ url_for('checkout') }}" class="btn btn-orange btn-block btn-lg">Proceed to Buy ({{ s.count }} item{{ 's' if s.count != 1 }})</a>
+            <p class="small muted center">&#128274; Safe and secure payments. 100% authentic products.</p>
+        </div>
+    </aside>
+    {% else %}
+    <section class="panel empty">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="">
+        <h2>Your cart is empty!</h2>
+        <p>Add items to it now. Shop today's deals.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-orange">Shop now</a>
+        {% if not user %}<p class="small">Have an account? <a href="{{ url_for('login', next='/cart') }}">Sign in</a> to see items you added before.</p>{% endif %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "admin/layout.html" %}
+{% block title %}Database{% endblock %}
+{% block heading %}Database Tables{% endblock %}
+{% block content %}
+<div class="db-tabs">
+    {% for name, count in tables %}<a href="{{ url_for('admin_database', table=name) }}" class="{{ 'on' if name == table }}">{{ name }} <em>{{ count }}</em></a>{% endfor %}
+</div>
+<section class="panel">
+    <div class="ph"><h2><code>{{ table }}</code> &middot; {{ total }} row{{ 's' if total != 1 }}</h2>
+        <a href="{{ url_for('admin_table_csv', table=table) }}" class="btn btn-outline btn-sm">&#11015; Download CSV (opens in Excel)</a></div>
+    <p class="small muted">Read-only view of the SQLite file <code>yo_delivery.db</code>, newest rows first{% if total > 200 %} (first 200 shown){% endif %}. Passwords are stored as secure hashes and are hidden here. Money columns are in paise (₹1 = 100).</p>
+    <div class="tw db"><table class="at">
+        <thead><tr>{% for c in cols %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+        {% for r in rows %}<tr>{% for v in r %}<td title="{{ v }}">{{ v if v is not none else 'NULL' }}</td>{% endfor %}</tr>
+        {% else %}<tr><td colspan="{{ cols|length }}" class="center muted">This table is empty.</td></tr>{% endfor %}
+    </table></div>
+</section>
+{% endblock %}

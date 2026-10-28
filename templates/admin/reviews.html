@@ -1,0 +1,24 @@
+{% extends "admin/layout.html" %}
+{% block title %}Reviews{% endblock %}
+{% block heading %}Customer Reviews{% endblock %}
+{% block content %}
+<form class="panel toolbar" method="get">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search author, title, text or product">
+    <select name="rating" onchange="this.form.submit()"><option value="">All ratings</option>{% for n in [5, 4, 3, 2, 1] %}<option value="{{ n }}" {% if rating == n|string %}selected{% endif %}>{{ n }} stars</option>{% endfor %}</select>
+    <button class="btn btn-orange">Search</button>
+</form>
+<section class="panel">
+    <p class="small muted">{{ reviews|length }} review{{ 's' if reviews|length != 1 }}. Deleting a review also removes its stars from the product rating.</p>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Date</th><th>Product</th><th>Rating</th><th>Review</th><th>Author</th><th></th></tr></thead>
+        {% for r in reviews %}
+        <tr><td class="nowrap">{{ r.created_at|nicedate }}</td>
+            <td><a href="{{ url_for('product', slug=r.slug) }}#reviews" target="_blank" class="pname"><img src="{{ url_for('static', filename='images/products/' ~ r.slug ~ '-1.jpg') }}" alt=""><span>{{ r.product }}</span></a></td>
+            <td class="nowrap"><span class="rating sm"><b>{{ r.rating }} &#9733;</b></span></td>
+            <td><b>{{ r.title }}</b><br><span class="small">{{ r.body }}</span></td>
+            <td>{% if r.user_id %}<a href="{{ url_for('admin_customer', uid=r.user_id) }}">{{ r.author }}</a>{% else %}{{ r.author }}{% endif %}</td>
+            <td><form method="post" onsubmit="return confirm('Delete this review?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="review_id" value="{{ r.id }}"><input type="hidden" name="q" value="{{ q }}"><input type="hidden" name="rating" value="{{ rating }}"><button class="btn btn-danger btn-sm">&#128465; Delete</button></form></td></tr>
+        {% else %}<tr><td colspan="6" class="center muted">No reviews found.</td></tr>{% endfor %}
+    </table></div>
+</section>
+{% endblock %}

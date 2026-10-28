@@ -1,0 +1,22 @@
+{% extends "admin/layout.html" %}
+{% block title %}Shop Settings{% endblock %}
+{% block heading %}Shop Settings{% endblock %}
+{% block content %}
+<form method="post" class="panel narrow-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2>Delivery &amp; payments</h2>
+    <div class="form-grid">
+        <div><label for="fd">Free delivery from (₹)</label><input type="number" id="fd" name="free_delivery_from" value="{{ '%g'|format(st.free_delivery_from / 100) }}" min="0" step="1" required>
+            <small class="muted">Orders below this pay the delivery fee.</small></div>
+        <div><label for="fee">Delivery fee (₹)</label><input type="number" id="fee" name="delivery_fee" value="{{ '%g'|format(st.delivery_fee / 100) }}" min="0" step="1" required></div>
+        <div><label for="cod">Cash on Delivery limit (₹)</label><input type="number" id="cod" name="cod_limit" value="{{ '%g'|format(st.cod_limit / 100) }}" min="0" step="1" required>
+            <small class="muted">Bigger orders must pay by UPI or wallet.</small></div>
+        <div><label for="sw">Welcome wallet bonus (₹)</label><input type="number" id="sw" name="signup_wallet" value="{{ '%g'|format(st.signup_wallet / 100) }}" min="0" step="1" required>
+            <small class="muted">Demo Yo Pay money every new customer gets.</small></div>
+    </div>
+    <h2 class="mt">Announcement bar</h2>
+    <label for="ann">Message shown at the top of every shop page (leave empty to hide)</label>
+    <input type="text" id="ann" name="announcement" value="{{ st.announcement }}" maxlength="160" placeholder="e.g. Diwali Sale is live! Extra 10% off with code YO10">
+    <button class="btn btn-orange btn-lg" style="margin-top:16px">Save settings</button>
+</form>
+{% endblock %}
