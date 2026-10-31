@@ -62,11 +62,8 @@ def ensure_admin(store):
 
 def seed(store):
     if not store.is_empty():
-        ensure_admin(store)
         return
     store.load_catalog()
-    rng = random.Random(11)
-    ensure_admin(store)
 
     uid = store.register("Ravi Kumar", DEMO_EMAIL, DEMO_MOBILE, DEMO_PASSWORD, wallet=5000 * 100, when=_ago(60))
     store.log(uid, "Signed up", "New account with email " + DEMO_EMAIL, "49.36.12.8", when=_ago(60))
