@@ -1,11 +1,32 @@
-<div class="form-grid">
+{% set cc = form.get('country', deliver_to.country if deliver_to else 'IN') or 'IN' %}
+<div class="form-grid addr-form" data-dial='{{ dial|tojson }}'>
+    <div class="full"><label for="a_country">Country</label>
+        <select id="a_country" name="country" required>{% for code, name in countries %}<option value="{{ code }}" {% if cc == code %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
     <div><label for="a_name">Full name</label><input type="text" id="a_name" name="name" value="{{ form.get('name', user.name if user else '') }}" required></div>
-    <div><label for="a_mobile">Mobile number</label><input type="tel" id="a_mobile" name="mobile" value="{{ form.get('mobile', user.mobile if user else '') }}" pattern="[6-9][0-9]{9}" maxlength="10" required></div>
+    <div><label for="a_mobile">Mobile number</label>
+        <div class="dial-row"><span class="dial" id="a_dial" translate="no">+{{ dial.get(cc, '') }}</span>
+        <input type="tel" id="a_mobile" name="mobile" value="{{ form.get('mobile', '') }}" maxlength="18" required></div></div>
     <div class="full"><label for="a_line1">House no., building, street</label><input type="text" id="a_line1" name="line1" value="{{ form.get('line1', '') }}" required></div>
     <div class="full"><label for="a_line2">Area, landmark (optional)</label><input type="text" id="a_line2" name="line2" value="{{ form.get('line2', '') }}"></div>
     <div><label for="a_city">City / Town</label><input type="text" id="a_city" name="city" value="{{ form.get('city', '') }}" required></div>
-    <div><label for="a_pin">Pincode</label><input type="text" id="a_pin" name="pincode" value="{{ form.get('pincode', '') }}" pattern="[1-9][0-9]{5}" maxlength="6" inputmode="numeric" required></div>
-    <div><label for="a_state">State</label><select id="a_state" name="state" required>{% for st in states %}<option {% if form.get('state', 'Haryana') == st %}selected{% endif %}>{{ st }}</option>{% endfor %}</select></div>
+    <div><label for="a_pin">Postal code / PIN code</label><input type="text" id="a_pin" name="pincode" value="{{ form.get('pincode', '') }}" maxlength="10" placeholder="{{ 'Leave empty if your country has none'|tr }}"></div>
+    <div class="india-only"><label for="a_state">State</label><select id="a_state" name="state">{% for st in states %}<option {% if form.get('state', 'Haryana') == st %}selected{% endif %}>{{ st }}</option>{% endfor %}</select></div>
+    <div class="abroad-only"><label for="a_region">Region / province (optional)</label><input type="text" id="a_region" name="state_abroad" value="{{ form.get('state', '') if cc != 'IN' else '' }}"></div>
     <div><label>Address type</label><div class="radio-row"><label><input type="radio" name="kind" value="Home" checked> Home</label><label><input type="radio" name="kind" value="Work"> Work</label></div></div>
 </div>
 <label class="check"><input type="checkbox" name="is_default" value="yes"> Make this my default address</label>
+<script>
+(function () {
+    var box = document.currentScript.previousElementSibling.previousElementSibling, dial = JSON.parse(box.dataset.dial);
+    var sel = box.querySelector('[name=country]'), state = box.querySelector('[name=state]'), region = box.querySelector('[name=state_abroad]');
+    function update() {
+        var india = sel.value === 'IN';
+        box.querySelector('.india-only').style.display = india ? '' : 'none';
+        box.querySelector('.abroad-only').style.display = india ? 'none' : '';
+        state.disabled = !india;                       // only the field that is shown is sent
+        region.name = india ? 'state_abroad' : 'state';
+        box.querySelector('.dial').textContent = '+' + (dial[sel.value] || '');
+    }
+    sel.addEventListener('change', update); update();
+})();
+</script>

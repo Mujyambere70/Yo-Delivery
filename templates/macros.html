@@ -18,7 +18,7 @@
         <button type="submit" class="wish {{ 'on' if p.id in wish_ids }}" title="{{ 'Remove from' if p.id in wish_ids else 'Add to' }} wishlist" aria-label="Wishlist">&#10084;</button>
     </form>
     <a href="{{ url_for('product', slug=p.slug) }}" class="pcard-link">
-        <div class="pcard-img"><img src="{{ url_for('static', filename=p.image) }}" alt="{{ p.name }}" loading="lazy"></div>
+        <div class="pcard-img"><img src="{{ picture(p.image) }}" alt="{{ p.name }}" loading="lazy"></div>
         <div class="pcard-body">
             <span class="brand-name">{{ p.brand }}</span>
             <h3>{{ p.name }}</h3>

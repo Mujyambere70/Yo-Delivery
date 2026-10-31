@@ -4,19 +4,56 @@
 {% block content %}
 <form method="post" class="panel narrow-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <h2>Delivery &amp; payments</h2>
+    <h2>Delivery in India &amp; payments</h2>
     <div class="form-grid">
         <div><label for="fd">Free delivery from (₹)</label><input type="number" id="fd" name="free_delivery_from" value="{{ '%g'|format(st.free_delivery_from / 100) }}" min="0" step="1" required>
             <small class="muted">Orders below this pay the delivery fee.</small></div>
         <div><label for="fee">Delivery fee (₹)</label><input type="number" id="fee" name="delivery_fee" value="{{ '%g'|format(st.delivery_fee / 100) }}" min="0" step="1" required></div>
         <div><label for="cod">Cash on Delivery limit (₹)</label><input type="number" id="cod" name="cod_limit" value="{{ '%g'|format(st.cod_limit / 100) }}" min="0" step="1" required>
-            <small class="muted">Bigger orders must pay by UPI or wallet.</small></div>
+            <small class="muted">Bigger orders must pay by card, UPI or wallet.</small></div>
         <div><label for="sw">Welcome wallet bonus (₹)</label><input type="number" id="sw" name="signup_wallet" value="{{ '%g'|format(st.signup_wallet / 100) }}" min="0" step="1" required>
             <small class="muted">Demo Yo Pay money every new customer gets.</small></div>
+    </div>
+    <h2 class="mt">Shipping abroad</h2>
+    <div class="form-grid">
+        <div><label for="near">Fee: nearby countries (₹)</label><input type="number" id="near" name="intl_fee_near" value="{{ '%g'|format(st.intl_fee_near / 100) }}" min="0" step="1" required>
+            <small class="muted">Nepal, Sri Lanka, Gulf, South-East Asia: about 6 days.</small></div>
+        <div><label for="world">Fee: rest of the world (₹)</label><input type="number" id="world" name="intl_fee_world" value="{{ '%g'|format(st.intl_fee_world / 100) }}" min="0" step="1" required>
+            <small class="muted">About 9 days.</small></div>
+        <div><label for="ifree">Free shipping abroad from (₹)</label><input type="number" id="ifree" name="intl_free_from" value="{{ '%g'|format(st.intl_free_from / 100) }}" min="0" step="1" required></div>
+    </div>
+    <h2 class="mt">Marketplace &amp; returns</h2>
+    <div class="form-grid">
+        <div><label for="com">Commission for new sellers (%)</label><input type="number" id="com" name="seller_commission" value="{{ st.seller_commission }}" min="0" max="50" required></div>
+        <div><label for="rd">Return window (days after delivery)</label><input type="number" id="rd" name="return_days" value="{{ st.return_days }}" min="0" max="60" required></div>
     </div>
     <h2 class="mt">Announcement bar</h2>
     <label for="ann">Message shown at the top of every shop page (leave empty to hide)</label>
     <input type="text" id="ann" name="announcement" value="{{ st.announcement }}" maxlength="160" placeholder="e.g. Diwali Sale is live! Extra 10% off with code YO10">
     <button class="btn btn-orange btn-lg" style="margin-top:16px">Save settings</button>
 </form>
+
+<div class="adm-grid">
+    <section class="panel">
+        <h2>Exchange rates</h2>
+        <p class="small muted">Prices are kept in rupees. Customers see them in their own currency with today's rate from open.er-api.com (downloaded once a day). Without a rate, prices are shown in rupees.</p>
+        {% if fx %}
+        <table class="at"><thead><tr><th>Currency</th><th class="num">1 ₹ =</th><th>Updated</th></tr></thead>
+        {% for c, r in fx.items() if c != 'INR' and 'INR' in fx %}<tr><td><b>{{ c }}</b></td><td class="num">{{ '%.4f'|format(r.per_usd / fx['INR'].per_usd) }}</td><td class="small">{{ r.updated_at|nicedate('%d %b %Y, %H:%M') }}</td></tr>{% endfor %}</table>
+        {% else %}<p class="err">No exchange rates yet: all prices are shown in rupees.</p>{% endif %}
+        <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="fx"><button class="btn btn-outline btn-sm">Download today's rates now</button></form>
+    </section>
+    <section class="panel">
+        <h2>System status</h2>
+        <ul class="status-list">
+            <li>Database: <b>{{ database }}</b>{% if database.startswith('SQLite') %} <span class="st st-cancelled">data is lost on Render restarts &mdash; set DATABASE_URL</span>{% else %} <span class="st st-delivered">permanent</span>{% endif %}</li>
+            <li>Login key (SECRET_KEY): <span class="st st-delivered">{{ 'from environment' if secret_from_env else 'saved in the database' }}</span></li>
+            <li>Card payments: {% if gateway == 'stripe' %}<span class="st st-delivered">Stripe test mode</span>{% if not webhook %} <span class="st st-packed">set STRIPE_WEBHOOK_SECRET for the webhook</span>{% endif %}{% else %}<span class="st st-packed">built-in test gateway</span> <small class="muted">set STRIPE_SECRET_KEY=sk_test_... to use Stripe</small>{% endif %}</li>
+            <li>Email: {% if providers.email %}<span class="st st-delivered">{{ providers.email|upper }}</span>{% else %}<span class="st st-packed">off</span> <small class="muted">set BREVO_API_KEY + ALERT_EMAIL_FROM</small>{% endif %}</li>
+            <li>SMS: {% if providers.sms %}<span class="st st-delivered">Twilio</span>{% else %}<span class="st st-packed">off</span> <small class="muted">set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM</small>{% endif %}</li>
+            <li>Push to phones: <span class="st st-delivered">on</span> <small class="muted">(keys made automatically)</small></li>
+        </ul>
+        <p class="small muted">Messages are always kept on the customer's Notifications page, even when email and SMS are off. Demo customers (example.com) are never emailed or texted.</p>
+    </section>
+</div>
 {% endblock %}

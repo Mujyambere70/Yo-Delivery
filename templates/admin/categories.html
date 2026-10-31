@@ -9,7 +9,7 @@
         {% for c in categories %}
         <form method="post" enctype="multipart/form-data" class="cat-row">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="slug" value="{{ c.slug }}">
-            <img src="{{ url_for('static', filename='images/' + c.image) }}" alt="">
+            <img src="{{ picture(c.image) }}" alt="">
             <div class="cat-fields">
                 <input type="text" name="name" value="{{ c.name }}" maxlength="40" required aria-label="Category name">
                 <small class="muted">/c/{{ c.slug }} &middot; {{ c.products }} product{{ 's' if c.products != 1 }}</small>

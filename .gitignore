@@ -5,3 +5,4 @@ __pycache__/
 *.db
 *.db.old-backup
 .DS_Store
+.env

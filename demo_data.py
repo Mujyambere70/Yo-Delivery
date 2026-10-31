@@ -1,8 +1,12 @@
 """
 demo_data.py - fills an empty Yo Delivery database:
 products (from catalog.py), one demo customer with addresses, past orders, a wishlist
-and items in the cart, a few more customers with orders, the activity history,
-and the admin account. All people here are fictional.
+and items in the cart, more customers in India and abroad (Russia, Rwanda, France, China,
+UAE, Spain) with orders in their own currency and language, one approved marketplace seller
+with sales, one seller application waiting for approval, product views for recommendations,
+a return request, the activity history and the admin account.
+All customers and shops here are fictional; all emails use example.com, so no message is
+ever sent to them.
 """
 
 import random
@@ -15,6 +19,20 @@ DEMO_PASSWORD = "Demo@1234"
 ADMIN_EMAIL = "admin@example.com"
 ADMIN_MOBILE = "9000000001"
 ADMIN_PASSWORD = "Admin@1234"
+ADMIN_NAME = "Jean Michel Mujyambere"          # founder and store administrator (the developer)
+
+SELLER_EMAIL = "seller@example.com"
+SELLER_PASSWORD = "Seller@1234"
+
+# name, email, mobile (international form), country, language, address line, city, post code
+WORLD_CUSTOMERS = [
+    ("Anna Smirnova", "anna.smirnova@example.com", "+7 916 555 0142", "RU", "ru", "ul. Tverskaya 12, kv. 8", "Moscow", "125009"),
+    ("Amani Uwase", "amani.uwase@example.com", "+250 788 555 014", "RW", "rw", "KG 11 Ave, house 27", "Kigali", ""),
+    ("Camille Laurent", "camille.laurent@example.com", "+33 6 55 50 14 20", "FR", "fr", "18 rue des Lilas", "Lyon", "69003"),
+    ("Li Wei", "li.wei@example.com", "+86 138 5550 1420", "CN", "zh", "Room 1203, 88 Century Avenue", "Shanghai", "200120"),
+    ("Omar Al Mansoori", "omar.almansoori@example.com", "+971 50 555 0142", "AE", "ar", "Villa 14, Street 22, Al Barsha", "Dubai", ""),
+    ("Lucia Fernandez", "lucia.fernandez@example.com", "+34 612 555 014", "ES", "es", "Calle Mayor 41, 2B", "Madrid", "28013"),
+]
 
 OTHER_CUSTOMERS = [
     ("Priya Sharma", "priya.sharma@example.com", "9812000001", "Model Town", "Ambala City", "134003"),
@@ -37,7 +55,7 @@ def ensure_admin(store):
     if row:
         uid = row["id"]
     else:
-        uid = store.register("Store Admin", ADMIN_EMAIL, ADMIN_MOBILE, ADMIN_PASSWORD, wallet=0, when=_ago(90))
+        uid = store.register(ADMIN_NAME, ADMIN_EMAIL, ADMIN_MOBILE, ADMIN_PASSWORD, wallet=0, when=_ago(90))
     store.make_admin(uid)
     return uid
 
@@ -104,3 +122,104 @@ def seed(store):
         conn.execute("UPDATE products SET stock = 7 WHERE slug = 'chrono-rose-women'")
     store.log(None, "Login failed", "Wrong password for unknown@example.com", "185.220.101.4", when=_ago(1, 4))
     store.log(uid, "Login failed", "Wrong password for " + DEMO_EMAIL, "49.36.12.8", when=_ago(0, 6))
+
+    if store.env.get("FX_ON_SEED", "1") != "0":
+        try:                        # today's real exchange rates, when the internet is reachable
+            store.refresh_fx_rates()
+        except Exception:
+            pass
+    rates = store.rates()           # without rates the orders simply stay in rupees
+
+    # ----- customers in other countries, each with their own language -----
+    world_ids = {}
+    for i, (name, email, mobile, country, lang, line1, city, postcode) in enumerate(WORLD_CUSTOMERS):
+        joined = 30 - i * 3
+        cid = store.register(name, email, mobile, "Shop@2026", when=_ago(joined), country=country, lang=lang)
+        world_ids[email] = cid
+        ip = f"{rng.randint(31, 213)}.{rng.randint(10, 220)}.{rng.randint(1, 250)}.{rng.randint(1, 250)}"
+        store.log(cid, "Signed up", "New account with email " + email, ip, when=_ago(joined))
+        addr = store.add_address(cid, {"name": name, "mobile": mobile, "line1": line1, "city": city,
+                                       "pincode": postcode, "country": country, "kind": "Home"})
+        user = store.get_user(cid)
+        for k in range(2):
+            items = [(sl, 1) for sl in rng.sample(slugs, rng.randint(1, 2))]
+            store.save_cart(cid, {store.get_product(slug=sl).id: q for sl, q in items})
+            when = _ago((4 if i == 0 else rng.randint(1, 20)) if k == 0 else rng.randint(0, 2),
+                        rng.randint(0, 9), rng.randint(0, 59))
+            store.log(cid, "Logged in", "", ip, when=when)
+            number = store.place_order(cid, addr, "card", when=when, currency=user["currency"], rates=rates)
+            with store.db() as conn:                # the card payment went through the test gateway
+                ref = "pi_demo_" + number[-8:]
+                conn.execute("UPDATE orders SET payment_status = 'Paid', paid_at = ?, payment_ref = ?, "
+                             "payment_note = 'Card - Yo Delivery test gateway' WHERE number = ?", (when, ref, number))
+                o = conn.execute("SELECT currency, total_local FROM orders WHERE number = ?", (number,)).fetchone()
+                conn.execute("INSERT INTO payments (order_number, gateway, payment_ref, currency, amount, status, "
+                             "message, created_at) VALUES (?, 'test', ?, ?, ?, 'Succeeded', ?, ?)",
+                             (number, ref, o["currency"], o["total_local"], "Test card ending 4242", when))
+            store.log(cid, "Order placed", f"{number} - {len(items)} item(s) - CARD", ip, when=when)
+        store.save_cart(cid, {})
+
+    # ----- marketplace: one approved seller with products and sales, one application waiting -----
+    sid_user = store.register("Meera Kapoor", SELLER_EMAIL, "9812000099", SELLER_PASSWORD, when=_ago(45))
+    store.log(sid_user, "Signed up", "New account with email " + SELLER_EMAIL, "49.36.40.17", when=_ago(45))
+    shop = store.apply_seller(sid_user, {"shop_name": "HomeEase Kitchen Studio",
+                                         "about": "Kitchen tools and lamps for Indian homes: cookers, kettles, pans "
+                                                  "and LED lamps, packed and sent from Ambala within one day.",
+                                         "country": "IN", "city": "Ambala", "payout_details": "meera.kapoor@okyo"})
+    store.decide_seller(shop, "Approved")
+    with store.db() as conn:
+        conn.execute("UPDATE sellers SET created_at = ?, decided_at = ? WHERE id = ?", (_ago(44), _ago(43), shop))
+        conn.execute("UPDATE products SET seller_id = ?, approved = 1 WHERE slug IN "
+                     "('homeease-cooker', 'homeease-kettle', 'homeease-pan', 'glow-led-lamp')", (shop,))
+    seller_addr = store.add_address(sid_user, {"name": "Meera Kapoor", "mobile": "9812000099",
+                                               "line1": "Shop 6, Rai Market", "city": "Ambala Cantt",
+                                               "state": "Haryana", "pincode": "133001", "kind": "Work"})
+    for cid_email, slug_list, days in (("priya.sharma@example.com", [("homeease-cooker", 1)], 9),
+                                       ("arjun.mehta@example.com", [("homeease-kettle", 1), ("glow-led-lamp", 1)], 6),
+                                       ("neha.verma@example.com", [("homeease-pan", 2)], 1)):
+        with store.db() as conn:
+            cid = conn.execute("SELECT id FROM users WHERE email = ?", (cid_email,)).fetchone()[0]
+            addr = conn.execute("SELECT id FROM addresses WHERE user_id = ?", (cid,)).fetchone()[0]
+        buy(cid, addr, slug_list, days, "upi", upi=cid_email.split("@")[0] + "@okyo")
+        store.save_cart(cid, {})
+    if store.seller_balance(shop)["balance"] >= 50000:
+        store.record_payout(shop, 500, "UPI meera.kapoor@okyo - demo payout", by=ADMIN_NAME)
+    pending = store.register("Lucas Moreau", "lucas.moreau@example.com", "+33 6 55 50 99 31", "Shop@2026",
+                             when=_ago(2), country="FR", lang="fr")
+    store.apply_seller(pending, {"shop_name": "Atelier Lumiere", "about": "Handmade candles and table lamps "
+                                 "from a small workshop in Lyon, shipped worldwide.", "country": "FR",
+                                 "city": "Lyon", "payout_details": "FR76 0000 0000 0000 0000 0000 000"})
+
+    # ----- what visitors looked at (for "customers also viewed" and "inspired by your views") -----
+    groups = [["nova-x5-blue", "nova-x5-black", "soundwave-buds", "powermax-20000", "pulsefit-s2"],
+              ["stridex-runner-teal", "stridex-runner-red", "urbanfit-tee-white", "trailpack-30l"],
+              ["homeease-cooker", "homeease-kettle", "homeease-pan", "glow-led-lamp"],
+              ["book-python", "book-flask", "book-dsa", "zentra-air-13"],
+              ["chrono-steel-silver", "chrono-classic-gold", "shades-aviator"]]
+    ids = {p["slug"]: store.get_product(slug=p["slug"]).id for p in __import__("catalog").PRODUCTS}
+    with store.db() as conn:
+        rows = []
+        for v in range(60):
+            g = rng.choice(groups)
+            for sl in rng.sample(g, rng.randint(2, len(g))):
+                rows.append((f"demo-visitor-{v}", None, ids[sl], _ago(rng.randint(0, 20), rng.randint(0, 23))))
+        for sl in ("nova-pro-12", "soundwave-700", "nova-x5-blue", "chrono-steel-silver"):
+            rows.append(("demo-ravi", uid, ids[sl], _ago(1, rng.randint(0, 23))))
+        conn.executemany("INSERT INTO views (visitor, user_id, product_id, at) VALUES (?, ?, ?, ?)", rows)
+
+    # ----- one delivered order with a return request (for the admin's Returns page) -----
+    for cid in world_ids.values():
+        with store.db() as conn:
+            numbers = [r[0] for r in conn.execute("SELECT number FROM orders WHERE user_id = ? ORDER BY placed_at",
+                                                  (cid,))]
+        o = next((store.get_order(cid, n) for n in numbers if store.return_window(store.get_order(cid, n))[0]), None)
+        if o:
+            store.request_return(cid, o["number"], "Size or fit is not right", "The item is smaller than I expected.")
+            break
+
+    # every seeded order 'tells' its customer only about its current step (one message, not a flood of old ones)
+    with store.db() as conn:
+        orders = [dict(r) for r in conn.execute("SELECT * FROM orders")]
+        for o in orders:
+            conn.execute("UPDATE orders SET notified_step = ? WHERE id = ?", (store._order_step(o) - 1, o["id"]))
+    store.sync_order_updates()          # in-site messages only: demo emails end with example.com and are skipped

@@ -13,16 +13,20 @@
         <h2>Frequently asked questions</h2>
         {% for q, a in [
             ('How long does delivery take?', 'Ambala and nearby (pincodes starting with 13): next day. Delhi, Haryana, Punjab and Himachal: 2 days. Rest of India: about 4 days. You can check the date on every product page with your pincode.'),
-            ('Is delivery free?', 'Yes, delivery is free for orders of ' ~ (FREE_DELIVERY_FROM|rupees) ~ ' or more. Smaller orders have a ₹40 delivery charge.'),
-            ('Which payment methods can I use?', 'UPI, Yo Pay wallet and Cash on Delivery (up to ₹50,000). This is a demo store, so no real money is taken.'),
-            ('Can I cancel my order?', 'Yes, you can cancel from the order details page until the order is shipped. Wallet and UPI payments are refunded to your Yo Pay wallet immediately.'),
-            ('How do coupons work?', 'Enter the code in the cart. WELCOME100 is for your first order, YO10 gives 10% off (up to ₹200) above ₹999 and BIGSALE gives 15% off above ₹9,999.'),
+            ('Is delivery free?', 'In India delivery is free for orders of ' ~ (FREE_DELIVERY_FROM|rupees) ~ ' or more; smaller orders pay ' ~ (SETTINGS.delivery_fee|rupees) ~ '. Abroad, shipping is free from ' ~ (SETTINGS.intl_free_from|rupees) ~ '.'),
+            ('Do you deliver to my country?', 'Yes. Yo Delivery ships to every country from its warehouse in Ambala, India: about 6 days to nearby countries and about 9 days to the rest of the world. Import duties of your country, if any, are paid when the parcel arrives.'),
+            ('Can I see prices in my currency and language?', 'Yes. Choose your language and currency at the top of every page. Prices are converted from Indian rupees with the day\'s exchange rate, and you pay by card in your currency.'),
+            ('Which payment methods can I use?', 'Credit or debit card (test mode), Yo Pay wallet, and in India also UPI and Cash on Delivery (up to ' ~ (SETTINGS.cod_limit|rupees) ~ '). This is a demo store, so no real money is taken. Test card: 4242 4242 4242 4242.'),
+            ('Will I get messages about my order?', 'Yes, at every step: placed, packed, shipped (with the tracking number), out for delivery and delivered. They are on your Notifications page and, when you allow it, by email, SMS or as a notification on your phone.'),
+            ('Can I sell on Yo Delivery?', 'Yes. Open "Sell on Yo Delivery", apply with your shop details and, after approval, add your products in the Seller Centre.'),
+            ('Can I cancel my order?', 'Yes, you can cancel from the order details page until the order is shipped. Card payments go back to the card; wallet and UPI payments are refunded to your Yo Pay wallet immediately.'),
+            ('How do coupons work?', 'Enter the code in the cart. WELCOME100 is for your first order, YO10 gives 10% off (up to ' ~ 20000|rupees ~ ') above ' ~ 99900|rupees ~ ' and BIGSALE gives 15% off above ' ~ 999900|rupees ~ '.'),
             ('Can I write a review?', 'Yes, after a product is delivered to you, open the order and click "Write a review".')] %}
         <details {% if loop.first %}open{% endif %}><summary>{{ q }}</summary><p>{{ a }}</p></details>
         {% endfor %}
     </section>
-    <section class="panel" id="returns"><h2>Returns &amp; replacement</h2><p>Most items can be replaced within 7 days of delivery if they are damaged, defective or different from the description. Grocery items are non-returnable.</p></section>
-    <section class="panel" id="about"><h2>About Yo Delivery</h2><p>Yo Delivery started as a fast local delivery service in Ambala, Haryana and grew into an online store for electronics, fashion, footwear, watches, grocery, home essentials and books.</p>
+    <section class="panel" id="returns"><h2>Returns &amp; refunds</h2><p>You can return a delivered order within {{ SETTINGS.return_days }} days: open the order and press "Return this order", then choose the reason. A courier picks up the parcel; after our check you get the money back &mdash; to your card for card payments, otherwise to your Yo Pay wallet. You get a message when the refund is sent.</p></section>
+    <section class="panel" id="about"><h2>About Yo Delivery</h2><p>Yo Delivery started as a fast local delivery service in Ambala, Haryana and grew into an international online store and marketplace for electronics, fashion, footwear, watches, grocery, home essentials and books. <a href="{{ url_for('about') }}">More about us and the developer &rsaquo;</a></p>
         <p class="small muted">This website is a demo built with Python (Flask), HTML and CSS for an academic project. All products, brands and sellers are fictional.</p></section>
     <section class="panel" id="contact"><h2>Contact us</h2><p>&#9742; 1800-000-9696 (toll free, 8 AM - 10 PM)<br>&#9993; support@yodelivery.example<br>&#128205; 12 Mall Road, Ambala Cantt, Haryana 133001</p></section>
 </div>

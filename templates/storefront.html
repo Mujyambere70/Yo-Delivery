@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "macros.html" import card with context %}
+{% block title %}{{ shop.shop_name }}{% endblock %}
+{% block content %}
+<div class="wrap">
+    <section class="panel shop-head">
+        <div class="shop-logo">{{ shop.shop_name[0] }}</div>
+        <div><h1>{{ shop.shop_name }}</h1><p>{{ shop.about }}</p>
+            <p class="small muted">Sells from {{ shop.city }}, {{ shop.country|country }} &middot; on Yo Delivery since {{ shop.created_at|nicedate('%B %Y') }} &middot; Delivered by Yo Delivery</p></div>
+    </section>
+    <div class="grid">{% for p in items %}{{ card(p, wish_ids) }}{% else %}<p class="muted">This shop has no products in the shop right now.</p>{% endfor %}</div>
+</div>
+{% endblock %}

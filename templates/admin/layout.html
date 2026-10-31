@@ -12,19 +12,23 @@
     <a href="{{ url_for('admin_dashboard') }}" class="logo"><img src="{{ url_for('static', filename='images/logo.png') }}" alt=""><span>yo<b>delivery</b><small>admin</small></span></a>
     <nav>
         {% set ep = request.endpoint or '' %}
-        {% for target, icon, label, match in [
-            ('admin_dashboard', '&#128202;', 'Dashboard', ['admin_dashboard']),
-            ('admin_orders', '&#128230;', 'Orders', ['admin_orders', 'admin_order']),
-            ('admin_products', '&#127991;', 'Products', ['admin_products', 'admin_product_new', 'admin_product_edit']),
-            ('admin_categories', '&#128193;', 'Categories', ['admin_categories']),
-            ('admin_customers', '&#128101;', 'Customers', ['admin_customers', 'admin_customer']),
-            ('admin_reviews', '&#11088;', 'Reviews', ['admin_reviews']),
-            ('admin_coupons', '&#127873;', 'Coupons', ['admin_coupons']),
-            ('admin_activity', '&#128221;', 'Activity Log', ['admin_activity']),
-            ('admin_database', '&#128451;', 'Database', ['admin_database']),
-            ('admin_settings', '&#9881;', 'Shop Settings', ['admin_settings']),
-            ('admin_account', '&#128100;', 'My Account', ['admin_account'])] %}
-            <a href="{{ url_for(target) }}" class="{{ 'on' if ep in match }}"><span>{{ icon|safe }}</span>{{ label }}</a>
+        {% set badge = counts if counts is defined else {} %}
+        {% for target, icon, label, match, badge in [
+            ('admin_dashboard', '&#128202;', 'Dashboard', ['admin_dashboard'], 0),
+            ('admin_orders', '&#128230;', 'Orders', ['admin_orders', 'admin_order'], 0),
+            ('admin_returns', '&#8634;', 'Returns', ['admin_returns'], badge.get('returns', 0)),
+            ('admin_products', '&#127991;', 'Products', ['admin_products', 'admin_product_new', 'admin_product_edit'], badge.get('products', 0)),
+            ('admin_categories', '&#128193;', 'Categories', ['admin_categories'], 0),
+            ('admin_sellers', '&#127978;', 'Sellers', ['admin_sellers'], badge.get('sellers', 0)),
+            ('admin_customers', '&#128101;', 'Customers', ['admin_customers', 'admin_customer'], 0),
+            ('admin_reviews', '&#11088;', 'Reviews', ['admin_reviews'], 0),
+            ('admin_coupons', '&#127873;', 'Coupons', ['admin_coupons'], 0),
+            ('admin_activity', '&#128221;', 'Activity Log', ['admin_activity'], 0),
+            ('admin_database', '&#128451;', 'Database', ['admin_database'], 0),
+            ('admin_backups', '&#128190;', 'Backups', ['admin_backups'], 0),
+            ('admin_settings', '&#9881;', 'Shop Settings', ['admin_settings'], 0),
+            ('admin_account', '&#128100;', 'My Account', ['admin_account'], 0)] %}
+            <a href="{{ url_for(target) }}" class="{{ 'on' if ep in match }}"><span>{{ icon|safe }}</span>{{ label }}{% if badge %}<em class="count">{{ badge }}</em>{% endif %}</a>
         {% endfor %}
     </nav>
     <div class="adm-side-foot">
@@ -41,7 +45,7 @@
         {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
     {% endwith %}
     {% block content %}{% endblock %}
-    <p class="small muted adm-note">Yo Delivery admin &middot; demo project &middot; data comes live from the SQLite database <code>yo_delivery.db</code></p>
+    <p class="small muted adm-note">Yo Delivery admin &middot; demo project by Jean Michel Mujyambere &middot; every change is written to the Activity Log</p>
 </div>
 </body>
 </html>

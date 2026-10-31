@@ -20,7 +20,7 @@
             <td><a href="{{ url_for('admin_order', number=o.number) }}"><b>{{ o.number }}</b></a></td>
             <td class="nowrap">{{ o.placed_at|nicedate('%d %b %Y, %H:%M') }}</td>
             <td>{{ o.customer }}<br><small class="muted">{{ o.email }}</small></td>
-            <td><div class="thumbs-row">{% for it in o['items'][:4] %}<img src="{{ url_for('static', filename='images/products/' ~ it.slug ~ '-1.jpg') }}" alt="" title="{{ it.name }} x{{ it.qty }}">{% endfor %}</div></td>
+            <td><div class="thumbs-row">{% for it in o['items'][:4] %}<img src="{{ picture('products/' ~ it.slug ~ '-1.jpg') }}" alt="" title="{{ it.name }} x{{ it.qty }}">{% endfor %}</div></td>
             <td>{{ o.ship_address.split(',')[-1] }}</td>
             <td>{{ o.payment_method }}</td>
             <td>{% with status = o.status %}{% include "admin/_status.html" %}{% endwith %}</td>

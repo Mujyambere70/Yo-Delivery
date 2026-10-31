@@ -4,14 +4,18 @@
 {% block content %}
 <p><a href="{{ url_for('admin_orders') }}">&lsaquo; All orders</a></p>
 <div class="adm-grid three">
-    <section class="panel"><h3>Customer</h3><p><a href="{{ url_for('admin_customer', uid=o.customer.id) }}"><b>{{ o.customer.name }}</b></a><br>{{ o.customer.email }}<br>+91 {{ o.customer.mobile }}</p></section>
-    <section class="panel"><h3>Ship to</h3><p><b>{{ o.ship_name }}</b><br>{{ o.ship_address }}<br>Phone {{ o.ship_mobile }}</p></section>
-    <section class="panel"><h3>Payment</h3><p><b>{{ o.payment_method }}</b><br><span class="small muted">{{ o.payment_note }}</span>{% if o.coupon %}<br>Coupon <code>{{ o.coupon }}</code> &minus;{{ o.coupon_discount|rupees }}{% endif %}</p></section>
+    <section class="panel"><h3>Customer</h3><p><a href="{{ url_for('admin_customer', uid=o.customer.id) }}"><b>{{ o.customer.name }}</b></a><br>{{ o.customer.email }}<br>{{ o.customer.mobile if o.customer.mobile.startswith('+') else '+91 ' ~ o.customer.mobile }}<br><small class="muted">Language: {{ o.lang }} &middot; {{ o.country|country }}</small></p></section>
+    <section class="panel"><h3>Ship to</h3><p><b>{{ o.ship_name }}</b><br>{{ o.ship_address }}<br>Phone {{ o.ship_mobile }}<br><small>{{ o.courier }} &middot; <code>{{ o.awb }}</code>{% if o.international %} &middot; <span class="st st-shipped">international</span>{% endif %}</small></p></section>
+    <section class="panel"><h3>Payment</h3><p><b>{{ o.payment_method }}</b> <span class="st st-{{ {'Paid': 'delivered', 'COD': 'packed', 'Pending': 'packed', 'Failed': 'cancelled', 'Expired': 'cancelled'}.get(o.payment_status, 'packed') }}">{{ o.payment_status }}</span><br><span class="small muted">{{ o.payment_note }}</span>{% if o.coupon %}<br>Coupon <code>{{ o.coupon }}</code> &minus;{{ o.coupon_discount|inr }}{% endif %}
+        {% if o.currency != 'INR' %}<br>Charged: <b>{{ o.total|omoney(o) }}</b> <small class="muted">(rate {{ '%.4f'|format(o.fx_rate) }})</small>{% endif %}
+        {% if o.refunded %}<br><span class="ok">Refunded {{ o.refunded|inr }}</span>{% endif %}
+        {% if ret %}<br><a href="{{ url_for('admin_returns', status='') }}">Return: {{ ret.status }}</a>{% endif %}</p>
+        {% for pmt in payments %}<p class="small mono">{{ pmt.created_at[5:16] }} {{ pmt.gateway }} {{ pmt.status }} {{ pmt.payment_ref or pmt.session_id }} {{ pmt.message }}</p>{% endfor %}</section>
 </div>
 <section class="panel">
     <div class="ph"><h2>{% with status = o.status %}{% include "admin/_status.html" %}{% endwith %}
             <small class="muted">{{ '(set by admin)' if o.manual else '(automatic demo tracking)' if o.status != 'Cancelled' else '' }}</small></h2>
-        {% if o.can_cancel %}<form method="post" onsubmit="return confirm('Cancel this order? Stock goes back and paid amounts are refunded to the wallet.')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="cancel"><button class="btn btn-danger btn-sm">Cancel order</button></form>{% endif %}</div>
+        {% if o.can_cancel %}<form method="post" onsubmit="return confirm('Cancel this order? Stock goes back and paid amounts are refunded (card or wallet).')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="cancel"><button class="btn btn-danger btn-sm">Cancel order</button></form>{% endif %}</div>
     {% if next_steps and not o.cancelled_at %}
     <form method="post" class="status-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="status">
@@ -30,8 +34,8 @@
     <table class="at">
         <thead><tr><th>Product</th><th class="num">Price</th><th class="num">MRP</th><th class="num">Qty</th><th class="num">Amount</th></tr></thead>
         {% for it in o['items'] %}
-        <tr><td><a href="{{ url_for('product', slug=it.slug) }}" target="_blank" class="pname"><img src="{{ url_for('static', filename='images/products/' ~ it.slug ~ '-1.jpg') }}" alt=""><span>{{ it.name }}</span></a></td>
-            <td class="num">{{ it.price|rupees }}</td><td class="num muted">{{ it.mrp|rupees }}</td><td class="num">{{ it.qty }}</td><td class="num">{{ (it.price * it.qty)|rupees }}</td></tr>
+        <tr><td><a href="{{ url_for('product', slug=it.slug) }}" target="_blank" class="pname"><img src="{{ picture('products/' ~ it.slug ~ '-1.jpg') }}" alt=""><span>{{ it.name }}</span></a></td>
+            <td class="num">{{ it.price|rupees }}</td><td class="num muted">{{ it.mrp|rupees }}</td><td class="num">{{ it.qty }}</td><td class="num">{{ (it.price * it.qty)|rupees }}{% if it.seller_id %}<br><small class="muted">{{ shops.get(it.seller_id, ('seller',))[0] }} &middot; {{ '%g'|format(it.commission) }}%</small>{% endif %}</td></tr>
         {% endfor %}
         <tr><td colspan="4" class="num">Items</td><td class="num">{{ o.items_total|rupees }}</td></tr>
         {% if o.coupon_discount %}<tr><td colspan="4" class="num">Coupon {{ o.coupon }}</td><td class="num">&minus;{{ o.coupon_discount|rupees }}</td></tr>{% endif %}

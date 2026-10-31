@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}My products{% endblock %}
+{% block content %}
+<div class="wrap seller">
+    {% include "seller/_nav.html" %}
+    <div class="row-head"><h1>My products</h1><a href="{{ url_for('seller_product_new') }}" class="btn btn-orange btn-sm">+ Add a product</a></div>
+    <section class="panel">
+    <table class="mini-table wide">
+        <thead><tr><th>Product</th><th class="num">Price</th><th class="num">Stock</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        {% for p in products %}
+            <tr><td><a href="{{ url_for('product', slug=p.slug) }}" class="pname"><img src="{{ picture(p.image) }}" alt=""><span>{{ p.name }}</span></a></td>
+                <td class="num">{{ p.price|inr }}</td>
+                <td class="num"><form method="post" action="{{ url_for('seller_product_action', pid=p.id, action='stock') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="number" name="stock" value="{{ p.stock }}" min="0" max="100000" class="num-in"><button class="link-btn">Save</button></form></td>
+                <td>{% if not p.approved %}<span class="tag">Waiting for approval</span>{% elif not p.active %}<span class="tag">Hidden</span>{% else %}<span class="tag ok-tag">In the shop</span>{% endif %}</td>
+                <td class="nowrap"><a href="{{ url_for('seller_product_edit', pid=p.id) }}">Edit</a>
+                    {% if p.approved %}<form method="post" action="{{ url_for('seller_product_action', pid=p.id, action='hide' if p.active else 'show') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-btn">{{ 'Hide' if p.active else 'Show' }}</button></form>{% endif %}</td></tr>
+        {% else %}<tr><td colspan="5" class="muted">No products yet.</td></tr>{% endfor %}
+        </tbody>
+    </table>
+    </section>
+</div>
+{% endblock %}

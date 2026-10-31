@@ -3,7 +3,9 @@
     <div class="s-row"><span>Price ({{ s.count }} item{{ 's' if s.count != 1 }})</span><span>{{ s.mrp_total|rupees }}</span></div>
     <div class="s-row"><span>Discount</span><span class="ok">&minus;{{ s.product_discount|rupees }}</span></div>
     {% if s.coupon %}<div class="s-row"><span>Coupon ({{ s.coupon }})</span><span class="ok">&minus;{{ s.coupon_discount|rupees }}</span></div>{% endif %}
-    <div class="s-row"><span>Delivery charges</span><span>{% if s.delivery_fee %}{{ s.delivery_fee|rupees }}{% else %}<s class="muted">₹40</s> <span class="ok">FREE</span>{% endif %}</span></div>
+    <div class="s-row"><span>Delivery charges</span><span>{% if s.delivery_fee %}{{ s.delivery_fee|rupees }}{% else %}<span class="ok">FREE</span>{% endif %}</span></div>
     <div class="s-row total"><span>Total amount</span><span>{{ s.total|rupees }}</span></div>
     {% if s.savings %}<p class="save">You will save {{ s.savings|rupees }} on this order</p>{% endif %}
+    {% if s.free_delivery_gap and s.delivery_fee %}<p class="small muted">Add {{ s.free_delivery_gap|rupees }} more for free delivery{% if s.international %} abroad{% endif %}.</p>{% endif %}
+    {% if CURRENCY != 'INR' %}<p class="small muted">Prices are converted from Indian rupees with today's exchange rate.</p>{% endif %}
 </div>

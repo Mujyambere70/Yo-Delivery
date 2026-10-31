@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="wrap acc">
+    {% include "_account_nav.html" %}
+    <div>
+        <h1>Notifications</h1>
+        <p class="small muted">Messages about your orders, returns, refunds and your shop. Choose email, SMS and phone notifications in <a href="{{ url_for('account') }}#notify">your account</a>.</p>
+        <section class="panel">
+        {% for n in rows %}
+            <div class="note-row {{ 'unseen' if not n.seen }}">
+                <div><b>{{ n.subject }}</b><p>{{ n.body }}</p>{% if n.order_number %}<a href="{{ url_for('order', number=n.order_number) }}" class="small">View order <span translate="no">{{ n.order_number }}</span> &rsaquo;</a>{% endif %}</div>
+                <small class="muted">{{ n.created_at|nicedate('%d %b, %H:%M') }}</small>
+            </div>
+        {% else %}<p class="muted">No notifications yet.</p>{% endfor %}
+        </section>
+    </div>
+</div>
+{% endblock %}

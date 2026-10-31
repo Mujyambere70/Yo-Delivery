@@ -8,16 +8,16 @@
     <article class="panel order-card">
         <div class="oc-head">
             <div><small>ORDER PLACED</small><b>{{ o.placed_at|nicedate }}</b></div>
-            <div><small>TOTAL</small><b>{{ o.total|rupees }}</b></div>
+            <div><small>TOTAL</small><b>{{ o.total|omoney(o) }}</b></div>
             <div class="hide-sm"><small>SHIP TO</small><b>{{ o.ship_name }}</b></div>
             <div class="oc-num"><small>ORDER # {{ o.number }}</small><a href="{{ url_for('order', number=o.number) }}">View order details</a> &middot; <a href="{{ url_for('invoice', number=o.number) }}">Invoice</a></div>
         </div>
         <div class="oc-body">
-            <h3 class="status s-{{ o.status|lower|replace(' ', '-') }}"><i></i>{{ o.status }}{% if o.status == 'Delivered' %} &middot; <span class="muted small">Package was handed to resident</span>{% elif o.status != 'Cancelled' %} &middot; <span class="muted small">Arriving by {{ o.expected|nicedate('%a, %d %b') }}</span>{% endif %}</h3>
+            <h3 class="status s-{{ o.status|lower|replace(' ', '-') }}"><i></i>{{ o.status }}{% if o.status == 'Delivered' %} &middot; <span class="muted small">Package was handed to resident</span>{% elif o.status == 'Awaiting payment' %} &middot; <a href="{{ url_for('pay_order', number=o.number) }}" class="small">Pay now</a>{% elif o.status != 'Cancelled' %} &middot; <span class="muted small">Arriving by {{ o.expected|nicedate('%a, %d %b') }}</span>{% endif %}</h3>
             {% for it in o['items'] %}
             <div class="oc-item">
-                <img src="{{ url_for('static', filename='images/products/' ~ it.slug ~ '-1.jpg') }}" alt="">
-                <div><a href="{{ url_for('product', slug=it.slug) }}">{{ it.name }}</a><br><span class="small muted">Qty {{ it.qty }} &middot; {{ (it.price * it.qty)|rupees }}</span></div>
+                <img src="{{ picture('products/' ~ it.slug ~ '-1.jpg') }}" alt="">
+                <div><a href="{{ url_for('product', slug=it.slug) }}">{{ it.name }}</a><br><span class="small muted">Qty {{ it.qty }} &middot; {{ (it.price * it.qty)|omoney(o) }}</span></div>
                 <form method="post" action="{{ url_for('cart_add') }}" class="hide-sm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="product_id" value="{{ it.product_id }}">

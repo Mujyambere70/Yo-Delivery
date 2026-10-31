@@ -4,7 +4,7 @@
 <div class="auth">
     <div class="auth-side">
         <h2>Looks like you're new here!</h2>
-        <p>Sign up and get <b>₹2,000</b> demo Yo Pay balance + <b>₹100 off</b> your first order with WELCOME100.</p>
+        <p>Sign up from any country and get <b>{{ SETTINGS.signup_wallet|rupees }}</b> demo Yo Pay balance + <b>{{ 10000|rupees }} off</b> your first order with WELCOME100.</p>
         <img src="{{ url_for('static', filename='images/products/trailpack-30l-2.jpg') }}" alt="">
     </div>
     <form method="post" class="auth-form">
@@ -12,7 +12,9 @@
         <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
         <h1>Create account</h1>
         <label for="name">Your name</label><input type="text" id="name" name="name" value="{{ form.get('name', '') }}" placeholder="First and last name" required>
-        <label for="mobile">Mobile number</label><div class="prefix"><span>+91</span><input type="tel" id="mobile" name="mobile" value="{{ form.get('mobile', '') }}" pattern="[6-9][0-9]{9}" maxlength="10" required></div>
+        <label for="country">Country</label>
+        <select id="country" name="country" required data-dial='{{ dial|tojson }}'>{% for code, name in countries %}<option value="{{ code }}" {% if form.get('country', 'IN') == code %}selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+        <label for="mobile">Mobile number</label><div class="prefix"><span id="dialCode" translate="no">+{{ dial.get(form.get('country', 'IN'), '') }}</span><input type="tel" id="mobile" name="mobile" value="{{ form.get('mobile', '') }}" maxlength="18" required></div>
         <label for="email">Email</label><input type="email" id="email" name="email" value="{{ form.get('email', '') }}" required>
         <label for="password">Password</label><input type="password" id="password" name="password" minlength="8" placeholder="At least 8 characters, letters + numbers" required>
         <label for="password2">Re-enter password</label><input type="password" id="password2" name="password2" minlength="8" required>
@@ -21,3 +23,7 @@
     </form>
 </div>
 {% endblock %}
+{% block scripts %}<script>
+(function () { var sel = document.getElementById('country'), dial = JSON.parse(sel.dataset.dial);
+  sel.addEventListener('change', function () { document.getElementById('dialCode').textContent = '+' + (dial[sel.value] || ''); }); })();
+</script>{% endblock %}

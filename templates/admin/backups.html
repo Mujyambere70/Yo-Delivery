@@ -1,0 +1,40 @@
+{% extends "admin/layout.html" %}
+{% block title %}Backups{% endblock %}
+{% block heading %}Backups{% endblock %}
+{% block content %}
+{% if database.startswith('SQLite') %}
+<section class="panel warn-panel"><b>Warning:</b> this server uses an SQLite file. On free hosting (Render) the file is deleted at every restart, so all orders and changes are lost. Set <code>DATABASE_URL</code> to a PostgreSQL database (for example Neon free) to keep the data.</section>
+{% endif %}
+<div class="adm-grid">
+    <section class="panel">
+        <h2>Automatic backups</h2>
+        <p>Database: <b>{{ database }}</b></p>
+        <ul class="status-list small">
+            <li>Once a day the shop saves a full copy inside the database (the last 7 are kept).</li>
+            <li>{% if backup_email and providers.email %}The daily copy is also emailed to <b>{{ backup_email }}</b>.{% else %}Set <code>BACKUP_EMAIL</code> (and an email service) to also receive the daily copy by email.{% endif %}</li>
+            <li>Uploaded product pictures are in the database too, so they are in every backup.</li>
+        </ul>
+        <div class="toolbar">
+            <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm">Save a backup copy now</button></form>
+            <a href="{{ url_for('admin_backup_download', bid=None) }}" class="btn btn-orange btn-sm">&#11015; Download a backup now</a>
+        </div>
+    </section>
+    <form method="post" enctype="multipart/form-data" class="panel" autocomplete="off">
+        <h2>Restore from a backup file</h2>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="restore">
+        <p class="small"><b>This replaces ALL data</b> with the data in the file. A copy of the current data is saved first.</p>
+        <label>Backup file (.json.gz)</label><input type="file" name="file" accept=".gz,application/gzip" required>
+        <label>Your password</label><input type="password" name="password" required>
+        <label>Type RESTORE to confirm</label><input type="text" name="confirm" placeholder="RESTORE" required>
+        <button class="btn btn-danger btn-sm">Restore database</button>
+    </form>
+</div>
+<section class="panel">
+    <h2>Saved copies</h2>
+    <table class="at"><thead><tr><th>#</th><th>Made</th><th>Type</th><th>By</th><th class="num">Size</th><th></th></tr></thead>
+    {% for b in rows %}<tr><td>{{ b.id }}</td><td>{{ b.created_at|nicedate('%d %b %Y, %H:%M') }}</td><td>{{ b.kind }}</td><td>{{ b.created_by or 'system' }}</td><td class="num">{{ '{:,.1f}'.format(b.size / 1024) }} KB</td>
+        <td><a href="{{ url_for('admin_backup_download', bid=b.id) }}">Download</a></td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No saved copies yet.</td></tr>{% endfor %}
+    </table>
+</section>
+{% endblock %}

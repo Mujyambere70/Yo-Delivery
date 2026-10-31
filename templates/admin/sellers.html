@@ -1,0 +1,48 @@
+{% extends "admin/layout.html" %}
+{% block title %}Sellers{% endblock %}
+{% block heading %}Sellers (marketplace){% endblock %}
+{% block content %}
+<div class="panel toolbar">
+    {% for s in [''] + STATUSES %}<a href="{{ url_for('admin_sellers', status=s) }}" class="chip {{ 'on' if s == status }}">{{ s or 'All' }}</a>{% endfor %}
+</div>
+{% if waiting %}
+<section class="panel warn-panel">
+    <h2>&#9203; {{ waiting|length }} seller product(s) waiting for your check</h2>
+    <p class="small">Open the product, check the pictures, price and text, then approve it on the <a href="{{ url_for('admin_products', show='waiting') }}">Products</a> page.</p>
+</section>
+{% endif %}
+{% for s in sellers %}
+<section class="panel">
+    <div class="row-head"><h2>{{ s.shop_name }} <span class="st st-{{ {'Approved': 'delivered', 'Pending': 'packed', 'Rejected': 'cancelled', 'Suspended': 'cancelled'}[s.status] }}">{{ s.status }}</span></h2>
+        <span class="small muted">#{{ s.id }} &middot; applied {{ s.created_at|nicedate }}</span></div>
+    <p>{{ s.about }}</p>
+    <p class="small">Owner: <a href="{{ url_for('admin_customer', uid=s.user_id) }}">{{ s.owner }}</a> ({{ s.email }}) &middot; ships from {{ s.city }}, {{ s.country|country }} &middot; payouts to: <code>{{ s.payout_details }}</code>
+        {% if s.status == 'Approved' %}&middot; <a href="{{ url_for('storefront', slug=s.slug) }}" target="_blank">shop page &#8599;</a>{% endif %}</p>
+    <div class="kpis small-kpis">
+        <div class="kpi"><small>Products</small><b>{{ s.products }}</b>{% if s.waiting %}<small>{{ s.waiting }} waiting</small>{% endif %}</div>
+        <div class="kpi"><small>Items sold</small><b>{{ s.units }}</b></div>
+        <div class="kpi"><small>Earned</small><b>{{ s.earned|inr }}</b></div>
+        <div class="kpi"><small>Paid out</small><b>{{ s.paid|inr }}</b></div>
+        <div class="kpi"><small>To pay</small><b>{{ s.balance|inr }}</b></div>
+    </div>
+    <div class="adm-grid">
+        <form method="post" class="status-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="seller_id" value="{{ s.id }}">
+            <label>Decision</label>
+            <select name="status">{% for st in STATUSES[1:] %}<option {% if st == ('Approved' if s.status == 'Pending' else s.status) %}selected{% endif %}>{{ st }}</option>{% endfor %}</select>
+            <label>Commission (%)</label><input type="number" name="commission" value="{{ '%g'|format(s.commission) }}" min="0" max="50" step="0.5">
+            <label>Reason (needed to reject or suspend; the seller sees it)</label><input type="text" name="reason" value="{{ s.reason }}" maxlength="200">
+            <button class="btn btn-orange btn-sm">Save decision</button>
+        </form>
+        {% if s.status == 'Approved' %}
+        <form method="post" class="status-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="seller_id" value="{{ s.id }}"><input type="hidden" name="action" value="payout">
+            <label>Record a payout (₹, at most {{ s.balance|inr }})</label><input type="number" name="amount" min="1" step="0.01" max="{{ '%.2f'|format(s.balance / 100) }}" required>
+            <label>Note</label><input type="text" name="note" maxlength="120" placeholder="e.g. UPI transfer ref 1234">
+            <button class="btn btn-outline btn-sm" {% if not s.balance %}disabled{% endif %}>Record payout</button>
+        </form>
+        {% endif %}
+    </div>
+</section>
+{% else %}<section class="panel"><p class="muted">No sellers here.</p></section>{% endfor %}
+{% endblock %}

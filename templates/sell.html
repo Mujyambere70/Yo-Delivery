@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Sell on Yo Delivery{% endblock %}
+{% block content %}
+<section class="sell-hero">
+    <div class="wrap">
+        <h1>Sell on Yo Delivery</h1>
+        <p>Reach customers in India and in every country. You add your products; we take the orders, the payments and the delivery.</p>
+    </div>
+</section>
+<div class="wrap">
+    <div class="sell-steps">
+        <div class="panel"><span>1</span><b>Apply</b><p>Tell us about your shop. Our team checks every new seller.</p></div>
+        <div class="panel"><span>2</span><b>Add products</b><p>Upload pictures, prices and stock in your Seller Centre. Each product is checked before it goes live.</p></div>
+        <div class="panel"><span>3</span><b>Sell</b><p>Orders, card payments, delivery and returns are handled by Yo Delivery.</p></div>
+        <div class="panel"><span>4</span><b>Get paid</b><p>You earn the price minus a {{ SETTINGS.seller_commission }}% commission for every delivered item.</p></div>
+    </div>
+    {% if shop %}
+        <section class="panel">
+            <h2>Your shop: {{ shop.shop_name }}</h2>
+            <p>Status: <span class="tag">{{ shop.status }}</span>{% if shop.reason %} &mdash; {{ shop.reason }}{% endif %}</p>
+            <a href="{{ url_for('seller_dashboard') }}" class="btn btn-orange">Open Seller Centre</a>
+        </section>
+    {% elif user %}
+    <form method="post" class="panel">
+        <h2>Apply to sell</h2>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-grid">
+            <div class="full"><label for="shop_name">Name of your shop</label><input type="text" id="shop_name" name="shop_name" value="{{ form.get('shop_name', '') }}" maxlength="60" required></div>
+            <div class="full"><label for="about">What do you sell?</label><textarea id="about" name="about" rows="3" maxlength="400" required placeholder="For example: handmade leather bags and wallets from Kigali">{{ form.get('about', '') }}</textarea></div>
+            <div><label for="s_country">Products are sent from (country)</label><select id="s_country" name="country">{% for code, name in countries %}<option value="{{ code }}" {% if form.get('country', 'IN') == code %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
+            <div><label for="s_city">City</label><input type="text" id="s_city" name="city" value="{{ form.get('city', '') }}" required></div>
+            <div class="full"><label for="payout">Where should we pay your earnings?</label><input type="text" id="payout" name="payout_details" value="{{ form.get('payout_details', '') }}" placeholder="UPI ID, IBAN or bank account number" required></div>
+        </div>
+        <p class="small muted">Demo shop: payouts are recorded, but no real money is sent.</p>
+        <button class="btn btn-orange">Send application</button>
+    </form>
+    {% else %}
+    <section class="panel center"><h2>Start selling today</h2><p>Sign in or create an account first, then fill in a short form.</p>
+        <a href="{{ url_for('login', next=url_for('sell')) }}" class="btn btn-orange">Sign in to apply</a> <a href="{{ url_for('signup', next=url_for('sell')) }}" class="btn btn-outline">Create an account</a></section>
+    {% endif %}
+</div>
+{% endblock %}

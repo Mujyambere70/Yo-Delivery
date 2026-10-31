@@ -1,0 +1,39 @@
+# Render Blueprint for Yo Delivery (free plan).
+# The data lives in an outside PostgreSQL database (Neon free plan), because the free web service
+# loses its disk at every restart. Put the Neon connection string in DATABASE_URL.
+services:
+  - type: web
+    name: yo-delivery-michel
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 60
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DATABASE_URL          # postgresql://USER:PASSWORD@HOST/neondb?sslmode=require  (from Neon)
+        sync: false
+      - key: SECRET_KEY            # optional: without it a key is created once and kept in the database
+        generateValue: true
+      # optional - card payments on Stripe's own page, TEST MODE ONLY (sk_test_...; live keys are refused)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET # whsec_... of the webhook https://<your-site>/payments/stripe/webhook
+        sync: false
+      # optional - order emails (Brevo free plan works on Render free; normal SMTP ports are blocked there)
+      - key: BREVO_API_KEY
+        sync: false
+      - key: ALERT_EMAIL_FROM      # a sender address you verified in Brevo
+        sync: false
+      - key: ALERT_EMAIL_NAME
+        value: Yo Delivery
+      - key: BACKUP_EMAIL          # the daily backup file is emailed here
+        sync: false
+      # optional - order SMS (Twilio)
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM
+        sync: false

@@ -1,5 +1,9 @@
 """
-store.py - all the shop logic of Yo Delivery (works with an SQLite database).
+store.py - all the shop logic of Yo Delivery.
+
+The data is kept in SQLite on a computer, or in PostgreSQL when DATABASE_URL is set (online),
+through db.py. Free hosts like Render delete local files at every restart - with PostgreSQL
+the shop keeps its orders, customers and uploaded pictures.
 
 Main parts
     Users & addresses      register(), login(), add_address() ...
@@ -14,21 +18,36 @@ import json
 import os
 import random
 import re
+import secrets
 import sqlite3
-from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import catalog
+import world
+from aftersales import ReturnsMixin
+from core import ShopError, now, to_dt          # noqa: F401  (ShopError, now and to_dt are used by app.py too)
+from db import Database
+from maintenance import MaintenanceMixin
+from notices import NoticesMixin
+from notify import Notifier
+from payments import PaymentsMixin
+from recommend import RecommendMixin
+from sellers import SellersMixin
 
 # Default shop settings (the admin can change them on the Settings page)
 FREE_DELIVERY_FROM = 499 * 100     # free delivery for orders of ₹499 or more
 DELIVERY_FEE = 40 * 100
 SIGNUP_WALLET = 2000 * 100         # demo Yo Pay balance for new users
 DEFAULT_SETTINGS = {"free_delivery_from": FREE_DELIVERY_FROM, "delivery_fee": DELIVERY_FEE,
-                    "signup_wallet": SIGNUP_WALLET, "cod_limit": 50000 * 100, "announcement": ""}
+                    "signup_wallet": SIGNUP_WALLET, "cod_limit": 50000 * 100, "announcement": "",
+                    # shipping abroad (the shop's own prices, in paise)
+                    "intl_fee_near": 900 * 100, "intl_fee_world": 1800 * 100, "intl_free_from": 25000 * 100,
+                    # marketplace
+                    "seller_commission": 10, "return_days": 7}
+TEXT_SETTINGS = {"announcement"}
 MAX_QTY = 10
 CATEGORY_NAMES = {}                # slug -> name, kept up to date by Store
 
@@ -36,6 +55,7 @@ CATEGORY_NAMES = {}                # slug -> name, kept up to date by Store
 # FAST mode (default) is for demos: an order is delivered in about 8 minutes.
 FAST_TRACKING = os.environ.get("YO_FAST_TRACKING", "1") != "0"
 TRACK_STEPS = ["Order placed", "Packed", "Shipped", "Out for delivery", "Delivered"]
+PAYMENT_WINDOW_MINUTES = 30        # an unpaid card order is cancelled after this time (stock comes back)
 TRACK_MINUTES = [0, 1, 3, 5, 8] if FAST_TRACKING else [0, 6 * 60, 24 * 60, 46 * 60, 52 * 60]
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$")
@@ -49,16 +69,6 @@ STATES = ["Andhra Pradesh", "Assam", "Bihar", "Chandigarh", "Chhattisgarh", "Del
           "Uttar Pradesh", "Uttarakhand", "West Bengal"]
 
 
-class ShopError(Exception):
-    """An error message that can be shown to the customer."""
-
-
-def now():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
-def to_dt(text):
-    return datetime.strptime(text, "%Y-%m-%d %H:%M:%S")
 
 
 def rupees(paise):
@@ -77,19 +87,16 @@ def rupees(paise):
     return f"₹{s}" + (f".{p:02d}" if p else "")
 
 
-def delivery_days(pincode):
-    """Rough delivery time from the Ambala warehouse."""
-    if pincode.startswith("13"):
-        return 1          # Ambala / nearby
-    if pincode[:2] in ("11", "12", "14", "15", "16", "17"):
-        return 2          # Delhi, Haryana, Punjab, Himachal
-    return 4
+def delivery_days(pincode, country="IN"):
+    """Rough delivery time from the Ambala warehouse (India by PIN code, other countries by zone)."""
+    return world.delivery_days(country, pincode)
 
 
-def delivery_date_text(pincode, start=None):
-    days = delivery_days(pincode)
+def delivery_date_text(pincode, start=None, country="IN"):
+    days = delivery_days(pincode, country)
     d = (start or datetime.now()) + timedelta(days=days)
-    return ("Tomorrow, " if days == 1 else "") + d.strftime("%a, %d %b")
+    text = world.format_when(d, with_time=False)
+    return ("Tomorrow, " if days == 1 else "") + text
 
 
 @dataclass
@@ -110,6 +117,8 @@ class Product:
     tags: str
     created_at: str
     active: int = 1
+    seller_id: int = None
+    approved: int = 1
 
     @property
     def rating(self):
@@ -199,31 +208,111 @@ CREATE TABLE IF NOT EXISTS coupons (
     first_order_only INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1
 );
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS media (
+    name TEXT PRIMARY KEY, mime TEXT NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS order_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL REFERENCES orders(id),
     step INTEGER NOT NULL, at TEXT NOT NULL, note TEXT NOT NULL DEFAULT ''
 );
+-- marketplace: other shops sell on Yo Delivery
+CREATE TABLE IF NOT EXISTS sellers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
+    shop_name TEXT NOT NULL UNIQUE, slug TEXT NOT NULL UNIQUE, about TEXT NOT NULL DEFAULT '',
+    country TEXT NOT NULL DEFAULT 'IN', city TEXT NOT NULL DEFAULT '', payout_details TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'Pending', commission REAL NOT NULL DEFAULT 10, reason TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL, decided_at TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS payouts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, seller_id INTEGER NOT NULL REFERENCES sellers(id),
+    amount INTEGER NOT NULL, note TEXT NOT NULL DEFAULT '', paid_by TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
+);
+-- what visitors look at (for recommendations)
+CREATE TABLE IF NOT EXISTS views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, visitor TEXT NOT NULL, user_id INTEGER,
+    product_id INTEGER NOT NULL, at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_views_visitor ON views(visitor);
+CREATE INDEX IF NOT EXISTS idx_views_product ON views(product_id);
+-- messages to customers: in the site, by email, SMS and push
+CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, order_number TEXT NOT NULL DEFAULT '',
+    channel TEXT NOT NULL, destination TEXT NOT NULL DEFAULT '', subject TEXT NOT NULL, body TEXT NOT NULL,
+    status TEXT NOT NULL, created_at TEXT NOT NULL, seen INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL, auth TEXT NOT NULL, device TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS password_resets (
+    token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0
+);
+-- payments through the card gateway (Stripe test mode or the built-in test gateway)
+CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, order_number TEXT NOT NULL, gateway TEXT NOT NULL,
+    session_id TEXT NOT NULL DEFAULT '', payment_ref TEXT NOT NULL DEFAULT '', currency TEXT NOT NULL,
+    amount INTEGER NOT NULL, status TEXT NOT NULL, message TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS returns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL REFERENCES orders(id), user_id INTEGER NOT NULL,
+    reason TEXT NOT NULL, details TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'Requested',
+    amount INTEGER NOT NULL DEFAULT 0, refund_to TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL, decided_at TEXT NOT NULL DEFAULT '', decided_by TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS fx_rates (
+    currency TEXT PRIMARY KEY, per_usd REAL NOT NULL, updated_at TEXT NOT NULL, source TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS backups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, kind TEXT NOT NULL,
+    created_by TEXT NOT NULL DEFAULT '', size INTEGER NOT NULL, data TEXT NOT NULL
+);
 """
 
 ACTIONS = ["Signed up", "Logged in", "Login failed", "Logged out", "Added to cart", "Order placed",
-           "Order cancelled", "Review posted", "Address added", "Profile updated", "Password changed",
-           "Admin update", "Admin: products", "Admin: customers", "Admin: orders", "Admin: settings"]
+           "Order cancelled", "Payment", "Return requested", "Review posted", "Address added", "Profile updated",
+           "Password changed", "Password reset", "Seller", "Admin update", "Admin: products", "Admin: customers",
+           "Admin: orders", "Admin: sellers", "Admin: settings"]
 
 
-class Store:
-    def __init__(self, db_path):
-        self.db_path = db_path
-        self._replace_old_database()
+EXTRA_SCHEMA = ""                  # tables of the newer modules are added by them
+MIGRATIONS = {
+    "users": [("is_admin", "INTEGER NOT NULL DEFAULT 0"), ("blocked", "INTEGER NOT NULL DEFAULT 0"),
+              ("country", "TEXT NOT NULL DEFAULT 'IN'"), ("lang", "TEXT NOT NULL DEFAULT 'en'"),
+              ("currency", "TEXT NOT NULL DEFAULT ''"), ("totp_secret", "TEXT NOT NULL DEFAULT ''"),
+              ("totp_enabled", "INTEGER NOT NULL DEFAULT 0"), ("totp_last_step", "INTEGER NOT NULL DEFAULT 0"),
+              ("notify_email", "INTEGER NOT NULL DEFAULT 1"), ("notify_sms", "INTEGER NOT NULL DEFAULT 1")],
+    "addresses": [("country", "TEXT NOT NULL DEFAULT 'IN'")],
+    "products": [("active", "INTEGER NOT NULL DEFAULT 1"), ("seller_id", "INTEGER"),
+                 ("approved", "INTEGER NOT NULL DEFAULT 1")],
+    "orders": [("country", "TEXT NOT NULL DEFAULT 'IN'"), ("currency", "TEXT NOT NULL DEFAULT 'INR'"),
+               ("fx_rate", "REAL NOT NULL DEFAULT 1"), ("total_local", "INTEGER NOT NULL DEFAULT 0"),
+               ("payment_status", "TEXT NOT NULL DEFAULT 'Paid'"), ("payment_ref", "TEXT NOT NULL DEFAULT ''"),
+               ("paid_at", "TEXT NOT NULL DEFAULT ''"), ("courier", "TEXT NOT NULL DEFAULT ''"),
+               ("awb", "TEXT NOT NULL DEFAULT ''"), ("notified_step", "INTEGER NOT NULL DEFAULT -1"),
+               ("lang", "TEXT NOT NULL DEFAULT 'en'"), ("refunded", "INTEGER NOT NULL DEFAULT 0")],
+    "order_items": [("seller_id", "INTEGER"), ("commission", "REAL NOT NULL DEFAULT 0")],
+}
+
+
+class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMixin, MaintenanceMixin):
+    def __init__(self, db_path, driver=None, notifier=None, env=None):
+        """db_path: an SQLite file, or a postgresql:// URL (DATABASE_URL).
+        notifier: who sends emails / SMS / push (notify.Notifier); env: settings like STRIPE_SECRET_KEY."""
+        self.db_path = str(db_path)
+        self.env = os.environ if env is None else env
+        self.notifier = notifier or Notifier(env=self.env)
+        self.database = Database(self.db_path, driver=driver)
+        if not self.database.is_postgres:
+            self._replace_old_database()
+        self.database.init_schema(SCHEMA + EXTRA_SCHEMA)
         with self.db() as conn:
-            conn.executescript(SCHEMA)
             # databases made by earlier versions get the new columns
-            user_cols = {r[1] for r in conn.execute("PRAGMA table_info(users)")}
-            if "is_admin" not in user_cols:
-                conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
-            if "blocked" not in user_cols:
-                conn.execute("ALTER TABLE users ADD COLUMN blocked INTEGER NOT NULL DEFAULT 0")
-            if "active" not in {r[1] for r in conn.execute("PRAGMA table_info(products)")}:
-                conn.execute("ALTER TABLE products ADD COLUMN active INTEGER NOT NULL DEFAULT 1")
+            for table, cols in MIGRATIONS.items():
+                have = set(conn.columns(table))
+                for col, ddl in cols:
+                    if col not in have:
+                        conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}")
             # first run: categories, coupons and settings come from catalog.py / defaults
             if not conn.execute("SELECT 1 FROM categories").fetchone():
                 conn.executemany("INSERT INTO categories (slug, name, image, position) VALUES (?, ?, ?, ?)",
@@ -233,7 +322,7 @@ class Store:
                     "INSERT INTO coupons (code, description, kind, amount, max_off, min_order, first_order_only) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?)",
                     [(code, c[0], c[1], c[2], c[3], c[4], int(code == "WELCOME100")) for code, c in catalog.COUPONS.items()])
-            conn.executemany("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
+            conn.executemany("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO NOTHING",
                              [(k, str(v)) for k, v in DEFAULT_SETTINGS.items()])
         self.refresh_categories()
 
@@ -259,46 +348,59 @@ class Store:
             os.rename(self.db_path, backup)
             print(f"Old database found - saved as {backup}, creating a new one.")
 
-    @contextmanager
     def db(self):
         """Open the database; commit when the block ends OK, roll back on error, always close."""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        try:
-            with conn:
-                yield conn
-        finally:
-            conn.close()
+        return self.database.connect()
+
+    @property
+    def is_postgres(self):
+        return self.database.is_postgres
+
+    def secret_key(self):
+        """The key that signs login cookies. Saved in the database, so logins survive a restart
+        and every server process uses the same key."""
+        with self.db() as conn:
+            conn.execute("INSERT INTO settings (key, value) VALUES ('secret_key', ?) ON CONFLICT (key) DO NOTHING",
+                         (secrets.token_hex(32),))
+            return conn.execute("SELECT value FROM settings WHERE key = 'secret_key'").fetchone()[0]
 
     # =================================================================
     # Users
     # =================================================================
 
-    def register(self, name, email, mobile, password, wallet=None, when=None):
+    def register(self, name, email, mobile, password, wallet=None, when=None, country="IN", lang="en"):
+        """New customer from any country. The mobile number is checked with the rules of that country."""
         if wallet is None:
             wallet = self.setting("signup_wallet")
-        name, email, mobile = " ".join(name.split()), email.strip().lower(), mobile.strip()
+        country = (country or "IN").upper()
+        name, email = " ".join(name.split()), email.strip().lower()
+        if country not in world.DIAL_CODES:
+            raise ShopError("Please choose your country.")
         if len(name) < 2:
             raise ShopError("Please enter your name.")
         if not EMAIL_RE.match(email):
             raise ShopError("Please enter a valid email address.")
-        if not MOBILE_RE.match(mobile):
-            raise ShopError("Please enter a valid 10-digit mobile number.")
-        if len(password) < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
-            raise ShopError("Password must be at least 8 characters with letters and numbers.")
+        mobile = world.clean_mobile(country, mobile)
+        if not mobile:
+            raise ShopError("Please enter a valid 10-digit mobile number." if country == "IN"
+                            else "Please enter a valid mobile number for your country.")
+        check_password(password)
+        lang = lang if lang in world.LANGUAGES else "en"
         with self.db() as conn:
             if conn.execute("SELECT 1 FROM users WHERE email = ? OR mobile = ?", (email, mobile)).fetchone():
                 raise ShopError("An account with this email or mobile number already exists. Please sign in.")
-            cur = conn.execute("INSERT INTO users (name, email, mobile, password, wallet, created_at) "
-                               "VALUES (?, ?, ?, ?, ?, ?)",
-                               (name.title(), email, mobile, generate_password_hash(password), wallet, when or now()))
+            cur = conn.execute("INSERT INTO users (name, email, mobile, password, wallet, created_at, country, lang, "
+                               "currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                               (name.title(), email, mobile, generate_password_hash(password), wallet, when or now(),
+                                country, lang, world.default_currency(country, lang)))
             return cur.lastrowid
 
     def login(self, login, password):
         login = login.strip().lower()
+        phone = re.sub(r"[\s().-]", "", login)
         with self.db() as conn:
-            user = conn.execute("SELECT * FROM users WHERE email = ? OR mobile = ?", (login, login)).fetchone()
+            user = conn.execute("SELECT * FROM users WHERE email = ? OR mobile = ? OR mobile = ?",
+                                (login, phone, "+" + phone.lstrip("+"))).fetchone()
         if user is None or not check_password_hash(user["password"], password):
             raise ShopError("Incorrect email/mobile number or password.")
         if user["blocked"]:
@@ -307,28 +409,39 @@ class Store:
 
     def get_user(self, user_id):
         with self.db() as conn:
-            row = conn.execute("SELECT id, name, email, mobile, wallet, created_at, is_admin, blocked FROM users WHERE id = ?",
+            row = conn.execute("SELECT id, name, email, mobile, wallet, created_at, is_admin, blocked, country, lang, "
+                               "currency, totp_enabled, notify_email, notify_sms FROM users WHERE id = ?",
                                (user_id,)).fetchone()
         return dict(row) if row else None
 
-    def update_user(self, user_id, name, email, mobile):
-        name, email, mobile = " ".join(name.split()), email.strip().lower(), mobile.strip()
-        if len(name) < 2 or not EMAIL_RE.match(email) or not MOBILE_RE.match(mobile):
-            raise ShopError("Please enter a valid name, email and 10-digit mobile number.")
+    def update_user(self, user_id, name, email, mobile, country=None):
+        user = self.get_user(user_id)
+        country = (country or user["country"] or "IN").upper()
+        name, email = " ".join(name.split()), email.strip().lower()
+        mobile = world.clean_mobile(country, mobile)
+        if country not in world.DIAL_CODES or len(name) < 2 or not EMAIL_RE.match(email) or not mobile:
+            raise ShopError("Please enter a valid name, email and mobile number.")
         with self.db() as conn:
             if conn.execute("SELECT 1 FROM users WHERE (email = ? OR mobile = ?) AND id != ?",
                             (email, mobile, user_id)).fetchone():
                 raise ShopError("This email or mobile number is used by another account.")
-            conn.execute("UPDATE users SET name = ?, email = ?, mobile = ? WHERE id = ?",
-                         (name.title(), email, mobile, user_id))
+            conn.execute("UPDATE users SET name = ?, email = ?, mobile = ?, country = ? WHERE id = ?",
+                         (name.title(), email, mobile, country, user_id))
+
+    def set_preferences(self, user_id, lang=None, currency=None):
+        """Language and currency the customer chose (alerts and emails use them too)."""
+        with self.db() as conn:
+            if lang in world.LANGUAGES:
+                conn.execute("UPDATE users SET lang = ? WHERE id = ?", (lang, user_id))
+            if currency in world.CURRENCIES:
+                conn.execute("UPDATE users SET currency = ? WHERE id = ?", (currency, user_id))
 
     def change_password(self, user_id, old, new):
         with self.db() as conn:
             row = conn.execute("SELECT password FROM users WHERE id = ?", (user_id,)).fetchone()
             if not check_password_hash(row["password"], old):
                 raise ShopError("Current password is wrong.")
-            if len(new) < 8 or not re.search(r"[A-Za-z]", new) or not re.search(r"\d", new):
-                raise ShopError("New password must be at least 8 characters with letters and numbers.")
+            check_password(new, "New password")
             conn.execute("UPDATE users SET password = ? WHERE id = ?", (generate_password_hash(new), user_id))
 
     # ----- addresses -----
@@ -344,17 +457,27 @@ class Store:
 
     def add_address(self, user_id, f):
         d = {k: " ".join(str(f.get(k, "")).split()) for k in
-             ("name", "mobile", "line1", "line2", "city", "state", "pincode", "kind")}
+             ("name", "mobile", "line1", "line2", "city", "state", "pincode", "kind", "country")}
+        country = (d["country"] or "IN").upper()
+        if country not in world.DIAL_CODES:
+            raise ShopError("Please choose the country.")
         if len(d["name"]) < 2:
             raise ShopError("Please enter the receiver's name.")
-        if not MOBILE_RE.match(d["mobile"]):
-            raise ShopError("Please enter a valid 10-digit mobile number.")
+        mobile = world.clean_mobile(country, d["mobile"])
+        if not mobile:
+            raise ShopError("Please enter a valid 10-digit mobile number." if country == "IN"
+                            else "Please enter a valid mobile number for this country.")
+        d["mobile"] = mobile
         if len(d["line1"]) < 5:
             raise ShopError("Please enter house number and street.")
-        if not d["city"] or d["state"] not in STATES:
+        if country == "IN" and (not d["city"] or d["state"] not in STATES):
             raise ShopError("Please enter the city and choose the state.")
-        if not PINCODE_RE.match(d["pincode"]):
-            raise ShopError("Please enter a valid 6-digit pincode.")
+        if not d["city"]:
+            raise ShopError("Please enter the city.")
+        postcode = world.clean_postcode(country, d["pincode"])
+        if postcode is None:
+            raise ShopError("Please enter a valid 6-digit pincode." if country == "IN" else "Please enter a valid postal code.")
+        d["pincode"] = postcode
         d["kind"] = d["kind"] if d["kind"] in ("Home", "Work") else "Home"
         with self.db() as conn:
             first = not conn.execute("SELECT 1 FROM addresses WHERE user_id = ?", (user_id,)).fetchone()
@@ -362,16 +485,17 @@ class Store:
             if make_default:
                 conn.execute("UPDATE addresses SET is_default = 0 WHERE user_id = ?", (user_id,))
             cur = conn.execute(
-                "INSERT INTO addresses (user_id, name, mobile, line1, line2, city, state, pincode, kind, is_default) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO addresses (user_id, name, mobile, line1, line2, city, state, pincode, kind, is_default, "
+                "country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (user_id, d["name"].title(), d["mobile"], d["line1"], d["line2"], d["city"].title(),
-                 d["state"], d["pincode"], d["kind"], int(make_default)))
+                 d["state"], d["pincode"], d["kind"], int(make_default), country))
             return cur.lastrowid
 
     def set_default_address(self, user_id, address_id):
         with self.db() as conn:
             if conn.execute("SELECT 1 FROM addresses WHERE id = ? AND user_id = ?", (address_id, user_id)).fetchone():
-                conn.execute("UPDATE addresses SET is_default = (id = ?) WHERE user_id = ?", (address_id, user_id))
+                conn.execute("UPDATE addresses SET is_default = CASE WHEN id = ? THEN 1 ELSE 0 END WHERE user_id = ?",
+                             (address_id, user_id))
 
     def delete_address(self, user_id, address_id):
         with self.db() as conn:
@@ -420,7 +544,7 @@ class Store:
     def products(self, ids=None, category=None, limit=None, order="popular", active_only=True):
         sql, args = "SELECT * FROM products WHERE 1 = 1", []
         if active_only:
-            sql += " AND active = 1"
+            sql += " AND active = 1 AND approved = 1"
         if ids is not None:
             if not ids:
                 return []
@@ -430,7 +554,7 @@ class Store:
             sql += " AND category = ?"
             args.append(category)
         sql += {"popular": " ORDER BY rating_count DESC", "deals": " ORDER BY (mrp - price) * 1.0 / mrp DESC",
-                "new": " ORDER BY created_at DESC", "rating": " ORDER BY rating_sum / rating_count DESC"}[order]
+                "new": " ORDER BY created_at DESC", "rating": " ORDER BY COALESCE(rating_sum / NULLIF(rating_count, 0), 0) DESC"}[order]
         if limit:
             sql += f" LIMIT {int(limit)}"
         with self.db() as conn:
@@ -443,7 +567,7 @@ class Store:
     def search(self, q="", category="", brands=(), min_price=None, max_price=None, min_rating=0,
                min_discount=0, sort="relevance"):
         """Search + filters + sorting for the product list page."""
-        sql, args = "SELECT * FROM products WHERE active = 1", []
+        sql, args = "SELECT * FROM products WHERE active = 1 AND approved = 1", []
         words = [w for w in re.split(r"\s+", q.lower().strip()) if w][:6]
         for w in words:
             sql += " AND (lower(name) LIKE ? OR lower(brand) LIKE ? OR tags LIKE ? OR category LIKE ?)"
@@ -461,13 +585,13 @@ class Store:
             sql += " AND price <= ?"
             args.append(int(max_price * 100))
         if min_rating:
-            sql += " AND rating_sum / rating_count >= ?"
+            sql += " AND COALESCE(rating_sum / NULLIF(rating_count, 0), 0) >= ?"
             args.append(float(min_rating))
         if min_discount:
             sql += " AND (mrp - price) * 100.0 / mrp >= ?"
             args.append(float(min_discount))
         sql += {"price_asc": " ORDER BY price ASC", "price_desc": " ORDER BY price DESC",
-                "rating": " ORDER BY rating_sum / rating_count DESC, rating_count DESC",
+                "rating": " ORDER BY COALESCE(rating_sum / NULLIF(rating_count, 0), 0) DESC, rating_count DESC",
                 "discount": " ORDER BY (mrp - price) * 1.0 / mrp DESC", "new": " ORDER BY created_at DESC"
                 }.get(sort, " ORDER BY rating_count DESC")
         with self.db() as conn:
@@ -476,10 +600,11 @@ class Store:
     def brands(self, category=""):
         with self.db() as conn:
             if category:
-                rows = conn.execute("SELECT DISTINCT brand FROM products WHERE active = 1 AND category = ? "
-                                    "ORDER BY brand", (category,))
+                rows = conn.execute("SELECT DISTINCT brand FROM products WHERE active = 1 AND approved = 1 "
+                                    "AND category = ? ORDER BY brand", (category,))
             else:
-                rows = conn.execute("SELECT DISTINCT brand FROM products WHERE active = 1 ORDER BY brand")
+                rows = conn.execute("SELECT DISTINCT brand FROM products WHERE active = 1 AND approved = 1 "
+                                    "ORDER BY brand")
             return [r[0] for r in rows]
 
     def reviews(self, product_id, limit=10):
@@ -545,7 +670,7 @@ class Store:
         """Change a quantity in a cart dict (checks stock). Returns the new cart."""
         product = self.get_product(pid=int(product_id))
         qty = max(0, min(int(qty), MAX_QTY))
-        if not product.active and qty > 0:
+        if (not product.active or not product.approved) and qty > 0:
             raise ShopError("Sorry, this product is no longer available.")
         if qty > product.stock:
             raise ShopError(f"Only {product.stock} left in stock for {product.brand} {product.name[:30]}...")
@@ -561,7 +686,16 @@ class Store:
         items = self.products(ids=list(cart))
         return [(p, cart[p.id]) for p in items]
 
-    def price_summary(self, items, coupon="", user_id=None):
+    def shipping_fee(self, items_total, country="IN"):
+        """Delivery charge: India - free above the limit, else the fee; abroad - by zone, free above its limit."""
+        zone = world.shipping_zone(country)
+        if zone == "domestic":
+            return 0 if items_total >= self.setting("free_delivery_from") else self.setting("delivery_fee")
+        if items_total >= self.setting("intl_free_from"):
+            return 0
+        return self.setting("intl_fee_near" if zone == "near" else "intl_fee_world")
+
+    def price_summary(self, items, coupon="", user_id=None, country="IN"):
         mrp_total = sum(p.mrp * q for p, q in items)
         items_total = sum(p.price * q for p, q in items)
         coupon = coupon.strip().upper()
@@ -571,14 +705,16 @@ class Store:
                 coupon_discount = self.coupon_value(coupon, items_total, user_id)
             except ShopError as e:
                 coupon_error, coupon = str(e), ""
-        free_from = self.setting("free_delivery_from")
-        fee = 0 if items_total - coupon_discount >= free_from or not items else self.setting("delivery_fee")
+        domestic = world.shipping_zone(country) == "domestic"
+        free_from = self.setting("free_delivery_from" if domestic else "intl_free_from")
+        fee = self.shipping_fee(items_total - coupon_discount, country) if items else 0
         total = items_total - coupon_discount + fee
         return {"count": sum(q for _, q in items), "mrp_total": mrp_total, "items_total": items_total,
                 "product_discount": mrp_total - items_total, "coupon": coupon, "coupon_discount": coupon_discount,
                 "coupon_error": coupon_error, "delivery_fee": fee, "total": total,
                 "savings": mrp_total - items_total + coupon_discount,
-                "free_delivery_gap": max(0, free_from - (items_total - coupon_discount))}
+                "free_delivery_gap": max(0, free_from - (items_total - coupon_discount)), "country": country,
+                "international": not domestic}
 
     def coupon_value(self, code, items_total, user_id=None):
         with self.db() as conn:
@@ -621,9 +757,13 @@ class Store:
     # Orders
     # =================================================================
 
-    def place_order(self, user_id, address_id, payment, coupon="", upi_id="", when=None):
+    def place_order(self, user_id, address_id, payment, coupon="", upi_id="", when=None, currency=None, rates=None):
         """Create an order from the user's cart. Everything happens in ONE database transaction:
-        stock is reduced, wallet is charged, the cart is emptied - or nothing changes at all."""
+        stock is reduced, wallet is charged, the cart is emptied - or nothing changes at all.
+
+        payment: cod (India only), wallet, upi (India only, simulated) or card. A card order waits for the
+        payment gateway (status 'Pending'); its stock is kept for PAYMENT_WINDOW_MINUTES.
+        currency/rates: the customer's currency and today's rates - the order remembers the amount in it."""
         cart = self.get_cart(user_id)
         items = self.cart_items(cart)
         if not items:
@@ -631,27 +771,43 @@ class Store:
         address = next((a for a in self.addresses(user_id) if a["id"] == int(address_id or 0)), None)
         if address is None:
             raise ShopError("Please choose a delivery address.")
-        summary = self.price_summary(items, coupon, user_id)
+        country = address.get("country") or "IN"
+        summary = self.price_summary(items, coupon, user_id, country)
         if coupon and summary["coupon_error"]:
             raise ShopError(summary["coupon_error"])
+        user = self.get_user(user_id)
 
+        status, paid_at = "Paid", None
         if payment == "cod":
+            if country != "IN":
+                raise ShopError("Cash on Delivery is available only in India.")
             if summary["total"] > self.setting("cod_limit"):
                 raise ShopError(f"Cash on Delivery is available for orders up to {rupees(self.setting('cod_limit'))}.")
-            method, note = "Cash on Delivery", f"Pay {rupees(summary['total'])} in cash or UPI at your door"
+            method, note, status = "Cash on Delivery", f"Pay {rupees(summary['total'])} in cash or UPI at your door", "COD"
         elif payment == "wallet":
             method, note = "Yo Pay Wallet", "Paid from Yo Pay balance"
         elif payment == "upi":
+            if country != "IN":
+                raise ShopError("UPI works only for delivery in India. Please pay by card.")
             if not UPI_RE.match(upi_id.strip()):
                 raise ShopError("Please enter a valid UPI ID, for example name@okyo.")
             method, note = "UPI", f"Paid via UPI ({upi_id.strip().lower()}) - demo payment"
+        elif payment == "card":
+            method, note, status = "Card", "Waiting for the card payment", "Pending"
         else:
             raise ShopError("Please choose a payment method.")
+
+        currency = currency if currency in world.CURRENCIES else "INR"
+        local = world.convert(summary["total"], currency, rates or {})
+        if local is None:                                   # no exchange rate today: charge in rupees
+            currency, local = "INR", summary["total"]
+        fx = local / summary["total"] if summary["total"] else 1.0
 
         when = when or now()
         with self.db() as conn:
             for p, q in items:
-                stock = conn.execute("SELECT stock FROM products WHERE id = ?", (p.id,)).fetchone()[0]
+                lock = " FOR UPDATE" if conn.is_postgres else ""
+                stock = conn.execute("SELECT stock FROM products WHERE id = ?" + lock, (p.id,)).fetchone()[0]
                 if q > stock:
                     raise ShopError(f"Sorry, only {stock} left of {p.name[:40]}. Please update your cart.")
                 conn.execute("UPDATE products SET stock = stock - ? WHERE id = ?", (q, p.id))
@@ -661,19 +817,31 @@ class Store:
                     raise ShopError(f"Not enough Yo Pay balance ({rupees(bal)}). Choose another payment method.")
                 conn.execute("UPDATE users SET wallet = wallet - ? WHERE id = ?", (summary["total"], user_id))
             number = "OD" + to_dt(when).strftime("%y%m%d") + "".join(random.choices("0123456789", k=8))
-            addr_text = ", ".join(x for x in (address["line1"], address["line2"], address["city"],
-                                              address["state"] + " - " + address["pincode"]) if x)
-            expected = (to_dt(when) + timedelta(days=delivery_days(address["pincode"]) + 1)).strftime("%Y-%m-%d %H:%M:%S")
+            line3 = (address["state"] + " - " if address["state"] else "") + address["pincode"]
+            addr_text = ", ".join(x for x in (address["line1"], address["line2"], address["city"], line3,
+                                              world.country_name(country) if country != "IN" else "") if x)
+            expected = (to_dt(when) + timedelta(days=delivery_days(address["pincode"], country) + 1)
+                        ).strftime("%Y-%m-%d %H:%M:%S")
+            domestic = world.shipping_zone(country) == "domestic"
+            courier = "Yo Express" if domestic else "Yo Global Express"
+            awb = "YX" + "".join(random.choices("0123456789", k=10)) + country
+            paid_at = when if status in ("Paid", "COD") else ""
             cur = conn.execute(
                 "INSERT INTO orders (number, user_id, ship_name, ship_mobile, ship_address, ship_pincode, mrp_total, "
                 "items_total, coupon, coupon_discount, delivery_fee, total, payment_method, payment_note, placed_at, "
-                "expected) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "expected, country, currency, fx_rate, total_local, payment_status, paid_at, courier, awb, lang, "
+                "notified_step) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (number, user_id, address["name"], address["mobile"], addr_text, address["pincode"],
                  summary["mrp_total"], summary["items_total"], summary["coupon"], summary["coupon_discount"],
-                 summary["delivery_fee"], summary["total"], method, note, when, expected))
+                 summary["delivery_fee"], summary["total"], method, note, when, expected, country, currency, fx,
+                 local, status, paid_at, courier, awb, user["lang"] or "en", -1))
+            order_id = cur.lastrowid
+            sellers = {r[0]: r[1] for r in conn.execute("SELECT id, commission FROM sellers")}
             conn.executemany(
-                "INSERT INTO order_items (order_id, product_id, slug, name, price, mrp, qty) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [(cur.lastrowid, p.id, p.slug, p.name, p.price, p.mrp, q) for p, q in items])
+                "INSERT INTO order_items (order_id, product_id, slug, name, price, mrp, qty, seller_id, commission) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [(order_id, p.id, p.slug, p.name, p.price, p.mrp, q, p.seller_id, sellers.get(p.seller_id, 0))
+                 for p, q in items])
             conn.execute("DELETE FROM cart WHERE user_id = ?", (user_id,))
         return number
 
@@ -686,14 +854,24 @@ class Store:
         """Steps the admin set by hand: {step: time}."""
         with self.db() as conn:
             return {r["step"]: r["at"] for r in conn.execute(
-                "SELECT step, MAX(at) at FROM order_events WHERE order_id = ? GROUP BY step", (order_id,))}
+                "SELECT step, MAX(at) AS at FROM order_events WHERE order_id = ? GROUP BY step", (order_id,))}
 
     def _order_step(self, order):
-        """Current step of an order: set by the admin if he changed it, otherwise automatic by time."""
+        """Current step of an order: set by the admin if he changed it, otherwise automatic by time
+        (the clock starts when the order is paid; a card order waiting for payment stays at step 0)."""
         events = self._events(order["id"])
         if events:
             return max(events)
-        return self._step(order["placed_at"])
+        if order.get("payment_status") == "Pending" or order.get("payment_status") == "Failed":
+            return 0
+        return self._step(self._clock_start(order))
+
+    @staticmethod
+    def _clock_start(order):
+        """Tracking starts when the order is placed - for a card order, when it is paid."""
+        if order.get("payment_method") == "Card" and order.get("paid_at"):
+            return order["paid_at"]
+        return order["placed_at"]
 
     def tracking(self, order):
         """List of tracking steps: (name, time text or '', done?)."""
@@ -701,7 +879,7 @@ class Store:
             return [("Order placed", order["placed_at"], True), ("Cancelled", order["cancelled_at"], True)]
         events = self._events(order["id"])
         step = self._order_step(order)
-        placed = to_dt(order["placed_at"])
+        placed = to_dt(self._clock_start(order))
         out = []
         for i, name in enumerate(TRACK_STEPS):
             if i > step:
@@ -716,6 +894,8 @@ class Store:
     def status(self, order):
         if order["cancelled_at"]:
             return "Cancelled"
+        if order.get("payment_status") in ("Pending", "Failed"):
+            return "Awaiting payment"
         return TRACK_STEPS[self._order_step(order)]
 
     def orders(self, user_id):
@@ -735,8 +915,10 @@ class Store:
             o = dict(o)
             o["items"] = [dict(r) for r in conn.execute("SELECT * FROM order_items WHERE order_id = ?", (o["id"],))]
         o["status"] = self.status(o)
-        o["can_cancel"] = not o["cancelled_at"] and self._order_step(o) < 2   # before "Shipped"
+        o["step"] = self._order_step(o)
+        o["can_cancel"] = not o["cancelled_at"] and o["step"] < 2   # before "Shipped"
         o["manual"] = bool(self._events(o["id"]))
+        o["international"] = o.get("country", "IN") != "IN"
         return o
 
     def cancel_order(self, user_id, number):
@@ -744,11 +926,16 @@ class Store:
         if not o["can_cancel"]:
             raise ShopError("This order has already been shipped and cannot be cancelled.")
         with self.db() as conn:
-            conn.execute("UPDATE orders SET cancelled_at = ? WHERE id = ?", (now(), o["id"]))
+            if conn.execute("UPDATE orders SET cancelled_at = ? WHERE id = ? AND cancelled_at = ''",
+                            (now(), o["id"])).rowcount == 0:
+                raise ShopError("This order was already cancelled.")
             for it in o["items"]:
                 conn.execute("UPDATE products SET stock = stock + ? WHERE id = ?", (it["qty"], it["product_id"]))
             if o["payment_method"] in ("Yo Pay Wallet", "UPI"):
                 conn.execute("UPDATE users SET wallet = wallet + ? WHERE id = ?", (o["total"], user_id))
+                conn.execute("UPDATE orders SET refunded = ? WHERE id = ?", (o["total"], o["id"]))
+        if o["payment_method"] == "Card" and o.get("payment_status") == "Paid":
+            self.refund_card(o, o["total"], "Order cancelled")
         return o
 
     # =================================================================
@@ -817,8 +1004,8 @@ class Store:
                                "sales": by_day.get((start + timedelta(days=i)).isoformat(), (0, 0))[1]}
                               for i in range(days)]
             stats["top_products"] = [dict(r) for r in conn.execute(
-                "SELECT i.slug, i.name, SUM(i.qty) qty, SUM(i.qty * i.price) sales FROM order_items i "
-                "JOIN orders o ON o.id = i.order_id WHERE o.cancelled_at = '' GROUP BY i.product_id "
+                "SELECT MAX(i.slug) AS slug, MAX(i.name) AS name, SUM(i.qty) AS qty, SUM(i.qty * i.price) AS sales "
+                "FROM order_items i JOIN orders o ON o.id = i.order_id WHERE o.cancelled_at = '' GROUP BY i.product_id "
                 "ORDER BY qty DESC, sales DESC LIMIT 5")]
             stats["by_category"] = [dict(r) for r in conn.execute(
                 "SELECT p.category, SUM(i.qty * i.price) sales FROM order_items i JOIN orders o ON o.id = i.order_id "
@@ -884,8 +1071,7 @@ class Store:
 
     def tables(self):
         with self.db() as conn:
-            names = [r[0] for r in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")]
+            names = sorted(n for n in conn.tables() if not n.startswith("sqlite_"))
             return [(n, conn.execute(f'SELECT COUNT(*) FROM "{n}"').fetchone()[0]) for n in names]
 
     def table_rows(self, name, limit=100, offset=0):
@@ -894,7 +1080,9 @@ class Store:
         if name not in dict(self.tables()):
             raise ShopError("Unknown table.")
         with self.db() as conn:
-            cur = conn.execute(f'SELECT * FROM "{name}" ORDER BY rowid DESC LIMIT ? OFFSET ?', (limit, offset))
+            columns = conn.columns(name)
+            order = "id" if "id" in columns else columns[0]
+            cur = conn.execute(f'SELECT * FROM "{name}" ORDER BY {order} DESC LIMIT ? OFFSET ?', (limit, offset))
             cols = [d[0] for d in cur.description]
             rows = [["•••••• (hidden)" if c in self.HIDDEN_COLUMNS else v for c, v in zip(cols, r)] for r in cur]
         return cols, rows
@@ -907,7 +1095,7 @@ class Store:
         with self.db() as conn:
             row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
         value = row["value"] if row else str(DEFAULT_SETTINGS[key])
-        return value if key == "announcement" else int(value)
+        return value if key in TEXT_SETTINGS else int(float(value))
 
     def settings(self):
         return {k: self.setting(k) for k in DEFAULT_SETTINGS}
@@ -915,15 +1103,21 @@ class Store:
     def update_settings(self, f):
         new = {}
         try:
-            for key in ("free_delivery_from", "delivery_fee", "signup_wallet", "cod_limit"):
-                new[key] = round(float(f.get(key, "")) * 100)
+            for key in ("free_delivery_from", "delivery_fee", "signup_wallet", "cod_limit", "intl_fee_near",
+                        "intl_fee_world", "intl_free_from"):
+                new[key] = round(float(f.get(key, self.setting(key) / 100)) * 100)
                 if not 0 <= new[key] <= 10_000_000 * 100:
                     raise ValueError
+            for key, low, high in (("seller_commission", 0, 50), ("return_days", 0, 60)):
+                new[key] = int(float(f.get(key, self.setting(key))))
+                if not low <= new[key] <= high:
+                    raise ValueError
         except (TypeError, ValueError):
-            raise ShopError("Please enter valid rupee amounts (0 or more).")
+            raise ShopError("Please enter valid amounts (0 or more), a commission of 0-50 % and 0-60 return days.")
         new["announcement"] = " ".join(f.get("announcement", "").split())[:160]
         with self.db() as conn:
-            conn.executemany("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            conn.executemany("INSERT INTO settings (key, value) VALUES (?, ?) "
+                             "ON CONFLICT (key) DO UPDATE SET value = excluded.value",
                              [(k, str(v)) for k, v in new.items()])
 
     def refresh_categories(self):
@@ -992,8 +1186,11 @@ class Store:
             f"₹{amount} off" if kind == "flat" else f"{amount}% off up to ₹{max_off:,}") + (
             f" on orders above ₹{min_order:,}" if min_order else "")
         with self.db() as conn:
-            conn.execute("INSERT OR REPLACE INTO coupons (code, description, kind, amount, max_off, min_order, "
-                         "first_order_only, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            conn.execute("INSERT INTO coupons (code, description, kind, amount, max_off, min_order, "
+                         "first_order_only, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (code) DO UPDATE SET "
+                         "description = excluded.description, kind = excluded.kind, amount = excluded.amount, "
+                         "max_off = excluded.max_off, min_order = excluded.min_order, "
+                         "first_order_only = excluded.first_order_only, active = excluded.active",
                          (code, desc, kind, amount, max_off, min_order, int(f.get("first_order_only") == "yes"),
                           int(f.get("active", "yes") == "yes")))
         return code
@@ -1082,7 +1279,7 @@ class Store:
     # =================================================================
 
     def admin_update_user(self, user_id, f, acting_admin_id):
-        self.update_user(user_id, f.get("name", ""), f.get("email", ""), f.get("mobile", ""))
+        self.update_user(user_id, f.get("name", ""), f.get("email", ""), f.get("mobile", ""), f.get("country"))
         is_admin, blocked = int(f.get("is_admin") == "yes"), int(f.get("blocked") == "yes")
         if user_id == acting_admin_id and (not is_admin or blocked):
             raise ShopError("You cannot remove your own admin rights or block yourself.")
@@ -1090,8 +1287,7 @@ class Store:
             conn.execute("UPDATE users SET is_admin = ?, blocked = ? WHERE id = ?", (is_admin, blocked, user_id))
 
     def admin_set_password(self, user_id, new):
-        if len(new) < 8 or not re.search(r"[A-Za-z]", new) or not re.search(r"\d", new):
-            raise ShopError("Password must be at least 8 characters with letters and numbers.")
+        check_password(new)
         with self.db() as conn:
             conn.execute("UPDATE users SET password = ? WHERE id = ?", (generate_password_hash(new), user_id))
 
@@ -1115,8 +1311,11 @@ class Store:
         with self.db() as conn:
             if conn.execute("SELECT 1 FROM orders WHERE user_id = ?", (user_id,)).fetchone():
                 raise ShopError("This customer has orders, so the account cannot be deleted. Block it instead.")
-            for table in ("addresses", "cart", "wishlist"):
+            if conn.execute("SELECT 1 FROM sellers WHERE user_id = ?", (user_id,)).fetchone():
+                raise ShopError("This account owns a seller shop. Suspend the shop instead.")
+            for table in ("addresses", "cart", "wishlist", "notifications", "push_subscriptions", "password_resets"):
                 conn.execute(f"DELETE FROM {table} WHERE user_id = ?", (user_id,))
+            conn.execute("UPDATE views SET user_id = NULL WHERE user_id = ?", (user_id,))
             conn.execute("UPDATE reviews SET user_id = NULL WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
@@ -1145,8 +1344,9 @@ class Store:
             if r is None:
                 raise ShopError("Review not found.")
             conn.execute("DELETE FROM reviews WHERE id = ?", (review_id,))
-            conn.execute("UPDATE products SET rating_sum = MAX(rating_sum - ?, 0), "
-                         "rating_count = MAX(rating_count - 1, 0) WHERE id = ?", (r["rating"], r["product_id"]))
+            conn.execute("UPDATE products SET rating_sum = CASE WHEN rating_sum > ? THEN rating_sum - ? ELSE 0 END, "
+                         "rating_count = CASE WHEN rating_count > 0 THEN rating_count - 1 ELSE 0 END WHERE id = ?",
+                         (r["rating"], r["rating"], r["product_id"]))
             return dict(r)
 
     def set_order_status(self, number, step_name, note=""):
@@ -1175,3 +1375,14 @@ class Store:
 def make_slug(text):
     """'Nova X5 Pro (Blue)' -> 'nova-x5-pro-blue'"""
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "item"
+
+
+def check_password(password, label="Password"):
+    if len(password or "") < 8 or not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
+        raise ShopError(f"{label} must be at least 8 characters with letters and numbers.")
+
+
+def is_example_email(email):
+    """Addresses on reserved example domains (RFC 2606) belong to demo customers: never email or text them."""
+    domain = str(email or "").rsplit("@", 1)[-1].lower()
+    return domain in ("example.com", "example.org", "example.net") or domain.endswith((".example", ".test", ".invalid"))

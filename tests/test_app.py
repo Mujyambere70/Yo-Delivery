@@ -6,9 +6,10 @@ import sys
 import tempfile
 import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app import create_app  # noqa: E402
+import support  # noqa: E402
+
 
 DEMO = {"login": "demo@example.com", "password": "Demo@1234"}
 
@@ -23,7 +24,7 @@ class TestShop(unittest.TestCase):
         cls.tmp.cleanup()
 
     def setUp(self):
-        self.app = create_app(os.path.join(self.tmp.name, f"{self._testMethodName}.db"))
+        self.app = support.make_app()
         self.c = self.app.test_client()
         self.store = self.app.store
 
@@ -95,7 +96,7 @@ class TestShop(unittest.TestCase):
         r = self.post("/checkout", page="/checkout", address_id=address["id"], payment="upi", upi_id="ravi@okyo")
         html = self.text(r)
         self.assertIn("Order placed, thank you!", html)
-        number = re.search(r'id="orderNumber">(OD\d+)<', html).group(1)
+        number = re.search(r'id="orderNumber"[^>]*>(OD\d+)<', html).group(1)
         order = self.store.get_order(demo["id"], number)
         self.assertEqual(order["coupon"], "YO10")
         self.assertIn("Order placed", self.text(self.c.get(f"/orders/{number}")))

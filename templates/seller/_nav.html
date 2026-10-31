@@ -1,0 +1,10 @@
+<nav class="seller-nav">
+    <span class="seller-badge">&#127978; Seller Centre &middot; <b>{{ shop.shop_name }}</b></span>
+    <a href="{{ url_for('seller_dashboard') }}" class="{{ 'on' if request.endpoint == 'seller_dashboard' }}">Dashboard</a>
+    {% if shop.status == 'Approved' %}
+    <a href="{{ url_for('seller_products') }}" class="{{ 'on' if request.endpoint in ('seller_products', 'seller_product_new', 'seller_product_edit') }}">My products</a>
+    <a href="{{ url_for('seller_orders') }}" class="{{ 'on' if request.endpoint == 'seller_orders' }}">Sales &amp; payouts</a>
+    <a href="{{ url_for('seller_settings') }}" class="{{ 'on' if request.endpoint == 'seller_settings' }}">Shop settings</a>
+    <a href="{{ url_for('storefront', slug=shop.slug) }}" target="_blank">My shop page &#8599;</a>
+    {% endif %}
+</nav>

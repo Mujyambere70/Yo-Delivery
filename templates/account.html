@@ -13,14 +13,51 @@
         <form method="post" class="panel">
             <h2>Personal information</h2>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="form-grid">
+            <div class="form-grid" data-dial='{{ dial|tojson }}' id="profileGrid">
                 <div class="full"><label for="name">Full name</label><input type="text" id="name" name="name" value="{{ user.name }}" required></div>
                 <div><label for="email">Email address</label><input type="email" id="email" name="email" value="{{ user.email }}" required></div>
-                <div><label for="mobile">Mobile number</label><input type="tel" id="mobile" name="mobile" value="{{ user.mobile }}" pattern="[6-9][0-9]{9}" maxlength="10" required></div>
+                <div><label for="p_country">Country</label><select id="p_country" name="country">{% for code, name in countries %}<option value="{{ code }}" {% if user.country == code %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
+                <div><label for="mobile">Mobile number</label><div class="dial-row"><span class="dial" id="p_dial" translate="no">+{{ dial.get(user.country, '') }}</span><input type="tel" id="mobile" name="mobile" value="{{ user.mobile }}" maxlength="18" required></div></div>
             </div>
             <button type="submit" class="btn btn-orange">Save</button>
             <p class="small muted">Member since {{ user.created_at|nicedate('%B %Y') }}</p>
         </form>
+
+        <form method="post" class="panel" id="prefs">
+            <h2>Language and currency</h2>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="prefs">
+            <div class="form-grid">
+                <div><label for="lang">Language of the shop, messages and emails</label><select id="lang" name="lang">{% for code, name in LANGUAGES.items() %}<option value="{{ code }}" {% if user.lang == code %}selected{% endif %} translate="no">{{ name }}</option>{% endfor %}</select></div>
+                <div><label for="cur">Show prices and pay in</label><select id="cur" name="currency">{% for c in CURRENCIES %}<option value="{{ c }}" {% if CURRENCY == c %}selected{% endif %}>{{ c }} &middot; {{ currency_name(c, LANG) }}</option>{% endfor %}</select></div>
+            </div>
+            <button type="submit" class="btn btn-outline">Save</button>
+        </form>
+
+        <section class="panel" id="notify">
+            <h2>Notifications about your orders</h2>
+            <p class="small muted">You get a message when an order is placed, packed, shipped, out for delivery and delivered, and about returns and refunds. Messages are always kept on the <a href="{{ url_for('notifications') }}">Notifications</a> page too.</p>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="notify">
+                <label class="check"><input type="checkbox" name="email" value="1" {% if user.notify_email %}checked{% endif %}> Email to <b>{{ user.email }}</b>{% if not providers.email %} <span class="tag">not set up by the shop yet</span>{% endif %}</label>
+                <label class="check"><input type="checkbox" name="sms" value="1" {% if user.notify_sms %}checked{% endif %}> SMS to <b translate="no">{{ user.mobile }}</b>{% if not providers.sms %} <span class="tag">not set up by the shop yet</span>{% endif %}</label>
+                <button class="btn btn-outline btn-sm">Save</button>
+            </form>
+            <h3>&#128241; Push notifications on your phone</h3>
+            <ol class="steps-list small">
+                <li>Open this website on your phone and add it to the Home Screen (browser menu &rarr; <b>Install app</b> / <b>Add to Home Screen</b>).</li>
+                <li>Open Yo Delivery from the Home Screen, sign in and press the button below.</li>
+            </ol>
+            <button type="button" class="btn btn-orange btn-sm" id="push-on">Turn on notifications on this device</button>
+            <p class="small muted" id="push-msg" aria-live="polite"></p>
+            {% for d in devices %}
+            <div class="device-row"><span>&#128241; {{ d.device or 'Device' }} &middot; <small class="muted">since {{ d.created_at|nicedate }}</small></span>
+                <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="push_remove"><input type="hidden" name="sub_id" value="{{ d.id }}"><button class="link-btn danger">Remove</button></form></div>
+            {% endfor %}
+        </section>
+
+        {% set action_field = 'action' %}{% set totp_enabled = user.totp_enabled %}
+        {% include "_totp_setup.html" %}
+
         <form method="post" class="panel">
             <h2>Change password</h2>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -34,4 +71,33 @@
         </form>
     </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+    var grid = document.getElementById('profileGrid'), dial = JSON.parse(grid.dataset.dial), sel = document.getElementById('p_country');
+    sel.addEventListener('change', function () { document.getElementById('p_dial').textContent = '+' + (dial[sel.value] || ''); });
+})();
+(function () {
+    var btn = document.getElementById('push-on'), msg = document.getElementById('push-msg');
+    var text = { nosupport: "{{ 'This browser cannot show push notifications. On iPhone, add Yo Delivery to the Home Screen first.'|tr }}",
+                 denied: "{{ 'Notifications are blocked. Allow them in the browser settings for this site.'|tr }}",
+                 done: "{{ 'Notifications are on for this device.'|tr }}", error: "{{ 'Something went wrong. Please try again.'|tr }}" };
+    function b64(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '=';
+        var raw = atob(s), out = new Uint8Array(raw.length); for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i); return out; }
+    btn.addEventListener('click', async function () {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) { msg.textContent = text.nosupport; return; }
+        try {
+            if (await Notification.requestPermission() !== 'granted') { msg.textContent = text.denied; return; }
+            var reg = await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready;
+            var key = (await (await fetch('{{ url_for("push_key") }}')).json()).key;
+            var sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+            var r = await fetch('{{ url_for("push_subscribe") }}', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subscription: sub, csrf: '{{ csrf_token() }}', device: navigator.userAgent.match(/(Android|iPhone|iPad|Windows|Mac|Linux)/) ? RegExp.$1 : 'Browser' }) });
+            if (!r.ok) throw new Error('save');
+            msg.textContent = text.done; setTimeout(function () { location.reload(); }, 900);
+        } catch (e) { msg.textContent = text.error; }
+    });
+})();
+</script>
 {% endblock %}

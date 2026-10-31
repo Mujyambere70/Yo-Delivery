@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit product' if p else 'Add product' }}{% endblock %}
+{% block content %}
+<div class="wrap seller">
+{% include "seller/_nav.html" %}
+<h1>{{ 'Edit product' if p else 'Add a new product' }}</h1>
+<p><a href="{{ url_for('seller_products') }}">&lsaquo; My products</a>{% if p %} &middot; <a href="{{ url_for('product', slug=p.slug) }}" target="_blank">View &#8599;</a>{% endif %}</p>
+<p class="info-box small">Prices are in Indian rupees (₹), the shop's own currency; customers see them converted to their currency. After saving, our team checks the product before it appears in the shop.</p>
+<form method="post" enctype="multipart/form-data" class="pform">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <section class="panel">
+        <h2>1. Basic information</h2>
+        <div class="form-grid">
+            <div class="full"><label for="name">Product name *</label>
+                <input type="text" id="name" name="name" value="{{ form.get('name', '') }}" maxlength="160" placeholder="e.g. Nova X7 5G (Sky Blue, 8GB RAM, 256GB Storage)" required></div>
+            <div><label for="brand">Brand *</label><input type="text" id="brand" name="brand" value="{{ form.get('brand', '') }}" maxlength="40" required></div>
+            <div><label for="category">Category *</label>
+                <select id="category" name="category" required><option value="">Choose...</option>
+                    {% for c in categories %}<option value="{{ c.slug }}" {% if form.get('category') == c.slug %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+                </select>
+</div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>2. Price &amp; stock</h2>
+        <div class="form-grid three">
+            <div><label for="price">Selling price (₹) *</label><input type="number" id="price" name="price" value="{{ form.get('price', '') }}" min="1" step="0.01" required oninput="disc()"></div>
+            <div><label for="mrp">MRP (₹) *</label><input type="number" id="mrp" name="mrp" value="{{ form.get('mrp', '') }}" min="1" step="0.01" required oninput="disc()"></div>
+            <div><label for="stock">Stock (pieces) *</label><input type="number" id="stock" name="stock" value="{{ form.get('stock', '') }}" min="0" max="100000" required></div>
+        </div>
+        <p class="small" id="discount"></p>
+    </section>
+
+    <section class="panel">
+        <h2>3. Pictures</h2>
+        {% if p %}
+        <div class="cur-imgs">{% for img in p.images %}<img src="{{ picture(img) }}?v={{ range(1, 99999)|random }}" alt="Picture {{ loop.index }}">{% endfor %}</div>
+        <p class="small muted">Upload new pictures only if you want to replace the current ones.</p>
+        {% endif %}
+        <label for="images">Upload 1 to 3 pictures (JPG, PNG or WEBP){{ ' *' if not p }}</label>
+        <input type="file" id="images" name="images" accept=".jpg,.jpeg,.png,.webp" multiple {% if not p %}required{% endif %} onchange="preview(this)">
+        <p class="small muted">The first picture is the main photo. If you upload only one, the 2nd and 3rd gallery pictures are made from it automatically. All pictures are saved as 800&times;800 JPG.</p>
+        <div class="cur-imgs" id="preview"></div>
+    </section>
+
+    <section class="panel">
+        <h2>4. Description</h2>
+        <label for="about">About this item * <small class="muted">(one point per line)</small></label>
+        <textarea id="about" name="about" rows="5" placeholder="6.6-inch FHD+ display&#10;5000mAh battery&#10;1 year warranty" required>{{ form.get('about', '') }}</textarea>
+        <label for="specs">Specifications <small class="muted">(one per line, like <code>RAM: 8 GB</code>)</small></label>
+        <textarea id="specs" name="specs" rows="5" placeholder="RAM: 8 GB&#10;Storage: 128 GB&#10;Warranty: 1 year">{{ form.get('specs', '') }}</textarea>
+        <label for="tags">Search words <small class="muted">(help customers find it, e.g. "mobile phone 5g")</small></label>
+        <input type="text" id="tags" name="tags" value="{{ form.get('tags', '') }}" maxlength="200">
+    </section>
+
+    <section class="panel">
+        <label class="check"><input type="checkbox" name="active" value="yes" {% if form.get('active', 'yes') == 'yes' %}checked{% endif %}> Show this product in the shop</label>
+        <input type="hidden" name="active" value="no">
+        <div class="btn-row" style="margin-top:12px">
+            <button class="btn btn-orange btn-lg">{{ 'Save changes' if p else 'Add product' }}</button>
+            <a href="{{ url_for('seller_products') }}" class="btn btn-outline btn-lg">Cancel</a>
+        </div>
+    </section>
+</form>
+</div>
+<script>
+  function disc() {
+    const p = parseFloat(document.getElementById('price').value), m = parseFloat(document.getElementById('mrp').value), out = document.getElementById('discount');
+    if (p > 0 && m > 0) out.innerHTML = m < p ? '<span class="err">MRP cannot be lower than the price.</span>' : 'Customers will see <b class="ok">' + Math.round((m - p) * 100 / m) + '% off</b>.';
+  }
+  function preview(input) {
+    const box = document.getElementById('preview'); box.innerHTML = '';
+    [...input.files].slice(0, 3).forEach(f => { const img = document.createElement('img'); img.src = URL.createObjectURL(f); box.appendChild(img); });
+  }
+  disc();
+</script>
+{% endblock %}

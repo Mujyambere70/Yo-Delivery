@@ -22,15 +22,18 @@
         <thead><tr><th>#</th><th>Description</th><th class="num">Unit price</th><th class="num">Qty</th><th class="num">Taxable value</th><th class="num">GST</th><th class="num">Total</th></tr></thead>
         <tbody>
         {% for l in lines %}
-            <tr><td>{{ loop.index }}</td><td>{{ l.name }}</td><td class="num">{{ l.price|rupees }}</td><td class="num">{{ l.qty }}</td>
-                <td class="num">{{ l.taxable|rupees }}</td><td class="num">{{ l.rate }}%<br><small>{{ l.tax|rupees }}</small></td><td class="num">{{ l.gross|rupees }}</td></tr>
+            <tr><td>{{ loop.index }}</td><td>{{ l.name }}</td><td class="num">{{ l.price|inr }}</td><td class="num">{{ l.qty }}</td>
+                <td class="num">{{ l.taxable|inr }}</td><td class="num">{{ l.rate }}%<br><small>{{ l.tax|inr }}</small></td><td class="num">{{ l.gross|inr }}</td></tr>
         {% endfor %}
-        {% if o.coupon_discount %}<tr><td></td><td>Coupon discount ({{ o.coupon }})</td><td colspan="4"></td><td class="num">&minus;{{ o.coupon_discount|rupees }}</td></tr>{% endif %}
-        <tr><td></td><td>Shipping charges</td><td colspan="4"></td><td class="num">{{ o.delivery_fee|rupees if o.delivery_fee else '₹0' }}</td></tr>
+        {% if o.coupon_discount %}<tr><td></td><td>Coupon discount ({{ o.coupon }})</td><td colspan="4"></td><td class="num">&minus;{{ o.coupon_discount|inr }}</td></tr>{% endif %}
+        <tr><td></td><td>Shipping charges</td><td colspan="4"></td><td class="num">{{ o.delivery_fee|inr if o.delivery_fee else '₹0' }}</td></tr>
         </tbody>
-        <tfoot><tr><td colspan="6">TOTAL</td><td class="num">{{ o.total|rupees }}</td></tr></tfoot>
+        <tfoot><tr><td colspan="6">TOTAL</td><td class="num">{{ o.total|inr }}</td></tr></tfoot>
     </table>
-    <p class="small">Amount in words: {{ o.total|rupees }} only. All prices include GST. Whether tax is payable under reverse charge: No.</p>
+    {% if export %}<p class="small"><b>Export of goods to {{ o.country|country }}:</b> zero-rated supply, no Indian GST is charged. Import duties and taxes of the destination country, if any, are paid by the receiver.</p>
+    {% else %}<p class="small">Amount in words: {{ o.total|inr }} only. All prices include GST. Whether tax is payable under reverse charge: No.</p>{% endif %}
+    {% if o.currency != 'INR' %}<p class="small">Charged to the customer: <b>{{ o.total|omoney(o) }}</b> ({{ o.currency }}, exchange rate of the order day).</p>{% endif %}
+    {% if o.refunded %}<p class="small">Refunded: {{ o.refunded|inr }}.</p>{% endif %}
     {% if o.cancelled_at %}<p class="err"><b>This order was cancelled on {{ o.cancelled_at|nicedate }}.</b></p>{% endif %}
     <div class="inv-sign"><span>For YoRetail:</span><b>Authorized Signatory</b></div>
     <p class="small muted center">Yo Delivery is a demo website for an academic project. This is not a real tax invoice.</p>

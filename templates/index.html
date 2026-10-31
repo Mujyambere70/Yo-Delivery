@@ -45,14 +45,14 @@
     <section class="cat-strip">
         {% for slug, name, img in CATEGORIES %}
         <a href="{{ url_for('category', category=slug) }}" class="cat-tile">
-            <span class="cat-img"><img src="{{ url_for('static', filename='images/' + img) }}" alt=""></span>
+            <span class="cat-img"><img src="{{ picture(img) }}" alt=""></span>
             <span>{{ name }}</span>
         </a>
         {% endfor %}
     </section>
 
     <section class="promo-row">
-        <div class="promo p1"><strong>&#127873; WELCOME100</strong><span>₹100 off your first order above ₹499</span></div>
+        <div class="promo p1"><strong>&#127873; WELCOME100</strong><span>{{ 10000|rupees }} off your first order above {{ 49900|rupees }}</span></div>
         <div class="promo p2"><strong>&#128666; Free Delivery</strong><span>On all orders above {{ FREE_DELIVERY_FROM|rupees }}</span></div>
         <div class="promo p3"><strong>&#128181; Cash on Delivery</strong><span>Pay when your order arrives</span></div>
         <div class="promo p4"><strong>&#8634; Easy Returns</strong><span>7-day replacement on most items</span></div>
@@ -66,6 +66,7 @@
         <div class="scroller">{% for p in deals %}{{ card(p, wish_ids) }}{% endfor %}</div>
     </section>
 
+    {% if for_you %}{{ row('Recommended for you', for_you, wish_ids) }}<p class="wrap small muted reco-note">Picked from what you looked at and bought.</p>{% endif %}
     {{ row('New arrivals', new_arrivals, wish_ids, url_for('search', sort='new')) }}
     {{ row('Best of Electronics', electronics, wish_ids, url_for('category', category='electronics')) }}
 
@@ -73,7 +74,7 @@
         <a href="{{ url_for('category', category='watches') }}" class="banner b-watch" style="background-image:url('{{ url_for('static', filename='images/categories/watches.jpg') }}')">
             <span><small>Min. 50% off</small><strong>Watches for every style</strong><em>Shop now &rsaquo;</em></span></a>
         <a href="{{ url_for('category', category='footwear') }}" class="banner b-shoe" style="background-image:url('{{ url_for('static', filename='images/categories/footwear.jpg') }}')">
-            <span><small>From ₹349</small><strong>Footwear store</strong><em>Shop now &rsaquo;</em></span></a>
+            <span><small>From {{ 34900|rupees }}</small><strong>Footwear store</strong><em>Shop now &rsaquo;</em></span></a>
     </section>
 
     {{ row('Fashion & Footwear top picks', fashion, wish_ids, url_for('category', category='fashion')) }}

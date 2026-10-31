@@ -15,9 +15,11 @@
         <input type="text" id="login" name="login" value="{{ login }}" required autofocus>
         <label for="password">Password</label>
         <div class="pw"><input type="password" id="password" name="password" required><button type="button" onclick="const p=document.getElementById('password');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'Show':'Hide'">Show</button></div>
+        <p class="small right"><a href="{{ url_for('forgot') }}">Forgot your password?</a></p>
         <button type="submit" class="btn btn-orange btn-block btn-lg">Continue</button>
         <p class="small muted">By continuing, you agree to Yo Delivery's Conditions of Use and Privacy Notice.</p>
-        <div class="demo"><b>Demo account:</b> <code>demo@example.com</code> / <code>Demo@1234</code></div>
+        <div class="demo"><b>Demo accounts</b> (password <code>Demo@1234</code>): <code>demo@example.com</code> (India) &middot; <code>anna.smirnova@example.com</code> (Russia) &middot; <code>amani.uwase@example.com</code> (Rwanda)<br>
+            Seller: <code>seller@example.com</code> / <code>Seller@1234</code> &middot; Admin: <code>admin@example.com</code> / <code>Admin@1234</code></div>
         <div class="divider"><span>New to Yo Delivery?</span></div>
         <a href="{{ url_for('signup', next=request.args.get('next')) }}" class="btn btn-outline btn-block">Create your Yo Delivery account</a>
     </form>

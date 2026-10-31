@@ -1,0 +1,24 @@
+{% extends "admin/layout.html" %}
+{% block title %}Returns{% endblock %}
+{% block heading %}Returns &amp; refunds{% endblock %}
+{% block content %}
+<div class="panel toolbar">
+    {% for s in ['Requested', 'Refunded', 'Rejected', ''] %}<a href="{{ url_for('admin_returns', status=s) }}" class="chip {{ 'on' if s == status }}">{{ s or 'All' }}</a>{% endfor %}
+</div>
+{% for r in rows %}
+<section class="panel">
+    <div class="row-head"><h2><a href="{{ url_for('admin_order', number=r.number) }}">{{ r.number }}</a> <span class="st st-{{ {'Requested': 'packed', 'Refunded': 'delivered', 'Rejected': 'cancelled'}[r.status] }}">{{ r.status }}</span></h2>
+        <span class="small muted">{{ r.customer }} ({{ r.email }}) &middot; {{ r.created_at|nicedate('%d %b %Y, %H:%M') }}</span></div>
+    <p><b>{{ r.reason }}</b>{% if r.details %} &mdash; {{ r.details }}{% endif %}</p>
+    <p class="small">Refund: <b>{{ r.amount|inr }}</b> to the customer's <b>{{ r.refund_to }}</b> ({{ r.payment_method }}{% if r.currency != 'INR' %}, paid in {{ r.currency }}{% endif %})</p>
+    {% if r.status == 'Requested' %}
+    <form method="post" class="toolbar">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="return_id" value="{{ r.id }}">
+        <input type="text" name="note" maxlength="200" placeholder="Note / reason for rejecting (the customer sees it)">
+        <button name="action" value="approve" class="btn btn-orange btn-sm">&#10004; Accept &amp; refund</button>
+        <button name="action" value="reject" class="btn btn-outline btn-sm">Reject</button>
+    </form>
+    {% else %}<p class="small muted">{{ r.status }} by {{ r.decided_by }} on {{ r.decided_at|nicedate }}{% if r.note %} &middot; {{ r.note }}{% endif %}</p>{% endif %}
+</section>
+{% else %}<section class="panel"><p class="muted">No returns here.</p></section>{% endfor %}
+{% endblock %}

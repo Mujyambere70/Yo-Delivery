@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Pay for order {{ o.number }}{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <div class="pay-page">
+        <section class="panel">
+            <div class="test-banner">&#129514; TEST MODE &mdash; Yo Delivery test payment gateway. No real money is taken.</div>
+            <h1>Card payment</h1>
+            <p class="muted">Order <b translate="no">{{ o.number }}</b> &middot; Amount <b>{{ o.total|omoney(o) }}</b></p>
+            {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+            <form method="post" autocomplete="off" class="card-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="card">Card number</label>
+                <input type="text" id="card" name="card" inputmode="numeric" maxlength="23" placeholder="4242 4242 4242 4242" required autofocus>
+                <div class="form-grid">
+                    <div><label for="expiry">Expiry (MM/YY)</label><input type="text" id="expiry" name="expiry" maxlength="5" placeholder="12/29" required></div>
+                    <div><label for="cvc">CVC</label><input type="text" id="cvc" name="cvc" inputmode="numeric" maxlength="4" placeholder="123" required></div>
+                </div>
+                <label for="cname">Name on the card</label>
+                <input type="text" id="cname" name="name" value="{{ user.name }}" required>
+                <button class="btn btn-orange btn-lg btn-block">&#128274; Pay {{ o.total|omoney(o) }}</button>
+            </form>
+            <p class="small muted center"><a href="{{ url_for('order', number=o.number) }}">Pay later</a> &middot; Your items are kept for 30 minutes.</p>
+        </section>
+        <aside class="panel small">
+            <h3>Test cards</h3>
+            <table class="mini-table">
+                <tr><td translate="no"><code>4242 4242 4242 4242</code></td><td>Payment succeeds</td></tr>
+                <tr><td translate="no"><code>5555 5555 5555 4444</code></td><td>Payment succeeds</td></tr>
+                <tr><td translate="no"><code>4000 0000 0000 0002</code></td><td>Card declined</td></tr>
+                <tr><td translate="no"><code>4000 0000 0000 9995</code></td><td>Not enough money</td></tr>
+            </table>
+            <p class="muted">Use any future expiry date, any 3-digit CVC and any name. These are the same test cards Stripe uses; when the shop has a Stripe test key, you pay on Stripe's own page instead.</p>
+        </aside>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+document.getElementById('card').addEventListener('input', function (e) {
+  var d = e.target.value.replace(/\D/g, '').slice(0, 19); e.target.value = d.replace(/(.{4})/g, '$1 ').trim(); });
+document.getElementById('expiry').addEventListener('input', function (e) {
+  var d = e.target.value.replace(/\D/g, '').slice(0, 4); e.target.value = d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d; });
+</script>{% endblock %}

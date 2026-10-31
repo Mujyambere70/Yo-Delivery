@@ -4,9 +4,10 @@
 <div class="wrap narrow">
     <nav class="crumbs pt"><a href="{{ url_for('account') }}">Your Account</a> &rsaquo; <a href="{{ url_for('orders') }}">Your Orders</a> &rsaquo; {{ o.number }}</nav>
     <div class="od-head">
-        <div><h1>Order details</h1><p class="muted">Ordered on {{ o.placed_at|nicedate('%d %B %Y, %I:%M %p') }} &middot; Order# {{ o.number }}</p></div>
+        <div><h1>Order details</h1><p class="muted">Ordered on {{ o.placed_at|nicedate('%d %B %Y, %I:%M %p') }} &middot; Order# <span translate="no">{{ o.number }}</span></p></div>
         <div class="btn-row">
-            <a href="{{ url_for('invoice', number=o.number) }}" class="btn btn-outline btn-sm">&#128462; Invoice</a>
+            {% if o.status == 'Awaiting payment' %}<a href="{{ url_for('pay_order', number=o.number) }}" class="btn btn-orange btn-sm">&#128179; Pay now {{ o.total|omoney(o) }}</a>{% endif %}
+            {% if o.payment_status in ('Paid', 'COD') %}<a href="{{ url_for('invoice', number=o.number) }}" class="btn btn-outline btn-sm">&#128462; Invoice</a>{% endif %}
             {% if o.can_cancel %}
             <form method="post" action="{{ url_for('cancel', number=o.number) }}" onsubmit="return confirmCancel(this)">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -18,32 +19,59 @@
 
     <section class="panel">
         <h2 class="status s-{{ o.status|lower|replace(' ', '-') }}"><i></i>{{ o.status }}</h2>
-        {% if o.status not in ('Delivered', 'Cancelled') %}<p>Arriving by <b>{{ o.expected|nicedate('%A, %d %B') }}</b></p>{% endif %}
+        {% if o.status == 'Awaiting payment' %}
+            <p>Your items are kept for you for 30 minutes. Please finish the card payment{% if o.payment_status == 'Failed' %} &mdash; <b class="err">the last try was declined</b>{% endif %}.</p>
+        {% elif o.status not in ('Delivered', 'Cancelled') %}<p>Arriving by <b>{{ o.expected|nicedate('%A, %d %B') }}</b></p>{% endif %}
+        {% if o.awb and o.step >= 2 and not o.cancelled_at %}<p class="small">Courier: <b>{{ o.courier }}</b> &middot; Tracking number <b translate="no">{{ o.awb }}</b> &middot; <a href="{{ url_for('track', awb=o.awb) }}">Public tracking page</a></p>{% endif %}
         <ol class="track {{ 'cancelled' if o.cancelled_at }}">
             {% for name, t, done in steps %}
             <li class="{{ 'done' if done }}"><span class="dot"></span><b>{{ name }}</b><small>{{ t|nicedate('%a, %d %b, %I:%M %p') if t else '' }}</small></li>
             {% endfor %}
         </ol>
-        {% if o.status not in ('Delivered', 'Cancelled') %}<p class="small muted">Demo store: tracking updates every few minutes so you can watch the order move (Packed &rarr; Shipped &rarr; Out for delivery &rarr; Delivered). Reload the page to refresh.</p>{% endif %}
+        {% if o.status not in ('Delivered', 'Cancelled', 'Awaiting payment') %}<p class="small muted">Demo store: tracking updates every few minutes so you can watch the order move (Packed &rarr; Shipped &rarr; Out for delivery &rarr; Delivered). You also get a message at every step.</p>{% endif %}
     </section>
+
+    {% if ret %}
+    <section class="panel">
+        <h3>Return</h3>
+        <p><span class="tag">{{ ret.status }}</span> {{ ret.reason }}{% if ret.details %} &mdash; <span class="muted">{{ ret.details }}</span>{% endif %}</p>
+        {% if ret.status == 'Requested' %}<p class="small muted">Requested on {{ ret.created_at|nicedate }}. A courier will pick up the parcel; the refund follows after our check.</p>
+        {% elif ret.status == 'Refunded' %}<p class="ok">Refund of {{ ret.amount|omoney(o) }} sent to your {{ 'card' if ret.refund_to == 'Card' else 'Yo Pay wallet' }} on {{ ret.decided_at|nicedate }}.</p>
+        {% else %}<p class="err">Not accepted: {{ ret.note }}</p>{% endif %}
+    </section>
+    {% elif can_return %}
+    <details class="panel">
+        <summary><b>&#8634; Return this order</b> <span class="small muted">(free return until {{ last_day|nicedate }})</span></summary>
+        <form method="post" action="{{ url_for('request_return', number=o.number) }}" class="return-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="reason">Reason</label>
+            <select id="reason" name="reason" required><option value="">Choose a reason</option>{% for r in reasons %}<option value="{{ r }}">{{ r }}</option>{% endfor %}</select>
+            <label for="details">Tell us more (optional)</label>
+            <textarea id="details" name="details" rows="3" maxlength="500"></textarea>
+            <p class="small muted">You get back {{ (o.total - o.delivery_fee)|omoney(o) }} to your {{ 'card' if o.payment_method == 'Card' else 'Yo Pay wallet' }} after our check.</p>
+            <button class="btn btn-outline btn-sm">Ask for a return</button>
+        </form>
+    </details>
+    {% endif %}
 
     <div class="od-grid">
         <section class="panel">
             <h3>Shipping address</h3>
-            <p><b>{{ o.ship_name }}</b><br>{{ o.ship_address }}<br>Phone: {{ o.ship_mobile }}</p>
+            <p><b>{{ o.ship_name }}</b><br>{{ o.ship_address }}<br>Phone: <span translate="no">{{ o.ship_mobile }}</span></p>
         </section>
         <section class="panel">
             <h3>Payment method</h3>
             <p><b>{{ o.payment_method }}</b><br><span class="small muted">{{ o.payment_note }}</span></p>
-            {% if o.cancelled_at and o.payment_method != 'Cash on Delivery' %}<p class="ok small">Refund of {{ o.total|rupees }} credited to Yo Pay wallet</p>{% endif %}
+            {% if o.currency != 'INR' %}<p class="small muted">Paid in {{ o.currency }} ({{ o.total|inr }} in shop rupees).</p>{% endif %}
+            {% if o.refunded %}<p class="ok small">Refunded: {{ o.refunded|omoney(o) }} to your {{ 'card' if o.payment_method == 'Card' else 'Yo Pay wallet' }}</p>{% endif %}
         </section>
         <section class="panel">
             <h3>Order summary</h3>
-            <div class="s-row"><span>Item(s) subtotal</span><span>{{ o.mrp_total|rupees }}</span></div>
-            <div class="s-row"><span>Discount</span><span class="ok">&minus;{{ (o.mrp_total - o.items_total)|rupees }}</span></div>
-            {% if o.coupon %}<div class="s-row"><span>Coupon {{ o.coupon }}</span><span class="ok">&minus;{{ o.coupon_discount|rupees }}</span></div>{% endif %}
-            <div class="s-row"><span>Delivery</span><span>{{ o.delivery_fee|rupees if o.delivery_fee else 'FREE' }}</span></div>
-            <div class="s-row total"><span>Grand total</span><span>{{ o.total|rupees }}</span></div>
+            <div class="s-row"><span>Item(s) subtotal</span><span>{{ o.mrp_total|omoney(o) }}</span></div>
+            <div class="s-row"><span>Discount</span><span class="ok">&minus;{{ (o.mrp_total - o.items_total)|omoney(o) }}</span></div>
+            {% if o.coupon %}<div class="s-row"><span>Coupon {{ o.coupon }}</span><span class="ok">&minus;{{ o.coupon_discount|omoney(o) }}</span></div>{% endif %}
+            <div class="s-row"><span>Delivery</span><span>{{ o.delivery_fee|omoney(o) if o.delivery_fee else 'FREE' }}</span></div>
+            <div class="s-row total"><span>Grand total</span><span>{{ o.total|omoney(o) }}</span></div>
         </section>
     </div>
 
@@ -51,9 +79,9 @@
         <h3>Items in this order</h3>
         {% for it in o['items'] %}
         <div class="oc-item">
-            <img src="{{ url_for('static', filename='images/products/' ~ it.slug ~ '-1.jpg') }}" alt="">
+            <img src="{{ picture('products/' ~ it.slug ~ '-1.jpg') }}" alt="">
             <div><a href="{{ url_for('product', slug=it.slug) }}">{{ it.name }}</a><br>
-                <span class="small muted">Sold by YoRetail &middot; Qty {{ it.qty }}</span><br><b>{{ (it.price * it.qty)|rupees }}</b></div>
+                <span class="small muted">Qty {{ it.qty }}</span><br><b>{{ (it.price * it.qty)|omoney(o) }}</b></div>
             <div class="btn-col">
                 {% if it.product_id in reviewable %}<a href="{{ url_for('review', slug=it.slug) }}" class="btn btn-yellow btn-sm">&#9733; Write a review</a>{% endif %}
                 <form method="post" action="{{ url_for('cart_add') }}">

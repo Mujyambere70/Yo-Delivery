@@ -4,18 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Online Shopping & Fast Delivery{% endblock %} | Yo Delivery</title>
-    <meta name="description" content="Shop electronics, fashion, footwear, watches, grocery and more with fast delivery across Ambala and India.">
+    <meta name="description" content="Shop electronics, fashion, footwear, watches, grocery and more with fast delivery in India and to every country.">
+    <meta name="author" content="Jean Michel Mujyambere">
+    <meta name="theme-color" content="#ff6b35">
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/app-icon-192.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
 {% if SETTINGS.announcement %}<div class="announce">&#128227; {{ SETTINGS.announcement }}</div>{% endif %}
+<div class="topstrip">
+    <div class="wrap topstrip-row">
+        <span class="hide-sm">&#127757; We deliver to every country &middot; <a href="{{ url_for('track') }}">Track a parcel</a></span>
+        <span class="hide-sm"><a href="{{ url_for('sell') }}">&#127978; Sell on Yo Delivery</a></span>
+        <details class="pick" aria-label="Language">
+            <summary title="Language">&#127760; {{ LANGUAGES[LANG] }}</summary>
+            <div class="pick-menu">{% for code, name in LANGUAGES.items() %}<a href="{{ url_for('set_language', code=code, next=request.full_path) }}" class="{{ 'on' if code == LANG }}" translate="no" lang="{{ code }}">{{ name }}</a>{% endfor %}</div>
+        </details>
+        <details class="pick" aria-label="Currency">
+            <summary title="Currency">{{ CURRENCY }}</summary>
+            <div class="pick-menu">{% for c in CURRENCIES %}<a href="{{ url_for('set_currency', code=c, next=request.full_path) }}" class="{{ 'on' if c == CURRENCY }}"><b translate="no">{{ c }}</b> {{ currency_name(c, LANG) }}</a>{% endfor %}
+                <small class="muted">Prices are converted with today's exchange rate. You pay in this currency by card.</small></div>
+        </details>
+    </div>
+</div>
 <header class="hdr">
     <div class="hdr-row wrap">
         <a href="{{ url_for('index') }}" class="logo" aria-label="Yo Delivery home">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="">
-            <span>yo<b>delivery</b><small>.in</small></span>
+            <span translate="no">yo<b>delivery</b></span>
         </a>
         <a href="{{ url_for('addresses') if user else url_for('login') }}" class="deliver hide-md">
             <span class="pin-ico">&#128205;</span>
@@ -31,6 +50,7 @@
             <button type="submit" aria-label="Search">&#128269;</button>
         </form>
         <div class="hdr-links">
+            {% if user %}<a href="{{ url_for('notifications') }}" class="bell" title="Notifications" aria-label="Notifications">&#128276;{% if unseen %}<em>{{ unseen }}</em>{% endif %}</a>{% endif %}
             <div class="acct">
                 <a href="{{ url_for('account') if user else url_for('login') }}" class="hdr-link">
                     <small>Hello, {{ user.name.split()[0] if user else 'sign in' }}</small><strong>Account &amp; Lists &#9662;</strong>
@@ -38,8 +58,10 @@
                 <div class="acct-menu">
                     {% if user %}
                         {% if user.is_admin %}<a href="{{ url_for('admin_dashboard') }}" class="admin-link">&#128202; Admin Panel</a>{% endif %}
+                        {% if my_shop %}<a href="{{ url_for('seller_dashboard') }}" class="admin-link">&#127978; Seller Centre</a>{% endif %}
                         <a href="{{ url_for('account') }}">&#128100; My Profile</a>
                         <a href="{{ url_for('orders') }}">&#128230; Orders</a>
+                        <a href="{{ url_for('notifications') }}">&#128276; Notifications</a>
                         <a href="{{ url_for('wishlist') }}">&#9825; Wishlist</a>
                         <a href="{{ url_for('addresses') }}">&#128205; Saved Addresses</a>
                         <a href="{{ url_for('logout') }}">&#10162; Sign Out</a>
@@ -80,21 +102,22 @@
 <footer class="ftr">
     <a href="#" class="to-top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top</a>
     <div class="wrap ftr-grid">
-        <div><h4>Get to Know Us</h4><a href="{{ url_for('help_page') }}#about">About Yo Delivery</a><a href="{{ url_for('help_page') }}#contact">Contact Us</a><a href="{{ url_for('help_page') }}">Careers</a></div>
+        <div><h4>Get to Know Us</h4><a href="{{ url_for('about') }}">About Yo Delivery</a><a href="{{ url_for('about') }}#developer">About the developer</a><a href="{{ url_for('help_page') }}#contact">Contact Us</a></div>
         <div><h4>Shop</h4>{% for slug, name, _ in CATEGORIES[:5] %}<a href="{{ url_for('category', category=slug) }}">{{ name }}</a>{% endfor %}</div>
-        <div><h4>Let Us Help You</h4><a href="{{ url_for('account') }}">Your Account</a><a href="{{ url_for('orders') }}">Track Orders</a><a href="{{ url_for('help_page') }}#returns">Returns &amp; Replacements</a><a href="{{ url_for('help_page') }}">Help Centre</a></div>
+        <div><h4>Make Money with Us</h4><a href="{{ url_for('sell') }}">Sell on Yo Delivery</a>{% if my_shop %}<a href="{{ url_for('seller_dashboard') }}">Seller Centre</a>{% endif %}</div>
+        <div><h4>Let Us Help You</h4><a href="{{ url_for('account') }}">Your Account</a><a href="{{ url_for('track') }}">Track a parcel</a><a href="{{ url_for('help_page') }}#returns">Returns &amp; Replacements</a><a href="{{ url_for('help_page') }}">Help Centre</a></div>
         <div><h4>Registered Office</h4><p>Yo Delivery (demo)<br>12 Mall Road, Ambala Cantt<br>Haryana 133001, India<br>support@yodelivery.example</p></div>
     </div>
     <div class="ftr-mid">
         <div class="wrap ftr-badges">
-            <span>&#128666; Free delivery over {{ FREE_DELIVERY_FROM|rupees }}</span>
-            <span>&#8634; 7-day easy returns</span>
-            <span>&#128181; Cash on Delivery</span>
-            <span>&#128274; Secure checkout</span>
+            <span>&#128666; Free delivery in India over {{ FREE_DELIVERY_FROM|rupees }}</span>
+            <span>&#127757; Shipping to every country</span>
+            <span>&#8634; {{ SETTINGS.return_days }}-day easy returns</span>
+            <span>&#128274; Secure card checkout (test mode)</span>
         </div>
     </div>
     <div class="ftr-bottom wrap">
-        <span>&copy; 2026 Yo Delivery. All rights reserved.</span>
+        <span>&copy; {{ now_year }} Yo Delivery &middot; Designed &amp; developed by <a href="{{ url_for('about') }}#developer" translate="no">Jean Michel Mujyambere</a> &middot; <a href="{{ DEVELOPER.github }}" target="_blank" rel="noopener" translate="no">GitHub</a></span>
         <span class="disclaimer">Yo Delivery is a demo e-commerce website made for an academic project. Products, brands, sellers and payments are fictional &mdash; no real orders are delivered and no real money is charged.</span>
     </div>
 </footer>

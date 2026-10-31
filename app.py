@@ -1,56 +1,124 @@
 """
-Yo Delivery - online shopping & delivery website (Python + Flask).
+Yo Delivery - international online shopping & delivery website (Python + Flask).
+Designed and developed by Jean Michel Mujyambere (github.com/Mujyambere70).
 
 Run:   python app.py      then open http://127.0.0.1:5000
-Demo:  demo@example.com  /  Demo@1234
+Demo:  demo@example.com  /  Demo@1234        Admin: admin@example.com / Admin@1234
+       seller@example.com / Seller@1234 (seller centre)
+
+Database: SQLite file yo_delivery.db on your computer, or PostgreSQL when DATABASE_URL is set
+(needed online - free hosts like Render delete local files at every restart).
 """
 
 import csv
 import io
 import os
 import secrets
+import time
+from datetime import datetime
 from functools import wraps
 
-from flask import (Flask, Response, abort, flash, redirect, render_template, request, session, url_for)
+from flask import (Flask, Response, abort, flash, jsonify, redirect, render_template, request, send_from_directory,
+                   session, url_for)
 
 import demo_data
+import i18n
 import images
+import otp
+import jinja2
+import world
+from aftersales import RETURN_REASONS
+from sellers import SELLER_STATUSES
 from store import (ACTIONS, CATEGORY_NAMES, STATES, TRACK_STEPS, ShopError, Store, delivery_date_text,
-                   delivery_days, rupees, to_dt, PINCODE_RE)
+                   delivery_days, rupees, to_dt)
 
 GST = {"electronics": 18, "fashion": 12, "footwear": 12, "watches": 18, "grocery": 5, "home": 18, "books": 0}
+LANG_CURRENCY = {"en": "INR", "ru": "RUB", "fr": "EUR", "es": "EUR", "ar": "AED", "zh": "CNY", "rw": "RWF"}
+DEVELOPER = {"name": "Jean Michel Mujyambere", "github": "https://github.com/Mujyambere70",
+             "linkedin": "https://linkedin.com/in/jeanmichel", "email": "mujyamberejean9@gmail.com"}
 
 
-def create_app(db_path=None, seed=True):
+def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, housekeeping=True):
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024        # uploads up to 12 MB
+    app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024        # pictures and backup files
+    env = os.environ if env is None else env
 
-    store = Store(db_path or os.path.join(app.root_path, "yo_delivery.db"))
+    target = db_path or env.get("DATABASE_URL") or os.path.join(app.root_path, "yo_delivery.db")
+    store = Store(target, driver=driver, notifier=notifier, env=env)
+    # the key that signs login cookies must stay the same after a restart and for every worker
+    app.config["SECRET_KEY"] = env.get("SECRET_KEY") or store.secret_key()
     if seed:
         demo_data.seed(store)
     app.store = store
+    app.config["HOUSEKEEPING"] = housekeeping
+    rate_cache = {"at": 0, "rates": {}}
 
     # ---------------- template helpers ----------------
 
-    app.jinja_env.filters["rupees"] = rupees
+    def rates():
+        if time.time() - rate_cache["at"] > 600:              # read the rates at most every 10 minutes
+            rate_cache.update(at=time.time(), rates=store.rates())
+        return rate_cache["rates"]
+
+    def order_money(amount, o):
+        """An amount of an order, in the currency the customer paid in (the rate of the order day)."""
+        cur = o.get("currency") or "INR"
+        if cur == "INR":
+            return world.format_money(amount, "INR")
+        return world.format_money(world.convert(amount, cur, {cur: o.get("fx_rate") or 1, "INR": 1.0}), cur)
+
+    # Filters that depend on the visitor (language, currency) get the template context, so that Jinja does not
+    # compute them once at compile time for constant values like {{ 10000|rupees }} and reuse them for everyone.
+    def live(fn):
+        return jinja2.pass_context(lambda _ctx, *args: fn(*args))
+    app.jinja_env.filters["rupees"] = live(lambda paise: world.price(paise))      # shop prices: visitor's currency
+    app.jinja_env.filters["inr"] = live(lambda paise: world.format_money(paise, "INR"))  # back office: rupees
+    app.jinja_env.filters["omoney"] = live(order_money)
+    app.jinja_env.filters["money"] = live(lambda amount, cur="INR": world.format_money(amount, cur))
+    app.jinja_env.filters["tr"] = live(lambda text: i18n.translate_text(text))
+    app.jinja_env.filters["country"] = live(lambda code: world.country_name(code, world.current_lang()))
 
     @app.template_filter("nicedate")
     def nicedate(value, fmt="%d %b %Y"):
-        return to_dt(value).strftime(fmt) if value else ""
+        if not value:
+            return ""
+        return world.format_when(value, with_time="%H" in fmt or "%I" in fmt)
+    app.jinja_env.filters["nicedate"] = live(nicedate)
+
+    def coupon_text(c):
+        """Coupon description in the visitor's currency, built from the coupon's numbers
+        (the page translator turns the English sentence into the visitor's language)."""
+        low = world.price(c["min_order"] * 100)
+        if c["kind"] == "flat":
+            text = f"{world.price(c['amount'] * 100)} off on orders above {low}"
+        else:
+            text = f"{c['amount']}% off up to {world.price(c['max_off'] * 100)} on orders above {low}"
+        return text + (", first order only" if c["first_order_only"] else "")
 
     def csrf_token():
         if "csrf_token" not in session:
             session["csrf_token"] = secrets.token_hex(16)
         return session["csrf_token"]
 
-    app.jinja_env.globals.update(csrf_token=csrf_token, TRACK_STEPS=TRACK_STEPS, GST=GST,
-                                 delivery_date=delivery_date_text)
+    def picture(name):
+        """Address of a picture: uploaded ones live in the database, built-in ones in static/images."""
+        name = str(name or "")
+        return url_for("img", name=name[7:] if name.startswith("images/") else name)
+
+    app.jinja_env.globals.update(csrf_token=csrf_token, TRACK_STEPS=TRACK_STEPS, GST=GST, picture=picture,
+                                 delivery_date=delivery_date_text, LANGUAGES=world.LANGUAGES,
+                                 CURRENCIES=world.CURRENCIES, DEVELOPER=DEVELOPER,
+                                 currency_name=world.currency_name, now_year=datetime.now().year)
 
     def user_id():
         return session.get("uid")
+
+    def visitor():
+        if "visitor" not in session:
+            session["visitor"] = secrets.token_hex(8)
+        return session["visitor"]
 
     def get_cart():
         if user_id():
@@ -63,6 +131,9 @@ def create_app(db_path=None, seed=True):
         else:
             session["cart"] = {str(k): v for k, v in cart.items()}
 
+    def is_back_office():
+        return (request.path.startswith("/admin")) and request.endpoint != "static"
+
     @app.context_processor
     def header_data():
         uid = user_id()
@@ -71,14 +142,59 @@ def create_app(db_path=None, seed=True):
             session.clear()
         address = store.default_address(uid) if user else None
         settings = store.settings()
+        lang = world.current_lang()
         return {"user": user, "cart_count": sum(get_cart().values()),
                 "wish_ids": store.wishlist_ids(uid) if user else set(), "deliver_to": address,
                 # these come from the database, so the admin can change them
                 "CATEGORIES": [(c["slug"], c["name"], c["image"]) for c in store.categories()],
-                "COUPONS": {c["code"]: (c["description"],) for c in store.coupons(active_only=True)},
-                "FREE_DELIVERY_FROM": settings["free_delivery_from"], "SETTINGS": settings}
+                "COUPONS": {c["code"]: (coupon_text(c),) for c in store.coupons(active_only=True)},
+                "RATES": world.current_rates(),
+                "FREE_DELIVERY_FROM": settings["free_delivery_from"], "SETTINGS": settings,
+                "LANG": lang, "RTL": lang in world.RTL_LANGUAGES, "CURRENCY": world.current_currency(),
+                "my_shop": store.seller_of(uid) if user else None,
+                "unseen": store.unseen_count(uid) if user else 0}
 
-    # ---------------- security ----------------
+    # ---------------- language, currency, housekeeping, security ----------------
+
+    @app.before_request
+    def language_and_currency():
+        """Language: chosen by the visitor, else the customer's saved one, else the browser's, else English.
+        Currency: chosen, else saved, else the usual currency of the language. The back office is English + ₹."""
+        if is_back_office():
+            world.set_context(lang="en", currency="INR", rates={})
+            return
+        u = store.get_user(user_id()) if user_id() else None
+        lang = session.get("lang") or (u["lang"] if u and u["lang"] != "en" else None)
+        if lang not in world.LANGUAGES:
+            lang = request.accept_languages.best_match(list(world.LANGUAGES)) or "en"
+        cur = session.get("currency") or (u["currency"] if u and u["currency"] else None) or LANG_CURRENCY[lang]
+        today = rates()
+        if cur != "INR" and not today.get(cur):           # no exchange rate yet: show and charge rupees, honestly
+            cur = "INR"
+        world.set_context(lang=lang, currency=cur, rates=today)
+
+    @app.after_request
+    def translate(resp):
+        lang = world.current_lang()
+        if lang != "en" and resp.mimetype == "text/html" and not resp.direct_passthrough:
+            page = i18n.translate_html(resp.get_data(as_text=True), lang)
+            if lang in world.RTL_LANGUAGES:
+                page = page.replace('<html lang="en">', f'<html lang="{lang}" dir="rtl">', 1)
+            else:
+                page = page.replace('<html lang="en">', f'<html lang="{lang}">', 1)
+            resp.set_data(page)
+        resp.headers["X-Frame-Options"] = "DENY"
+        resp.headers["X-Content-Type-Options"] = "nosniff"
+        resp.headers["Referrer-Policy"] = "same-origin"
+        return resp
+
+    @app.before_request
+    def jobs():
+        if app.config["HOUSEKEEPING"] and request.endpoint not in ("static", "img"):
+            try:
+                store.housekeeping()
+            except Exception as e:                      # never block the shop because of this
+                app.logger.warning("housekeeping failed: %s", e)
 
     @app.before_request
     def check_csrf():
@@ -88,16 +204,10 @@ def create_app(db_path=None, seed=True):
                 session.clear()
                 flash("Your account has been blocked. Please contact customer support.", "error")
                 return redirect(url_for("index"))
-        if request.method == "POST":
+        if request.method == "POST" and request.endpoint not in ("stripe_webhook", "push_subscribe"):
             sent = request.form.get("csrf_token", "")
             if not sent or not secrets.compare_digest(sent, session.get("csrf_token", "")):
                 abort(400)
-
-    @app.after_request
-    def headers(resp):
-        resp.headers["X-Frame-Options"] = "DENY"
-        resp.headers["X-Content-Type-Options"] = "nosniff"
-        return resp
 
     def login_required(view):
         @wraps(view)
@@ -125,9 +235,66 @@ def create_app(db_path=None, seed=True):
             return view(*a, **kw)
         return wrapper
 
+    def seller_required(view):
+        @wraps(view)
+        def wrapper(*a, **kw):
+            if not user_id():
+                flash("Please sign in to open your Seller Centre.", "info")
+                return redirect(url_for("login", next=request.full_path))
+            shop = store.seller_of(user_id())
+            if not shop:
+                return redirect(url_for("sell"))
+            if shop["status"] != "Approved" and request.endpoint not in ("seller_dashboard",):
+                flash("Your shop is not approved, so this page is not available yet.", "info")
+                return redirect(url_for("seller_dashboard"))
+            request.shop = shop
+            return view(*a, **kw)
+        return wrapper
+
     def safe_next(default="index"):
         nxt = request.values.get("next", "")
         return nxt if nxt.startswith("/") and not nxt.startswith("//") else url_for(default)
+
+    def base_url():
+        return request.url_root if request.url_root.endswith("/") else request.url_root + "/"
+
+    # ======================================================
+    # Language, currency, pictures, app files
+    # ======================================================
+
+    @app.route("/lang/<code>")
+    def set_language(code):
+        if code in world.LANGUAGES:
+            session["lang"] = code
+            session.pop("currency", None) if code == "ru" else None     # Russian -> rubles
+            if code == "ru":
+                session["currency"] = "RUB"
+            if user_id():
+                store.set_preferences(user_id(), lang=code, currency="RUB" if code == "ru" else None)
+        return redirect(safe_next())
+
+    @app.route("/currency/<code>")
+    def set_currency(code):
+        if code in world.CURRENCIES:
+            session["currency"] = code
+            if user_id():
+                store.set_preferences(user_id(), currency=code)
+        return redirect(safe_next())
+
+    @app.route("/img/<path:name>")
+    def img(name):
+        found = store.media(name)
+        if found:
+            mime, blob, when = found
+            etag = f'"{abs(hash((name, when)))}"'
+            if request.headers.get("If-None-Match") == etag:
+                return Response(status=304)
+            return Response(blob, mimetype=mime, headers={"Cache-Control": "public, max-age=3600", "ETag": etag})
+        return send_from_directory(os.path.join(app.static_folder, "images"), name, max_age=86400)
+
+    @app.route("/sw.js")
+    def service_worker():
+        return send_from_directory(app.static_folder, "sw.js", mimetype="application/javascript", max_age=0)
 
     # ======================================================
     # Shopping pages
@@ -135,7 +302,7 @@ def create_app(db_path=None, seed=True):
 
     @app.route("/")
     def index():
-        recent = store.products(ids=session.get("recent", [])[:8]) if session.get("recent") else []
+        recent = store.recently_viewed(visitor(), user_id(), 8)
         return render_template(
             "index.html",
             deals=store.products(order="deals", limit=8),
@@ -144,6 +311,7 @@ def create_app(db_path=None, seed=True):
             grocery=store.products(category="grocery", limit=8),
             home_books=store.products(category="home") + store.products(category="books"),
             new_arrivals=store.products(order="new", limit=10),
+            for_you=store.recommended(visitor(), user_id(), 10) if recent or user_id() else [],
             recent=recent)
 
     def listing(category=""):
@@ -181,24 +349,46 @@ def create_app(db_path=None, seed=True):
             p = store.get_product(slug=slug)
         except ShopError:
             abort(404)
-        if not p.active and not (user_id() and store.get_user(user_id())["is_admin"]):
-            abort(404)                      # hidden by the admin
-        recent = [x for x in session.get("recent", []) if x != p.id]
-        session["recent"] = ([p.id] + recent)[:10]
+        u = store.get_user(user_id()) if user_id() else None
+        shop = store.seller_of(user_id()) if u else None
+        own = shop and p.seller_id == shop["id"]
+        if (not p.active or not p.approved) and not (u and u["is_admin"]) and not own:
+            abort(404)                      # hidden, or a seller's product waiting for approval
+        store.record_view(visitor(), user_id(), p.id)
 
+        address = store.default_address(user_id()) if user_id() else None
+        country = request.args.get("country") or (address["country"] if address else "IN")
+        country = country if country in world.DIAL_CODES else "IN"
         pin = request.args.get("pin", "").strip()
-        if not pin and user_id() and store.default_address(user_id()):
-            pin = store.default_address(user_id())["pincode"]
+        if not pin and address and address["country"] == country:
+            pin = address["pincode"]
         delivery = None
-        if pin:
-            if PINCODE_RE.match(pin):
-                delivery = {"pin": pin, "date": delivery_date_text(pin), "days": delivery_days(pin)}
+        if country != "IN":
+            delivery = {"country": country, "date": delivery_date_text("", country=country),
+                        "days": delivery_days("", country), "fee": store.shipping_fee(p.price, country)}
+        elif pin:
+            if world.clean_postcode("IN", pin):
+                delivery = {"pin": pin, "country": "IN", "date": delivery_date_text(pin), "days": delivery_days(pin)}
             else:
-                delivery = {"pin": pin, "error": "Please enter a valid 6-digit pincode."}
+                delivery = {"pin": pin, "country": "IN", "error": "Please enter a valid 6-digit pincode."}
         similar = [x for x in store.products(category=p.category) if x.id != p.id][:8]
+        sold_by = store.shop_names().get(p.seller_id) if p.seller_id else None
         return render_template("product.html", p=p, reviews=store.reviews(p.id), breakdown=store.rating_breakdown(p),
-                               delivery=delivery, similar=similar,
-                               can_review=user_id() and store.can_review(user_id(), p.id))
+                               delivery=delivery, similar=similar, country=country,
+                               countries=world.countries(world.current_lang()),
+                               together=store.bought_together(p.id, 4), also_viewed=store.also_viewed(p.id, 8),
+                               sold_by=sold_by, can_review=user_id() and store.can_review(user_id(), p.id))
+
+    @app.route("/s/<slug>")
+    def storefront(slug):
+        try:
+            shop = store.seller(slug=slug)
+        except ShopError:
+            abort(404)
+        if shop["status"] != "Approved":
+            abort(404)
+        items = [p for p in store.seller_products(shop["id"]) if p.active and p.approved]
+        return render_template("storefront.html", shop=shop, items=items)
 
     # ======================================================
     # Cart
@@ -207,11 +397,13 @@ def create_app(db_path=None, seed=True):
     @app.route("/cart")
     def cart():
         items = store.cart_items(get_cart())
-        summary = store.price_summary(items, session.get("coupon", ""), user_id())
+        address = store.default_address(user_id()) if user_id() else None
+        summary = store.price_summary(items, session.get("coupon", ""), user_id(), address["country"] if address else "IN")
         if session.get("coupon") and summary["coupon_error"]:
             flash(summary["coupon_error"], "error")
             session.pop("coupon", None)
-        return render_template("cart.html", items=items, s=summary)
+        suggestions = store.recommended(visitor(), user_id(), 8, exclude={p.id for p, _ in items}) if items else []
+        return render_template("cart.html", items=items, s=summary, suggestions=suggestions)
 
     @app.route("/cart/add", methods=["POST"])
     def cart_add():
@@ -256,18 +448,18 @@ def create_app(db_path=None, seed=True):
         code = request.form.get("code", "").strip().upper()
         if request.form.get("remove") or not code:
             session.pop("coupon", None)
-            return redirect(url_for("cart"))
+            return redirect(url_for("checkout") if request.form.get("back") == "checkout" else url_for("cart"))
         items = store.cart_items(get_cart())
         s = store.price_summary(items, code, user_id())
         if s["coupon_error"]:
             flash(s["coupon_error"], "error")
         else:
             session["coupon"] = code
-            flash(f"Coupon {code} applied! You saved {rupees(s['coupon_discount'])}.", "success")
-        return redirect(url_for(request.form.get("back", "cart") if request.form.get("back") == "checkout" else "cart"))
+            flash(f"Coupon {code} applied! You saved {world.price(s['coupon_discount'])}.", "success")
+        return redirect(url_for("checkout") if request.form.get("back") == "checkout" else url_for("cart"))
 
     # ======================================================
-    # Checkout & orders
+    # Checkout, payment & orders
     # ======================================================
 
     @app.route("/checkout", methods=["GET", "POST"])
@@ -279,20 +471,82 @@ def create_app(db_path=None, seed=True):
             flash("Your cart is empty.", "info")
             return redirect(url_for("cart"))
         if request.method == "POST":
+            payment = request.form.get("payment", "")
             try:
-                number = store.place_order(uid, request.form.get("address_id"), request.form.get("payment", ""),
-                                           session.get("coupon", ""), request.form.get("upi_id", ""))
+                number = store.place_order(uid, request.form.get("address_id"), payment, session.get("coupon", ""),
+                                           request.form.get("upi_id", ""), currency=world.current_currency(),
+                                           rates=rates())
             except ShopError as e:
                 flash(str(e), "error")
-                return redirect(url_for("checkout"))
+                return redirect(url_for("checkout", address=request.form.get("address_id", "")))
             session.pop("coupon", None)
             o = store.get_order(uid, number)
             act("Order placed", f"{number} - {len(o['items'])} item(s) - {o['payment_method']} - {rupees(o['total'])}")
+            if payment == "card":
+                return redirect(url_for("pay_order", number=number))
             return redirect(url_for("order_success", number=number))
         addresses = store.addresses(uid)
-        summary = store.price_summary(items, session.get("coupon", ""), uid)
-        return render_template("checkout.html", items=items, s=summary, addresses=addresses, states=STATES,
-                               wallet=store.get_user(uid)["wallet"])
+        chosen = next((a for a in addresses if str(a["id"]) == request.args.get("address")), addresses[0] if addresses else None)
+        country = chosen["country"] if chosen else "IN"
+        summary = store.price_summary(items, session.get("coupon", ""), uid, country)
+        return render_template("checkout.html", items=items, s=summary, addresses=addresses, chosen=chosen,
+                               states=STATES, wallet=store.get_user(uid)["wallet"], country=country,
+                               countries=world.countries(world.current_lang()), dial=world.DIAL_CODES,
+                               gateway=store.gateway())
+
+    @app.route("/pay/<number>", methods=["GET", "POST"])
+    @login_required
+    def pay_order(number):
+        """Start paying a card order: Stripe test mode when configured, else the built-in test gateway."""
+        try:
+            o = store.get_order(user_id(), number)
+        except ShopError:
+            abort(404)
+        if o["payment_status"] == "Paid" or o["payment_method"] != "Card" or o["cancelled_at"]:
+            return redirect(url_for("order", number=number))
+        if store.gateway() == "stripe":
+            try:
+                return redirect(store.start_card_payment(user_id(), number, base_url()))
+            except ShopError as e:
+                flash(str(e), "error")
+                return redirect(url_for("order", number=number))
+        error = None
+        if request.method == "POST":
+            f = request.form
+            try:
+                ok, message = store.pay_with_test_card(user_id(), number, f.get("card", ""), f.get("expiry", ""),
+                                                       f.get("cvc", ""), f.get("name", ""))
+                if ok:
+                    act("Payment", f"{number} paid by test card")
+                    return redirect(url_for("order_success", number=number))
+                error = message
+                act("Payment", f"{number} card declined")
+            except ShopError as e:
+                error = str(e)
+        return render_template("pay.html", o=o, error=error), (402 if error else 200)
+
+    @app.route("/pay/<number>/return")
+    @login_required
+    def stripe_return(number):
+        try:
+            store.get_order(user_id(), number)
+            paid = store.finish_stripe(number, request.args.get("session_id", ""))
+        except ShopError as e:
+            flash(str(e), "error")
+            return redirect(url_for("order", number=number))
+        if paid:
+            act("Payment", f"{number} paid via Stripe (test mode)")
+            return redirect(url_for("order_success", number=number))
+        flash("The payment is not finished yet. You can try again.", "info")
+        return redirect(url_for("order", number=number))
+
+    @app.route("/payments/stripe/webhook", methods=["POST"])
+    def stripe_webhook():
+        try:
+            store.stripe_webhook(request.get_data(), request.headers.get("Stripe-Signature", ""))
+        except ShopError:
+            return jsonify({"ok": False}), 400
+        return jsonify({"ok": True})
 
     @app.route("/order/<number>/success")
     @login_required
@@ -315,8 +569,13 @@ def create_app(db_path=None, seed=True):
             o = store.get_order(user_id(), number)
         except ShopError:
             abort(404)
+        if request.args.get("payment") == "cancelled":
+            flash("The payment was cancelled. You can try again within 30 minutes.", "info")
         reviewable = {it["product_id"] for it in o["items"] if store.can_review(user_id(), it["product_id"])}
-        return render_template("order.html", o=o, steps=store.tracking(o), reviewable=reviewable)
+        can_return, last_day = store.return_window(o)
+        return render_template("order.html", o=o, steps=store.tracking(o), reviewable=reviewable,
+                               ret=store.order_return(o["id"]), can_return=can_return, last_day=last_day,
+                               reasons=RETURN_REASONS)
 
     @app.route("/orders/<number>/cancel", methods=["POST"])
     @login_required
@@ -324,8 +583,24 @@ def create_app(db_path=None, seed=True):
         try:
             o = store.cancel_order(user_id(), number)
             act("Order cancelled", f"{number} - {rupees(o['total'])}")
-            extra = " The amount was refunded to your Yo Pay wallet." if o["payment_method"] != "Cash on Delivery" else ""
+            if o["payment_method"] == "Card" and o["payment_status"] == "Paid":
+                extra = " The money goes back to your card."
+            elif o["payment_method"] in ("Yo Pay Wallet", "UPI"):
+                extra = " The amount was refunded to your Yo Pay wallet."
+            else:
+                extra = ""
             flash("Your order was cancelled." + extra, "success")
+        except ShopError as e:
+            flash(str(e), "error")
+        return redirect(url_for("order", number=number))
+
+    @app.route("/orders/<number>/return", methods=["POST"])
+    @login_required
+    def request_return(number):
+        try:
+            store.request_return(user_id(), number, request.form.get("reason", ""), request.form.get("details", ""))
+            act("Return requested", f"{number} - {request.form.get('reason', '')}")
+            flash("Your return request was sent. We will tell you when it is checked.", "success")
         except ShopError as e:
             flash(str(e), "error")
         return redirect(url_for("order", number=number))
@@ -338,13 +613,35 @@ def create_app(db_path=None, seed=True):
         except ShopError:
             abort(404)
         lines = []
+        export = o["international"]
         for it in o["items"]:
             cat = store.get_product(pid=it["product_id"]).category
-            rate = GST.get(cat, 18)
+            rate = 0 if export else GST.get(cat, 18)            # exports are zero-rated for GST
             gross = it["price"] * it["qty"]
             taxable = round(gross * 100 / (100 + rate))
             lines.append({**it, "rate": rate, "gross": gross, "taxable": taxable, "tax": gross - taxable})
-        return render_template("invoice.html", o=o, lines=lines, user=store.get_user(user_id()))
+        return render_template("invoice.html", o=o, lines=lines, user=store.get_user(user_id()), export=export)
+
+    @app.route("/track", methods=["GET", "POST"])
+    def track():
+        """Track a parcel without signing in: order number + email, or the tracking number."""
+        found, form = None, request.values
+        if form.get("number") or form.get("awb"):
+            with store.db() as conn:
+                if form.get("awb"):
+                    row = conn.execute("SELECT number, user_id FROM orders WHERE awb = ?",
+                                       (form.get("awb", "").strip().upper(),)).fetchone()
+                else:
+                    row = conn.execute("SELECT o.number, o.user_id FROM orders o JOIN users u ON u.id = o.user_id "
+                                       "WHERE o.number = ? AND u.email = ?", (form.get("number", "").strip().upper(),
+                                                                              form.get("email", "").strip().lower())
+                                       ).fetchone()
+            if row:
+                o = store.get_order(row["user_id"], row["number"])
+                found = {"o": o, "steps": store.tracking(o)}
+            else:
+                flash("No parcel found. Please check the numbers (and the email of the order).", "error")
+        return render_template("track.html", found=found, form=form)
 
     # ======================================================
     # Reviews & wishlist
@@ -395,27 +692,33 @@ def create_app(db_path=None, seed=True):
 
     @app.route("/signup", methods=["GET", "POST"])
     def signup():
-        form = request.form if request.method == "POST" else {}
+        lang = world.current_lang()
+        form = request.form if request.method == "POST" else {"country": "RU" if lang == "ru" else "IN"}
         if request.method == "POST":
             try:
                 if request.form.get("password") != request.form.get("password2"):
                     raise ShopError("The two passwords do not match.")
                 uid = store.register(form.get("name", ""), form.get("email", ""), form.get("mobile", ""),
-                                     form.get("password", ""))
+                                     form.get("password", ""), country=form.get("country", "IN"), lang=lang)
             except ShopError as e:
                 flash(str(e), "error")
-                return render_template("signup.html", form=form), 400
+                return render_template("signup.html", form=form, countries=world.countries(lang),
+                                       dial=world.DIAL_CODES), 400
             start_session(uid)
             act("Signed up", "New account with email " + form.get("email", "").strip().lower())
-            flash("Welcome to Yo Delivery! ₹2,000 demo balance was added to your Yo Pay wallet.", "success")
+            flash(f"Welcome to Yo Delivery! {world.price(store.setting('signup_wallet'))} demo balance was added "
+                  f"to your Yo Pay wallet.", "success")
             return redirect(safe_next())
-        return render_template("signup.html", form=form)
+        return render_template("signup.html", form=form, countries=world.countries(lang), dial=world.DIAL_CODES)
 
     def start_session(uid):
         guest_cart = {int(k): v for k, v in session.get("cart", {}).items()}
-        recent, token = session.get("recent", []), session.get("csrf_token")
+        keep = {k: session[k] for k in ("visitor", "csrf_token", "lang", "currency") if k in session}
         session.clear()
-        session.update(uid=uid, recent=recent, csrf_token=token)
+        session.update(uid=uid, **keep)
+        store.link_visitor(visitor(), uid)
+        if "lang" in keep or "currency" in keep:          # what was chosen before signing in is remembered
+            store.set_preferences(uid, keep.get("lang"), keep.get("currency"))
         if guest_cart:                                  # move guest cart into the account
             cart = store.get_cart(uid)
             for pid, q in guest_cart.items():
@@ -424,6 +727,15 @@ def create_app(db_path=None, seed=True):
                 except ShopError:
                     pass
             store.save_cart(uid, cart)
+
+    def after_login(u):
+        start_session(u["id"])
+        act("Logged in", "Admin" if u.get("is_admin") else "")
+        if u.get("is_admin") and not request.values.get("next"):
+            flash(f"Welcome, {u['name'].split()[0]}! You are signed in as admin.", "success")
+            return redirect(url_for("admin_dashboard"))
+        flash(f"Welcome back, {u['name'].split()[0]}!", "success")
+        return redirect(safe_next())
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
@@ -436,22 +748,118 @@ def create_app(db_path=None, seed=True):
                 act("Login failed", "Wrong password or unknown account: " + request.form.get("login", "")[:60], uid=0)
                 flash(str(e), "error")
                 return render_template("login.html", login=request.form.get("login", "")), 401
-            start_session(u["id"])
-            act("Logged in", "Admin" if u.get("is_admin") else "")
-            if u.get("is_admin") and not request.values.get("next"):
-                flash(f"Welcome, {u['name'].split()[0]}! You are signed in as admin.", "success")
-                return redirect(url_for("admin_dashboard"))
-            flash(f"Welcome back, {u['name'].split()[0]}!", "success")
-            return redirect(safe_next())
+            if u.get("totp_enabled"):                    # second step: code from the authenticator app
+                session.update(pending_uid=u["id"], pending_at=time.time(), pending_tries=0,
+                               pending_next=request.values.get("next", ""))
+                return redirect(url_for("login_verify"))
+            return after_login(u)
         return render_template("login.html", login="")
+
+    @app.route("/login/verify", methods=["GET", "POST"])
+    def login_verify():
+        uid = session.get("pending_uid")
+        if not uid or time.time() - session.get("pending_at", 0) > 300:
+            session.pop("pending_uid", None)
+            flash("Please sign in again.", "info")
+            return redirect(url_for("login"))
+        if request.method == "POST":
+            try:
+                store.verify_2fa(uid, request.form.get("code", ""))
+            except ShopError as e:
+                session["pending_tries"] = session.get("pending_tries", 0) + 1
+                if session["pending_tries"] >= 5:
+                    session.pop("pending_uid", None)
+                    flash("Too many wrong codes. Please sign in again.", "error")
+                    return redirect(url_for("login"))
+                flash(str(e), "error")
+                return render_template("verify.html"), 401
+            nxt = session.get("pending_next", "")
+            for k in ("pending_uid", "pending_at", "pending_tries", "pending_next"):
+                session.pop(k, None)
+            resp = after_login(store.get_user(uid))
+            return redirect(nxt) if nxt.startswith("/") and not nxt.startswith("//") else resp
+        return render_template("verify.html")
+
+    @app.route("/forgot", methods=["GET", "POST"])
+    def forgot():
+        if request.method == "POST":
+            try:
+                sent = store.start_password_reset(request.form.get("email", ""), base_url())
+            except Exception:
+                sent = False
+            if sent:
+                act("Password reset", "Reset link sent to " + request.form.get("email", "").strip().lower()[:60], uid=0)
+            # the same answer for every email, so nobody can find out which emails have accounts
+            flash("If this email belongs to an account, we sent a link to choose a new password. It works for 30 "
+                  "minutes.", "info")
+            return redirect(url_for("login"))
+        return render_template("forgot.html", email_ready=bool(store.notifier.email_provider()))
+
+    @app.route("/reset/<token>", methods=["GET", "POST"])
+    def reset(token):
+        if request.method == "POST":
+            try:
+                if request.form.get("password") != request.form.get("password2"):
+                    raise ShopError("The two passwords do not match.")
+                uid = store.reset_password(token, request.form.get("password", ""))
+            except ShopError as e:
+                flash(str(e), "error")
+                return render_template("reset.html", ok=store.reset_token_ok(token)), 400
+            act("Password reset", "New password set with an email link", uid=uid)
+            flash("Your new password is saved. Please sign in.", "success")
+            return redirect(url_for("login"))
+        return render_template("reset.html", ok=store.reset_token_ok(token))
 
     @app.route("/logout")
     def logout():
         if user_id():
             act("Logged out")
+        keep = {k: session[k] for k in ("lang", "currency") if k in session}
         session.clear()
+        session.update(keep)
         flash("You have been signed out.", "success")
         return redirect(url_for("index"))
+
+    def totp_context(prefix):
+        secret = session.get(prefix + "totp")
+        u = store.get_user(user_id())
+        return {"new_secret": secret if secret and not u["totp_enabled"] else None,
+                "new_secret_grouped": otp.grouped(secret) if secret else "",
+                "otp_uri": otp.uri(secret, u["email"], "Yo Delivery") if secret else ""}
+
+    def handle_security_form(f):
+        """2FA, notification and preference actions shared by My Account and the admin account page."""
+        action = f.get("action")
+        if action == "2fa_start":
+            session["new_totp"] = otp.new_secret()
+            return "#two-factor"
+        if action == "2fa_confirm":
+            store.enable_2fa(user_id(), session.get("new_totp", ""), f.get("code", ""))
+            session.pop("new_totp", None)
+            flash("Two-factor login is ON. From now on you also need the code from your app to sign in.", "success")
+            return "#two-factor"
+        if action == "2fa_disable":
+            store.disable_2fa(user_id(), f.get("password", ""), f.get("code", ""))
+            flash("Two-factor login is OFF.", "success")
+            return "#two-factor"
+        if action == "notify":
+            store.set_notify_prefs(user_id(), f.get("email"), f.get("sms"))
+            flash("Notification settings saved.", "success")
+            return "#notify"
+        if action == "prefs":
+            lang, cur = f.get("lang"), f.get("currency")
+            store.set_preferences(user_id(), lang, cur)
+            if lang in world.LANGUAGES:
+                session["lang"] = lang
+            if cur in world.CURRENCIES:
+                session["currency"] = cur
+            flash("Language and currency saved.", "success")
+            return "#prefs"
+        if action == "push_remove":
+            store.remove_push_subscription(user_id(), f.get("sub_id", type=int))
+            flash("This device will no longer get notifications.", "success")
+            return "#notify"
+        return None
 
     @app.route("/account", methods=["GET", "POST"])
     @login_required
@@ -459,6 +867,9 @@ def create_app(db_path=None, seed=True):
         if request.method == "POST":
             f = request.form
             try:
+                anchor = handle_security_form(f)
+                if anchor is not None:
+                    return redirect(url_for("account") + anchor)
                 if f.get("action") == "password":
                     if f.get("new_password") != f.get("new_password2"):
                         raise ShopError("The two new passwords do not match.")
@@ -466,13 +877,41 @@ def create_app(db_path=None, seed=True):
                     act("Password changed")
                     flash("Your password was changed.", "success")
                 else:
-                    store.update_user(user_id(), f.get("name", ""), f.get("email", ""), f.get("mobile", ""))
+                    store.update_user(user_id(), f.get("name", ""), f.get("email", ""), f.get("mobile", ""),
+                                      f.get("country"))
                     act("Profile updated")
                     flash("Your profile was updated.", "success")
             except ShopError as e:
                 flash(str(e), "error")
             return redirect(url_for("account"))
-        return render_template("account.html", orders_count=len(store.orders(user_id())))
+        return render_template("account.html", orders_count=len(store.orders(user_id())),
+                               countries=world.countries(world.current_lang()), dial=world.DIAL_CODES,
+                               devices=store.push_subscriptions(user_id()), providers=store.notifier.status(),
+                               **totp_context("new_"))
+
+    @app.route("/account/notifications")
+    @login_required
+    def notifications():
+        rows = store.notifications(user_id())
+        store.mark_seen(user_id())
+        return render_template("notifications.html", rows=rows)
+
+    @app.route("/push/key")
+    @login_required
+    def push_key():
+        return jsonify({"key": store.vapid_keys()["public"]})
+
+    @app.route("/push/subscribe", methods=["POST"])
+    @login_required
+    def push_subscribe():
+        data = request.get_json(silent=True) or {}
+        if not secrets.compare_digest(str(data.get("csrf", "")), session.get("csrf_token", "")):
+            return jsonify({"ok": False}), 400
+        try:
+            store.add_push_subscription(user_id(), data.get("subscription") or {}, data.get("device", ""))
+        except ShopError as e:
+            return jsonify({"ok": False, "error": i18n.translate_text(str(e))}), 400
+        return jsonify({"ok": True})
 
     @app.route("/account/addresses", methods=["GET", "POST"])
     @login_required
@@ -487,35 +926,165 @@ def create_app(db_path=None, seed=True):
                     store.set_default_address(user_id(), f.get("address_id", type=int))
                     flash("Default address changed.", "success")
                 else:
-                    store.add_address(user_id(), f)
-                    act("Address added", f"{f.get('city', '')} {f.get('pincode', '')}")
+                    aid = store.add_address(user_id(), f)
+                    act("Address added", f"{f.get('city', '')} {f.get('pincode', '')} {f.get('country', 'IN')}")
                     flash("Address saved.", "success")
+                    if f.get("next", "").startswith("/checkout"):
+                        return redirect(url_for("checkout", address=aid))
             except ShopError as e:
                 flash(str(e), "error")
                 if f.get("next"):
                     return redirect(safe_next())
                 return render_template("addresses.html", addresses=store.addresses(user_id()), states=STATES,
-                                       form=f), 400
+                                       form=f, countries=world.countries(world.current_lang()),
+                                       dial=world.DIAL_CODES), 400
             return redirect(safe_next("addresses") if f.get("next") else url_for("addresses"))
-        return render_template("addresses.html", addresses=store.addresses(user_id()), states=STATES, form={})
+        u = store.get_user(user_id())
+        return render_template("addresses.html", addresses=store.addresses(user_id()), states=STATES,
+                               form={"country": u["country"]}, countries=world.countries(world.current_lang()),
+                               dial=world.DIAL_CODES)
+
+    # ======================================================
+    # Sell on Yo Delivery (seller centre)
+    # ======================================================
+
+    @app.route("/sell", methods=["GET", "POST"])
+    def sell():
+        shop = store.seller_of(user_id()) if user_id() else None
+        if request.method == "POST":
+            if not user_id():
+                return redirect(url_for("login", next=url_for("sell")))
+            try:
+                store.apply_seller(user_id(), request.form)
+                act("Seller", "Applied to sell: " + request.form.get("shop_name", "")[:60])
+                flash("Thank you! Your seller application was sent. We will tell you when it is checked.", "success")
+                return redirect(url_for("seller_dashboard"))
+            except ShopError as e:
+                flash(str(e), "error")
+                return render_template("sell.html", shop=shop, form=request.form,
+                                       countries=world.countries(world.current_lang())), 400
+        u = store.get_user(user_id()) if user_id() else None
+        return render_template("sell.html", shop=shop, form={"country": u["country"] if u else "IN"},
+                               countries=world.countries(world.current_lang()))
+
+    @app.route("/seller")
+    @seller_required
+    def seller_dashboard():
+        shop = request.shop
+        sales = store.seller_sales(shop["id"], 10) if shop["status"] == "Approved" else []
+        return render_template("seller/dashboard.html", shop=shop, sales=sales, bal=store.seller_balance(shop["id"]),
+                               products=store.seller_products(shop["id"]), payouts=store.payouts(shop["id"]))
+
+    @app.route("/seller/products")
+    @seller_required
+    def seller_products():
+        return render_template("seller/products.html", shop=request.shop,
+                               products=store.seller_products(request.shop["id"]))
+
+    def seller_product_form(product=None):
+        shop = request.shop
+        f = request.form if request.method == "POST" else None
+        if f is not None:
+            try:
+                files = request.files.getlist("images")
+                if product is None and not any(x.filename for x in files):
+                    raise ShopError("Please upload at least one product picture (JPG or PNG).")
+                slug = store.save_seller_product(shop["id"], f, product.id if product else None)
+                try:
+                    images.save_product_images(files, slug, store)
+                except ShopError:
+                    if product is None:
+                        store.delete_product(store.get_product(slug=slug).id)
+                    raise
+                p = store.get_product(slug=slug)
+                act("Seller", ("Updated " if product else "Added ") + p.name[:60] + " (waits for approval)")
+                flash("Saved. Our team checks the product before it appears in the shop.", "success")
+                return redirect(url_for("seller_products"))
+            except ShopError as e:
+                flash(str(e), "error")
+        if f is None and product is not None:
+            f = product_fields(product)
+        return render_template("seller/product_form.html", shop=shop, p=product, form=f or {"active": "yes"},
+                               categories=store.categories()), (400 if request.method == "POST" else 200)
+
+    @app.route("/seller/products/new", methods=["GET", "POST"])
+    @seller_required
+    def seller_product_new():
+        return seller_product_form()
+
+    @app.route("/seller/products/<int:pid>/edit", methods=["GET", "POST"])
+    @seller_required
+    def seller_product_edit(pid):
+        try:
+            p = store.get_product(pid=pid)
+        except ShopError:
+            abort(404)
+        if p.seller_id != request.shop["id"]:
+            abort(404)
+        return seller_product_form(p)
+
+    @app.route("/seller/products/<int:pid>/<action>", methods=["POST"])
+    @seller_required
+    def seller_product_action(pid, action):
+        try:
+            p = store.get_product(pid=pid)
+        except ShopError:
+            abort(404)
+        if p.seller_id != request.shop["id"] or action not in ("hide", "show", "stock"):
+            abort(404)
+        try:
+            if action == "stock":
+                store.admin_update_product(pid, p.price / 100, p.mrp / 100, request.form.get("stock"))
+                flash("Stock updated.", "success")
+            else:
+                store.set_product_active(pid, action == "show")
+                flash("The product is now " + ("visible in the shop." if action == "show" else "hidden."), "success")
+        except ShopError as e:
+            flash(str(e), "error")
+        return redirect(url_for("seller_products"))
+
+    @app.route("/seller/orders")
+    @seller_required
+    def seller_orders():
+        return render_template("seller/orders.html", shop=request.shop, sales=store.seller_sales(request.shop["id"]),
+                               bal=store.seller_balance(request.shop["id"]), payouts=store.payouts(request.shop["id"]))
+
+    @app.route("/seller/settings", methods=["GET", "POST"])
+    @seller_required
+    def seller_settings():
+        if request.method == "POST":
+            try:
+                store.update_shop(request.shop["id"], request.form)
+                flash("Shop details saved.", "success")
+            except ShopError as e:
+                flash(str(e), "error")
+            return redirect(url_for("seller_settings"))
+        return render_template("seller/settings.html", shop=request.shop)
 
     # ======================================================
     # Admin panel  (sign in as admin@example.com / Admin@1234)
     # ======================================================
 
+    def admin_page(template, **kw):
+        with store.db() as conn:
+            counts = {"sellers": conn.execute("SELECT COUNT(*) FROM sellers WHERE status = 'Pending'").fetchone()[0],
+                      "products": conn.execute("SELECT COUNT(*) FROM products WHERE approved = 0").fetchone()[0],
+                      "returns": conn.execute("SELECT COUNT(*) FROM returns WHERE status = 'Requested'").fetchone()[0]}
+        return render_template(template, counts=counts, **kw)
+
     @app.route("/admin")
     @admin_required
     def admin_dashboard():
         stats = store.admin_stats()
-        return render_template("admin/dashboard.html", st=stats, recent_orders=store.all_orders(limit=8),
-                               recent_activity=store.activity(limit=12),
-                               low_stock=[p for p in store.products(order="popular") if p.stock <= 10])
+        return admin_page("admin/dashboard.html", st=stats, recent_orders=store.all_orders(limit=8),
+                          recent_activity=store.activity(limit=12),
+                          low_stock=[p for p in store.products(order="popular") if p.stock <= 10])
 
     @app.route("/admin/orders")
     @admin_required
     def admin_orders():
         status, q = request.args.get("status", ""), request.args.get("q", "").strip()
-        return render_template("admin/orders.html", orders=store.all_orders(status, q), status=status, q=q)
+        return admin_page("admin/orders.html", orders=store.all_orders(status, q), status=status, q=q)
 
     @app.route("/admin/orders/<number>", methods=["GET", "POST"])
     @admin_required
@@ -528,27 +1097,29 @@ def create_app(db_path=None, seed=True):
             try:
                 if request.form.get("action") == "status":
                     status = request.form.get("status", "")
+                    if o["payment_status"] in ("Pending", "Failed"):
+                        raise ShopError("This order is waiting for payment.")
                     store.set_order_status(number, status, request.form.get("note", ""))
                     act("Admin: orders", f"Order {number} -> {status}")
-                    flash(f"Order status changed to '{status}'. The customer sees it on the tracking page.", "success")
+                    flash(f"Order status changed to '{status}'. The customer sees it on the tracking page and gets "
+                          f"a message.", "success")
                 else:
                     store.cancel_order(o["user_id"], number)
                     act("Admin: orders", f"Admin cancelled order {number}")
-                    flash("Order cancelled by admin. Stock returned" +
-                          (" and amount refunded to the customer's wallet." if o["payment_method"] != "Cash on Delivery"
-                           else "."), "success")
+                    flash("Order cancelled by admin. Stock returned and the payment refunded.", "success")
             except ShopError as e:
                 flash(str(e), "error")
             return redirect(url_for("admin_order", number=number))
         current = TRACK_STEPS.index(o["status"]) if o["status"] in TRACK_STEPS else len(TRACK_STEPS)
-        return render_template("admin/order.html", o=o, steps=store.tracking(o), next_steps=TRACK_STEPS[current + 1:],
-                               activity=store.activity(q=number, limit=20))
+        return admin_page("admin/order.html", o=o, steps=store.tracking(o), next_steps=TRACK_STEPS[current + 1:],
+                          activity=store.activity(q=number, limit=20), payments=store.payments_of(number),
+                          ret=store.order_return(o["id"]), shops=store.shop_names())
 
     @app.route("/admin/customers")
     @admin_required
     def admin_customers():
         q = request.args.get("q", "").strip()
-        return render_template("admin/customers.html", customers=store.all_customers(q), q=q)
+        return admin_page("admin/customers.html", customers=store.all_customers(q), q=q)
 
     @app.route("/admin/customers/<int:uid>", methods=["GET", "POST"])
     @admin_required
@@ -573,6 +1144,10 @@ def create_app(db_path=None, seed=True):
                     act("Admin: customers", f"Wallet of {c['name']} changed by ₹{f.get('amount')} "
                         f"({f.get('reason', '').strip()[:60] or 'no reason'}) -> {rupees(bal)}")
                     flash(f"Wallet updated. New balance: {rupees(bal)}.", "success")
+                elif action == "reset2fa":
+                    store.reset_2fa(uid)
+                    act("Admin: customers", f"Turned off two-factor login of {c['name']}")
+                    flash("Two-factor login turned off for this account.", "success")
                 elif action == "delete":
                     store.delete_user(uid, user_id())
                     act("Admin: customers", f"Deleted account {c['name']} ({c['email']})")
@@ -581,9 +1156,11 @@ def create_app(db_path=None, seed=True):
             except ShopError as e:
                 flash(str(e), "error")
             return redirect(url_for("admin_customer", uid=uid))
-        return render_template("admin/customer.html", c=c, orders=store.orders(uid), addresses=store.addresses(uid),
-                               activity=store.activity(user_id=uid, limit=50),
-                               cart=store.cart_items(store.get_cart(uid)), wishlist=store.wishlist(uid))
+        full = store.get_user(uid)
+        return admin_page("admin/customer.html", c=c, full=full, orders=store.orders(uid),
+                          addresses=store.addresses(uid), activity=store.activity(user_id=uid, limit=50),
+                          cart=store.cart_items(store.get_cart(uid)), wishlist=store.wishlist(uid),
+                          countries=world.countries("en"), shop=store.seller_of(uid))
 
     @app.route("/admin/products", methods=["GET", "POST"])
     @admin_required
@@ -604,14 +1181,24 @@ def create_app(db_path=None, seed=True):
             products = [p for p in products if not p.active]
         elif show == "low":
             products = [p for p in products if p.stock <= 10]
+        elif show == "waiting":
+            products = [p for p in products if not p.approved]
+        elif show == "sellers":
+            products = [p for p in products if p.seller_id]
         if q:
             products = [p for p in products if q.lower() in (p.name + " " + p.brand).lower()]
         with store.db() as conn:
             sold = {r[0]: r[1] for r in conn.execute(
                 "SELECT i.product_id, SUM(i.qty) FROM order_items i JOIN orders o ON o.id = i.order_id "
                 "WHERE o.cancelled_at = '' GROUP BY i.product_id")}
-        return render_template("admin/products.html", products=products, category=cat, show=show, q=q, sold=sold,
-                               categories=store.categories())
+        return admin_page("admin/products.html", products=products, category=cat, show=show, q=q, sold=sold,
+                          categories=store.categories(), shops=store.shop_names())
+
+    def product_fields(product):
+        return {"name": product.name, "brand": product.brand, "category": product.category,
+                "price": "%g" % (product.price / 100), "mrp": "%g" % (product.mrp / 100), "stock": product.stock,
+                "about": "\n".join(product.about), "specs": "\n".join(f"{k}: {v}" for k, v in product.specs.items()),
+                "tags": product.tags, "active": "yes" if product.active else "no"}
 
     def product_form(product=None):
         f = request.form if request.method == "POST" else None
@@ -622,7 +1209,7 @@ def create_app(db_path=None, seed=True):
                     raise ShopError("Please upload at least one product picture (JPG or PNG).")
                 slug = store.save_product(f, product.id if product else None)
                 try:
-                    count = images.save_product_images(files, slug, app.static_folder)
+                    count = images.save_product_images(files, slug, store)
                 except ShopError:
                     if product is None:                 # do not keep a new product without pictures
                         store.delete_product(store.get_product(slug=slug).id)
@@ -635,12 +1222,9 @@ def create_app(db_path=None, seed=True):
             except ShopError as e:
                 flash(str(e), "error")
         if f is None and product is not None:
-            f = {"name": product.name, "brand": product.brand, "category": product.category,
-                 "price": "%g" % (product.price / 100), "mrp": "%g" % (product.mrp / 100), "stock": product.stock,
-                 "about": "\n".join(product.about), "specs": "\n".join(f"{k}: {v}" for k, v in product.specs.items()),
-                 "tags": product.tags, "active": "yes" if product.active else "no"}
-        return render_template("admin/product_form.html", p=product, form=f or {"active": "yes"},
-                               categories=store.categories()), (400 if request.method == "POST" else 200)
+            f = product_fields(product)
+        return admin_page("admin/product_form.html", p=product, form=f or {"active": "yes"},
+                          categories=store.categories()), (400 if request.method == "POST" else 200)
 
     @app.route("/admin/products/new", methods=["GET", "POST"])
     @admin_required
@@ -665,10 +1249,15 @@ def create_app(db_path=None, seed=True):
                 act("Admin: products", ("Showed " if action == "show" else "Hid ") + p.name[:60])
                 flash(f"{p.name[:50]} is now {'visible in the shop' if action == 'show' else 'hidden from the shop'}.",
                       "success")
+            elif action in ("approve", "reject"):
+                store.approve_product(pid, action == "approve")
+                act("Admin: products", ("Approved " if action == "approve" else "Did not approve ") + p.name[:60])
+                flash(f"{p.name[:50]}: " + ("approved and visible in the shop." if action == "approve"
+                                            else "not approved; the seller was told."), "success")
             elif action == "delete":
                 store.delete_product(pid)
                 if p.art == "upload":
-                    images.delete_product_images(p.slug, app.static_folder)
+                    images.delete_product_images(p.slug, store)
                 act("Admin: products", "Deleted " + p.name[:60])
                 flash(f"Deleted: {p.name[:60]}", "success")
             else:
@@ -691,14 +1280,13 @@ def create_app(db_path=None, seed=True):
                     slug = store.save_category(f.get("name", ""), f.get("slug") or None)
                     pic = request.files.get("image")
                     if pic and pic.filename:
-                        store.save_category(f.get("name", ""), slug,
-                                            images.save_category_image(pic, slug, app.static_folder))
+                        store.save_category(f.get("name", ""), slug, images.save_category_image(pic, slug, store))
                     act("Admin: products", ("Renamed" if f.get("slug") else "Added") + f" category {f.get('name')}")
                     flash(f"Category '{f.get('name')}' saved.", "success")
             except ShopError as e:
                 flash(str(e), "error")
             return redirect(url_for("admin_categories"))
-        return render_template("admin/categories.html", categories=store.categories())
+        return admin_page("admin/categories.html", categories=store.categories())
 
     @app.route("/admin/coupons", methods=["GET", "POST"])
     @admin_required
@@ -720,7 +1308,7 @@ def create_app(db_path=None, seed=True):
             except ShopError as e:
                 flash(str(e), "error")
             return redirect(url_for("admin_coupons"))
-        return render_template("admin/coupons.html", coupons=store.coupons())
+        return admin_page("admin/coupons.html", coupons=store.coupons())
 
     @app.route("/admin/reviews", methods=["GET", "POST"])
     @admin_required
@@ -734,21 +1322,116 @@ def create_app(db_path=None, seed=True):
                 flash(str(e), "error")
             return redirect(url_for("admin_reviews", q=request.form.get("q", ""), rating=request.form.get("rating", "")))
         q, rating = request.args.get("q", "").strip(), request.args.get("rating", "")
-        return render_template("admin/reviews.html", reviews=store.all_reviews(q, rating if rating.isdigit() else None),
-                               q=q, rating=rating)
+        return admin_page("admin/reviews.html", reviews=store.all_reviews(q, rating if rating.isdigit() else None),
+                          q=q, rating=rating)
+
+    @app.route("/admin/sellers", methods=["GET", "POST"])
+    @admin_required
+    def admin_sellers():
+        if request.method == "POST":
+            f = request.form
+            sid = f.get("seller_id", type=int)
+            try:
+                if f.get("action") == "payout":
+                    amount = store.record_payout(sid, f.get("amount"), f.get("note"), store.get_user(user_id())["name"])
+                    act("Admin: sellers", f"Payout {rupees(amount)} to seller #{sid}")
+                    flash(f"Payout of {rupees(amount)} recorded. The seller was told.", "success")
+                else:
+                    s = store.decide_seller(sid, f.get("status"), f.get("reason"), f.get("commission"))
+                    act("Admin: sellers", f"{s['shop_name']} -> {f.get('status')}")
+                    flash(f"{s['shop_name']}: {f.get('status')}. The seller was told.", "success")
+            except ShopError as e:
+                flash(str(e), "error")
+            return redirect(url_for("admin_sellers", status=request.args.get("status", "")))
+        status = request.args.get("status", "")
+        return admin_page("admin/sellers.html", sellers=store.sellers(status), status=status, STATUSES=SELLER_STATUSES,
+                          waiting=store.products_waiting())
+
+    @app.route("/admin/returns", methods=["GET", "POST"])
+    @admin_required
+    def admin_returns():
+        if request.method == "POST":
+            f = request.form
+            try:
+                r = store.decide_return(f.get("return_id", type=int), f.get("action") == "approve",
+                                        store.get_user(user_id())["name"], f.get("note", ""))
+                act("Admin: orders", f"Return #{r['id']} " + ("refunded" if f.get("action") == "approve" else "rejected"))
+                flash("Return refunded: stock is back and the customer was paid back." if f.get("action") == "approve"
+                      else "Return rejected. The customer was told why.", "success")
+            except ShopError as e:
+                flash(str(e), "error")
+            return redirect(url_for("admin_returns", status=request.args.get("status", "Requested")))
+        status = request.args.get("status", "Requested")
+        return admin_page("admin/returns.html", rows=store.returns(status), status=status)
 
     @app.route("/admin/settings", methods=["GET", "POST"])
     @admin_required
     def admin_settings():
         if request.method == "POST":
             try:
-                store.update_settings(request.form)
-                act("Admin: settings", "Changed shop settings")
-                flash("Settings saved. The shop uses them immediately.", "success")
+                if request.form.get("action") == "fx":
+                    n = store.refresh_fx_rates()
+                    act("Admin: settings", f"Downloaded today's exchange rates ({n} currencies)")
+                    flash(f"Exchange rates updated ({n} currencies).", "success")
+                    rate_cache["at"] = 0
+                else:
+                    store.update_settings(request.form)
+                    act("Admin: settings", "Changed shop settings")
+                    flash("Settings saved. The shop uses them immediately.", "success")
             except ShopError as e:
                 flash(str(e), "error")
+            except Exception as e:
+                flash(f"Could not download the rates: {str(e)[:80]}", "error")
             return redirect(url_for("admin_settings"))
-        return render_template("admin/settings.html", st=store.settings())
+        return admin_page("admin/settings.html", st=store.settings(), fx=store.fx_rates(), gateway=store.gateway(),
+                          providers=store.notifier.status(), database=store.database.describe(),
+                          webhook=bool(env.get("STRIPE_WEBHOOK_SECRET")), secret_from_env=bool(env.get("SECRET_KEY")))
+
+    @app.route("/admin/backups", methods=["GET", "POST"])
+    @admin_required
+    def admin_backups():
+        if request.method == "POST":
+            f = request.form
+            if f.get("action") == "restore":
+                file = request.files.get("file")
+                me = store.get_user(user_id())
+                try:
+                    if f.get("confirm") != "RESTORE":
+                        raise ShopError("Type RESTORE in capital letters to confirm.")
+                    if not file or not file.filename:
+                        raise ShopError("Choose a backup file (.json.gz).")
+                    store.login(me["email"], f.get("password", ""))
+                    data = store.unpack(file.read())
+                    store.save_backup("before restore", me["name"])
+                    counts = store.import_data(data)
+                    act("Admin: settings", f"Restored the database from a backup ({counts.get('orders', 0)} orders)",
+                        uid=user_id() if store.get_user(user_id()) else 0)
+                    flash(f"Database restored: {counts.get('users', 0)} users, {counts.get('orders', 0)} orders. "
+                          f"A copy of the old data was saved first.", "success")
+                    if not store.get_user(user_id()):
+                        session.clear()
+                        return redirect(url_for("login"))
+                except ShopError as e:
+                    flash("Password is wrong." if "Incorrect" in str(e) else str(e), "error")
+            else:
+                bid, _ = store.save_backup("manual", store.get_user(user_id())["name"])
+                act("Admin: settings", f"Made backup #{bid}")
+                flash(f"Backup #{bid} created. Download it and keep it safe on your computer.", "success")
+            return redirect(url_for("admin_backups"))
+        return admin_page("admin/backups.html", rows=store.backups(), database=store.database.describe(),
+                          backup_email=env.get("BACKUP_EMAIL", ""), providers=store.notifier.status())
+
+    @app.route("/admin/backups/<int:bid>.json.gz")
+    @app.route("/admin/backups/now.json.gz", defaults={"bid": None})
+    @admin_required
+    def admin_backup_download(bid):
+        try:
+            blob = store.backup_blob(bid) if bid else store.pack(store.export_data())
+        except ShopError:
+            abort(404)
+        act("Admin update", f"Downloaded backup {bid or 'now'}")
+        name = f"yo_delivery_backup_{bid or datetime.now().strftime('%Y%m%d_%H%M')}.json.gz"
+        return Response(blob, mimetype="application/gzip", headers={"Content-Disposition": f"attachment; filename={name}"})
 
     @app.route("/admin/account", methods=["GET", "POST"])
     @admin_required
@@ -756,6 +1439,9 @@ def create_app(db_path=None, seed=True):
         if request.method == "POST":
             f = request.form
             try:
+                anchor = handle_security_form(f)
+                if anchor is not None:
+                    return redirect(url_for("admin_account") + anchor)
                 if f.get("action") == "password":
                     if f.get("new_password") != f.get("new_password2"):
                         raise ShopError("The two new passwords do not match.")
@@ -763,20 +1449,21 @@ def create_app(db_path=None, seed=True):
                     act("Password changed", "Admin changed own password")
                     flash("Your password was changed. Use the new password next time you sign in.", "success")
                 else:
-                    store.update_user(user_id(), f.get("name", ""), f.get("email", ""), f.get("mobile", ""))
+                    store.update_user(user_id(), f.get("name", ""), f.get("email", ""), f.get("mobile", ""),
+                                      f.get("country"))
                     act("Profile updated", "Admin updated own name / email / mobile")
                     flash("Your details were saved.", "success")
             except ShopError as e:
                 flash(str(e), "error")
             return redirect(url_for("admin_account"))
-        return render_template("admin/account.html")
+        return admin_page("admin/account.html", **totp_context("new_"))
 
     @app.route("/admin/activity")
     @admin_required
     def admin_activity():
         action, q = request.args.get("action", ""), request.args.get("q", "").strip()
-        return render_template("admin/activity.html", rows=store.activity(action, q, limit=500), action=action, q=q,
-                               actions=ACTIONS)
+        return admin_page("admin/activity.html", rows=store.activity(action, q, limit=500), action=action, q=q,
+                          actions=ACTIONS)
 
     @app.route("/admin/database")
     @app.route("/admin/database/<table>")
@@ -788,8 +1475,8 @@ def create_app(db_path=None, seed=True):
             cols, rows = store.table_rows(table, limit=200)
         except ShopError:
             abort(404)
-        return render_template("admin/database.html", tables=tables, table=table, cols=cols, rows=rows,
-                               total=dict(tables)[table])
+        return admin_page("admin/database.html", tables=tables, table=table, cols=cols, rows=rows,
+                          total=dict(tables)[table])
 
     @app.route("/admin/database/<table>.csv")
     @admin_required
@@ -803,19 +1490,25 @@ def create_app(db_path=None, seed=True):
         writer.writerow(cols)
         writer.writerows(rows)
         act("Admin update", f"Exported table {table} to CSV")
-        return Response("\ufeff" + out.getvalue(), mimetype="text/csv",
+        return Response("﻿" + out.getvalue(), mimetype="text/csv",
                         headers={"Content-Disposition": f"attachment; filename=yo_delivery_{table}.csv"})
 
-    @app.errorhandler(403)
-    def forbidden(e):
-        return render_template("error.html", code=403, title="Admins only",
-                               message="This page is only for store administrators."), 403
+    # ======================================================
+    # Information pages
+    # ======================================================
 
     @app.route("/help")
     def help_page():
         return render_template("help.html")
 
-    # ---------------- errors ----------------
+    @app.route("/about")
+    def about():
+        return render_template("about.html")
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template("error.html", code=403, title="Admins only",
+                               message="This page is only for store administrators."), 403
 
     @app.errorhandler(404)
     def not_found(e):
@@ -826,6 +1519,11 @@ def create_app(db_path=None, seed=True):
     def bad_request(e):
         return render_template("error.html", code=400, title="Please try again",
                                message="This form has expired. Go back, reload the page and try again."), 400
+
+    @app.errorhandler(413)
+    def too_big(e):
+        return render_template("error.html", code=413, title="File too large",
+                               message="The file is too large. Pictures can be at most 12 MB."), 413
 
     return app
 

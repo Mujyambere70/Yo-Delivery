@@ -17,12 +17,22 @@
         <label for="cn">Name</label><input type="text" id="cn" name="name" value="{{ c.name }}" required>
         <div class="form-grid">
             <div><label for="ce">Email</label><input type="email" id="ce" name="email" value="{{ c.email }}" required></div>
-            <div><label for="cm">Mobile</label><input type="tel" id="cm" name="mobile" value="{{ c.mobile }}" pattern="[6-9][0-9]{9}" maxlength="10" required></div>
+            <div><label for="cm">Mobile</label><input type="tel" id="cm" name="mobile" value="{{ c.mobile }}" maxlength="18" required></div>
+            <div><label for="cc">Country</label><select id="cc" name="country">{% for code, name in countries %}<option value="{{ code }}" {% if full.country == code %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
+            <div><label>Language &middot; currency</label><input type="text" value="{{ full.lang }} &middot; {{ full.currency or '-' }}" disabled></div>
         </div>
         <label class="check"><input type="checkbox" name="blocked" value="yes" {% if c.blocked %}checked{% endif %}> Block this account (cannot sign in or buy)</label>
         <label class="check"><input type="checkbox" name="is_admin" value="yes" {% if c.is_admin %}checked{% endif %}> Admin (can open this admin panel)</label>
         <button class="btn btn-orange" style="margin-top:10px">Save</button>
+        {% if shop %}<p class="small">&#127978; Seller: <a href="{{ url_for('admin_sellers') }}">{{ shop.shop_name }}</a> ({{ shop.status }})</p>{% endif %}
     </form>
+    {% if full.totp_enabled %}
+    <form method="post" class="panel" onsubmit="return confirm('Turn off two-factor login for this account? Do it only after checking the person.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="reset2fa">
+        <h2>Two-factor login is ON</h2><p class="small muted">If the customer lost the phone, turn it off; they can sign in with the password and set it up again.</p>
+        <button class="btn btn-outline btn-sm">Turn off two-factor login</button>
+    </form>
+    {% endif %}
     <div>
         <form method="post" class="panel">
             <h2>Yo Pay wallet &middot; {{ c.wallet|rupees }}</h2>

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Seller Centre{% endblock %}
+{% block content %}
+<div class="wrap seller">
+    {% include "seller/_nav.html" %}
+    {% if shop.status != 'Approved' %}
+        <section class="panel">
+            <h1>{{ shop.shop_name }}</h1>
+            {% if shop.status == 'Pending' %}<p><span class="tag">Pending</span> Thank you for applying! Our team checks your application, usually within one working day. You will get a message.</p>
+            {% elif shop.status == 'Rejected' %}<p><span class="tag">Rejected</span> Your application was not approved. Reason: {{ shop.reason }}</p>
+            {% else %}<p><span class="tag">Suspended</span> Your shop is suspended and its products are hidden. Reason: {{ shop.reason }}</p>{% endif %}
+        </section>
+    {% else %}
+    <h1>Hello, {{ user.name.split()[0] }}!</h1>
+    <div class="kpis">
+        <div class="kpi"><small>Items sold</small><b>{{ bal.units }}</b></div>
+        <div class="kpi"><small>Sales (before commission)</small><b>{{ bal.gross|inr }}</b></div>
+        <div class="kpi"><small>Earned (delivered items)</small><b class="ok">{{ bal.earned|inr }}</b></div>
+        <div class="kpi"><small>On the way (not delivered yet)</small><b>{{ bal.pending|inr }}</b></div>
+        <div class="kpi"><small>Paid to you</small><b>{{ bal.paid|inr }}</b></div>
+        <div class="kpi"><small>Balance to be paid</small><b class="ok">{{ bal.balance|inr }}</b></div>
+    </div>
+    <div class="od-grid two">
+        <section class="panel">
+            <h3>Latest sales</h3>
+            {% for r in sales %}
+                <div class="mini-line"><span>{{ r.name[:50] }} &times; {{ r.qty }}<br><small class="muted"><span translate="no">{{ r.number }}</span> &middot; {{ r.country|country }} &middot; {{ r.status }}</small></span><b>{{ r.net|inr }}</b></div>
+            {% else %}<p class="muted">No sales yet. Add products and share your shop page!</p>{% endfor %}
+            <a href="{{ url_for('seller_orders') }}" class="small">All sales &rsaquo;</a>
+        </section>
+        <section class="panel">
+            <h3>Products</h3>
+            <p>{{ products|length }} product(s) &middot; {{ products|selectattr('approved', 'equalto', 0)|list|length }} waiting for approval</p>
+            <a href="{{ url_for('seller_product_new') }}" class="btn btn-orange btn-sm">+ Add a product</a>
+            <a href="{{ url_for('seller_products') }}" class="btn btn-outline btn-sm">Manage products</a>
+            <p class="small muted">Commission: {{ '%g'|format(shop.commission) }}% of the price of each delivered item. Earnings are counted when the item is delivered and not returned.</p>
+        </section>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

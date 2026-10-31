@@ -32,7 +32,7 @@
     <section class="panel">
         <h2>3. Pictures</h2>
         {% if p %}
-        <div class="cur-imgs">{% for img in p.images %}<img src="{{ url_for('static', filename=img) }}?v={{ range(1, 99999)|random }}" alt="Picture {{ loop.index }}">{% endfor %}</div>
+        <div class="cur-imgs">{% for img in p.images %}<img src="{{ picture(img) }}?v={{ range(1, 99999)|random }}" alt="Picture {{ loop.index }}">{% endfor %}</div>
         <p class="small muted">Upload new pictures only if you want to replace the current ones.</p>
         {% endif %}
         <label for="images">Upload 1 to 3 pictures (JPG, PNG or WEBP){{ ' *' if not p }}</label>

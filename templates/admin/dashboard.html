@@ -28,7 +28,7 @@
         <table class="at">
             <thead><tr><th>Product</th><th class="num">Sold</th><th class="num">Sales</th></tr></thead>
             {% for t in st.top_products %}
-            <tr><td><a href="{{ url_for('product', slug=t.slug) }}" target="_blank" class="pname"><img src="{{ url_for('static', filename='images/products/' ~ t.slug ~ '-1.jpg') }}" alt=""><span>{{ t.name }}</span></a></td><td class="num">{{ t.qty }}</td><td class="num">{{ t.sales|rupees }}</td></tr>
+            <tr><td><a href="{{ url_for('product', slug=t.slug) }}" target="_blank" class="pname"><img src="{{ picture('products/' ~ t.slug ~ '-1.jpg') }}" alt=""><span>{{ t.name }}</span></a></td><td class="num">{{ t.qty }}</td><td class="num">{{ t.sales|rupees }}</td></tr>
             {% endfor %}
         </table>
         <h3 class="mt">Sales by category</h3>
@@ -67,7 +67,7 @@
 {% if low_stock %}
 <section class="panel warn-panel">
     <div class="ph"><h2>&#9888; Low stock</h2><a href="{{ url_for('admin_products') }}">Manage stock &rsaquo;</a></div>
-    <div class="low-list">{% for p in low_stock %}<a href="{{ url_for('admin_products', category=p.category) }}#p{{ p.id }}"><img src="{{ url_for('static', filename=p.image) }}" alt="">{{ p.name[:40] }}<b>{{ p.stock }} left</b></a>{% endfor %}</div>
+    <div class="low-list">{% for p in low_stock %}<a href="{{ url_for('admin_products', category=p.category) }}#p{{ p.id }}"><img src="{{ picture(p.image) }}" alt="">{{ p.name[:40] }}<b>{{ p.stock }} left</b></a>{% endfor %}</div>
 </section>
 {% endif %}
 {% endblock %}

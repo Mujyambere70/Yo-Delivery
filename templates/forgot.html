@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Forgot password{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <form method="post" class="panel auth-form single">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <h1>Forgot your password?</h1>
+        <p class="muted">Type the email of your account. We send you a link to choose a new password; it works for 30 minutes.</p>
+        <label for="femail">Email</label><input type="email" id="femail" name="email" required autofocus>
+        <button class="btn btn-orange btn-block">Send me the link</button>
+        {% if not email_ready %}<p class="small muted">Note: this demo shop has no email service switched on yet, so no email can be sent. Ask the shop's support to set a new password for you.</p>{% endif %}
+        <p class="small"><a href="{{ url_for('login') }}">Back to sign in</a></p>
+    </form>
+</div>
+{% endblock %}

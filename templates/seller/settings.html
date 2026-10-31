@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Shop settings{% endblock %}
+{% block content %}
+<div class="wrap seller">
+    {% include "seller/_nav.html" %}
+    <h1>Shop settings</h1>
+    <form method="post" class="panel">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <p><b>{{ shop.shop_name }}</b> &middot; {{ shop.city }}, {{ shop.country|country }} &middot; commission {{ '%g'|format(shop.commission) }}%</p>
+        <label for="about">About your shop (shown on your shop page)</label>
+        <textarea id="about" name="about" rows="4" maxlength="400" required>{{ shop.about }}</textarea>
+        <label for="payout">Where should we pay your earnings?</label>
+        <input type="text" id="payout" name="payout_details" value="{{ shop.payout_details }}" required>
+        <button class="btn btn-orange">Save</button>
+        <p class="small muted">To change the shop name or country, please contact Yo Delivery support.</p>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}About Yo Delivery{% endblock %}
+{% block content %}
+<div class="wrap narrow about">
+    <section class="panel">
+        <h1>About Yo Delivery</h1>
+        <p>Yo Delivery is an online shop and delivery service written in Python with Flask. Customers from any country can shop in seven languages, see prices in their own currency, pay by card in test mode, follow their parcel step by step and return what they don't want. Independent sellers can open their own shop on the marketplace.</p>
+        <p>It started as a broken PHP website and was rebuilt from the ground up as an academic and portfolio project. Products, brands, sellers and payments are fictional: nothing is really sold, shipped or charged.</p>
+        <div class="about-facts">
+            <div><b>7</b><span>languages</span></div><div><b>8</b><span>currencies</span></div><div><b>240+</b><span>countries and territories</span></div><div><b>{{ CATEGORIES|length }}</b><span>categories</span></div>
+        </div>
+    </section>
+
+    <section class="panel dev" id="developer">
+        <div class="dev-photo" translate="no">JM</div>
+        <div>
+            <h2 translate="no">Jean Michel Mujyambere</h2>
+            <p class="muted">Software Engineer &middot; Python Development &middot; Data Analytics &middot; UX Design &middot; Machine Learning</p>
+            <p>I designed and developed Yo Delivery by myself: the database, the Python code, every page, the translations, the payment and notification integrations and the automated tests.</p>
+            <ul class="dev-list">
+                <li>&#127891; Master's student in Applied Mathematics and Informatics (Data Analysis in Science and Entrepreneurship), Siberian Federal University, Krasnoyarsk, Russia (2026 &ndash; 2028)</li>
+                <li>&#127891; Bachelor of Computer Applications (AI &amp; ML), Maharishi Markandeshwar University, India (2022 &ndash; 2025)</li>
+                <li>&#128187; Software Engineering Bootcamp, HyperionDev (2023 &ndash; 2024)</li>
+                <li>&#128200; Google certificates: Advanced Data Analytics, Cybersecurity, UX Design, Project Management</li>
+                <li>&#128483; Languages: English, Russian, French, Kinyarwanda</li>
+            </ul>
+            <p class="dev-links"><a href="{{ DEVELOPER.github }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" translate="no">GitHub &middot; Mujyambere70</a>
+                <a href="{{ DEVELOPER.linkedin }}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" translate="no">LinkedIn</a>
+                <a href="mailto:{{ DEVELOPER.email }}" class="btn btn-outline btn-sm" translate="no">{{ DEVELOPER.email }}</a></p>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>How it is built</h2>
+        <ul class="dev-list small">
+            <li>Python 3, Flask, Jinja2 &middot; SQLite on a computer, PostgreSQL online</li>
+            <li>Interface in English, Russian, French, Spanish, Arabic (right to left), Chinese and Kinyarwanda; money and dates formatted with Babel (Unicode CLDR)</li>
+            <li>Card payments with Stripe in test mode, or the built-in test gateway; exchange rates from open.er-api.com</li>
+            <li>Order messages by email (Brevo), SMS (Twilio) and Web Push; recommendations from what customers view and buy</li>
+            <li>Every important rule is checked by automated tests</li>
+        </ul>
+    </section>
+</div>
+{% endblock %}

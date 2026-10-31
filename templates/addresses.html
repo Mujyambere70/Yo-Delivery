@@ -9,7 +9,7 @@
             {% for a in addresses %}
             <div class="panel addr-card {{ 'default' if a.is_default }}">
                 {% if a.is_default %}<span class="tag">Default</span>{% endif %} <em class="tag">{{ a.kind }}</em>
-                <p><b>{{ a.name }}</b><br>{{ a.line1 }}{% if a.line2 %}<br>{{ a.line2 }}{% endif %}<br>{{ a.city }}, {{ a.state }} {{ a.pincode }}<br>Phone: {{ a.mobile }}</p>
+                <p><b>{{ a.name }}</b><br>{{ a.line1 }}{% if a.line2 %}<br>{{ a.line2 }}{% endif %}<br>{{ a.city }}{% if a.state %}, {{ a.state }}{% endif %} {{ a.pincode }}<br>{{ a.country|country }}<br>Phone: <span translate="no">{{ a.mobile }}</span></p>
                 <div class="btn-row">
                     {% if not a.is_default %}
                     <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="default"><input type="hidden" name="address_id" value="{{ a.id }}"><button class="link-btn">Set as default</button></form>

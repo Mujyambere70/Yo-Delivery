@@ -6,7 +6,9 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import support  # noqa: E402
 
 import demo_data  # noqa: E402
 from store import ShopError, Store, delivery_days, rupees  # noqa: E402
@@ -18,8 +20,7 @@ ADDR = {"name": "Test User", "mobile": "9811111111", "line1": "12 Main Road", "c
 class TestStore(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.s = Store(os.path.join(self.tmp.name, "t.db"))
-        demo_data.seed(self.s)
+        self.s = support.make_store(seed=True)
         self.uid = self.s.register("Test User", "test@example.com", "9811111111", "Secret123")
         self.addr = self.s.add_address(self.uid, ADDR)
         self.phone = self.s.get_product(slug="nova-x5-blue")

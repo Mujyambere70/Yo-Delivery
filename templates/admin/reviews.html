@@ -13,7 +13,7 @@
         <thead><tr><th>Date</th><th>Product</th><th>Rating</th><th>Review</th><th>Author</th><th></th></tr></thead>
         {% for r in reviews %}
         <tr><td class="nowrap">{{ r.created_at|nicedate }}</td>
-            <td><a href="{{ url_for('product', slug=r.slug) }}#reviews" target="_blank" class="pname"><img src="{{ url_for('static', filename='images/products/' ~ r.slug ~ '-1.jpg') }}" alt=""><span>{{ r.product }}</span></a></td>
+            <td><a href="{{ url_for('product', slug=r.slug) }}#reviews" target="_blank" class="pname"><img src="{{ picture('products/' ~ r.slug ~ '-1.jpg') }}" alt=""><span>{{ r.product }}</span></a></td>
             <td class="nowrap"><span class="rating sm"><b>{{ r.rating }} &#9733;</b></span></td>
             <td><b>{{ r.title }}</b><br><span class="small">{{ r.body }}</span></td>
             <td>{% if r.user_id %}<a href="{{ url_for('admin_customer', uid=r.user_id) }}">{{ r.author }}</a>{% else %}{{ r.author }}{% endif %}</td>

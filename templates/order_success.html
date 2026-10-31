@@ -4,14 +4,14 @@
 <div class="wrap narrow">
     <section class="panel success">
         <div class="tick">&#10004;</div>
-        <h1>Order placed, thank you!</h1>
-        <p>Confirmation will be sent to your email. Order ID <b id="orderNumber">{{ o.number }}</b></p>
+        <h1>{{ 'Payment received - thank you!' if o.payment_method == 'Card' else 'Order placed, thank you!' }}</h1>
+        <p>You will get a message at every step of the delivery. Order ID <b id="orderNumber" translate="no">{{ o.number }}</b></p>
         <div class="success-box">
             <div><small>Arriving by</small><strong>{{ o.expected|nicedate('%A, %d %B') }}</strong></div>
             <div><small>Shipping to</small><strong>{{ o.ship_name }}</strong><span class="small">{{ o.ship_address }}</span></div>
-            <div><small>Payment</small><strong>{{ o.payment_method }}</strong><span class="small">{{ o.total|rupees }}</span></div>
+            <div><small>Payment</small><strong>{{ o.payment_method }}</strong><span class="small">{{ o.total|omoney(o) }}</span></div>
         </div>
-        <div class="success-items">{% for it in o['items'] %}<img src="{{ url_for('static', filename='images/products/' ~ it.slug ~ '-1.jpg') }}" alt="{{ it.name }}" title="{{ it.name }}">{% endfor %}</div>
+        <div class="success-items">{% for it in o['items'] %}<img src="{{ picture('products/' ~ it.slug ~ '-1.jpg') }}" alt="{{ it.name }}" title="{{ it.name }}">{% endfor %}</div>
         <div class="btn-row center-row">
             <a href="{{ url_for('order', number=o.number) }}" class="btn btn-orange">Track order</a>
             <a href="{{ url_for('index') }}" class="btn btn-outline">Continue shopping</a>

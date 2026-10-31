@@ -4,6 +4,8 @@
     <a href="{{ url_for('account') }}" {% if request.endpoint == 'account' %}class="on"{% endif %}>&#128100; Profile information</a>
     <a href="{{ url_for('addresses') }}" {% if request.endpoint == 'addresses' %}class="on"{% endif %}>&#128205; Manage addresses</a>
     <a href="{{ url_for('wishlist') }}">&#10084; My Wishlist</a>
+    <a href="{{ url_for('notifications') }}" {% if request.endpoint == 'notifications' %}class="on"{% endif %}>&#128276; Notifications{% if unseen %} <em class="count">{{ unseen }}</em>{% endif %}</a>
+    {% if my_shop %}<a href="{{ url_for('seller_dashboard') }}">&#127978; Seller Centre</a>{% else %}<a href="{{ url_for('sell') }}">&#127978; Sell on Yo Delivery</a>{% endif %}
     <div class="wallet"><small>Yo Pay balance</small><b>{{ user.wallet|rupees }}</b></div>
     <a href="{{ url_for('logout') }}" class="out">&#10162; Sign out</a>
 </aside>

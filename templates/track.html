@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Track a parcel{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <h1>Track a parcel</h1>
+    <div class="od-grid two">
+        <form method="get" class="panel">
+            <h3>With the tracking number</h3>
+            <label for="awb">Tracking number (from the shipping message)</label>
+            <input type="text" id="awb" name="awb" value="{{ form.get('awb', '') }}" placeholder="YX0123456789IN" translate="no">
+            <button class="btn btn-orange btn-sm">Track</button>
+        </form>
+        <form method="get" class="panel">
+            <h3>With the order number</h3>
+            <label for="number">Order number</label><input type="text" id="number" name="number" value="{{ form.get('number', '') }}" placeholder="OD2610311234567">
+            <label for="temail">Email of the order</label><input type="email" id="temail" name="email" value="{{ form.get('email', '') }}">
+            <button class="btn btn-outline btn-sm">Track</button>
+        </form>
+    </div>
+    {% if found %}{% set o = found.o %}
+    <section class="panel">
+        <h2 class="status s-{{ o.status|lower|replace(' ', '-') }}"><i></i>{{ o.status }}</h2>
+        <p>Order <b translate="no">{{ o.number }}</b> &middot; to {{ o.country|country }}</p>
+        {% if o.step >= 2 %}<p class="small">Courier: <b>{{ o.courier }}</b> &middot; <span translate="no">{{ o.awb }}</span></p>{% endif %}
+        {% if o.status not in ('Delivered', 'Cancelled', 'Awaiting payment') %}<p>Expected by <b>{{ o.expected|nicedate('%A, %d %B') }}</b></p>{% endif %}
+        <ol class="track {{ 'cancelled' if o.cancelled_at }}">
+            {% for name, t, done in found.steps %}<li class="{{ 'done' if done }}"><span class="dot"></span><b>{{ name }}</b><small>{{ t|nicedate('%a, %d %b, %I:%M %p') if t else '' }}</small></li>{% endfor %}
+        </ol>
+        <p class="small muted">For privacy this page shows no names or full addresses. Sign in to see all details.</p>
+    </section>
+    {% endif %}
+    <p class="small muted">Yo Express delivers in India; Yo Global Express takes parcels to other countries. In this demo shop both couriers are simulated (sandbox).</p>
+</div>
+{% endblock %}

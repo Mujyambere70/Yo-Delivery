@@ -7,9 +7,10 @@ import sys
 import tempfile
 import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app import create_app  # noqa: E402
+import support  # noqa: E402
+
 
 ADMIN = {"login": "admin@example.com", "password": "Admin@1234"}
 DEMO = {"login": "demo@example.com", "password": "Demo@1234"}
@@ -27,7 +28,7 @@ class AdminBase(unittest.TestCase):
         cls.tmp.cleanup()
 
     def setUp(self):
-        self.app = create_app(os.path.join(self.tmp.name, f"{self._testMethodName}.db"))
+        self.app = support.make_app()
         self.c = self.app.test_client()
         self.store = self.app.store
 
@@ -143,7 +144,7 @@ class TestAdminManagement(AdminBase):
         import images
         for p in self.store.products(active_only=False):
             if p.art == "upload":
-                images.delete_product_images(p.slug, self.app.static_folder)
+                images.delete_product_images(p.slug, self.store)
         super().tearDown()
 
     def test_add_product_with_picture(self):
@@ -152,8 +153,8 @@ class TestAdminManagement(AdminBase):
         p = self.store.search("gaming mouse")[0]
         self.assertEqual((p.price, p.stock, p.specs["DPI"]), (79900, 30, "7200"))
         for img in p.images:                                     # 3 gallery pictures were made
-            path = os.path.join(self.app.static_folder, img)
-            self.assertTrue(os.path.exists(path), img)
+            self.assertIsNotNone(self.store.media(img[len("images/"):]), img)    # saved in the database
+            self.assertEqual(self.c.get("/img/" + img[len("images/"):]).status_code, 200)
         html = self.text(self.c.get(f"/p/{p.slug}"))
         self.assertIn("Test Gaming Mouse", html)
         self.assertIn("47% off", html)
@@ -199,7 +200,7 @@ class TestAdminManagement(AdminBase):
         self.assertIn("Remote Control Racing Car", self.text(self.c.get("/c/toys-games")))
         r = self.post("/admin/categories", page="/admin/categories", slug="toys-games", action="delete")
         self.assertIn("still has products", self.text(r))
-        os.remove(os.path.join(self.app.static_folder, "images", "categories", "toys-games.jpg"))
+        self.assertIsNotNone(self.store.media("categories/toys-games.jpg"))     # the picture is in the database
 
     def test_coupons(self):
         r = self.post("/admin/coupons", page="/admin/coupons", action="save", code="diwali50", kind="flat",

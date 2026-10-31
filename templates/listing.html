@@ -20,11 +20,11 @@
             <div class="f-group">
                 <h4>Price</h4>
                 <div class="price-inputs">
-                    <input type="number" name="min" min="0" placeholder="Min ₹" value="{{ args.get('min', '') }}" aria-label="Minimum price">
+                    <input type="number" name="min" min="0" placeholder="Min (₹)" value="{{ args.get('min', '') }}" aria-label="Minimum price">
                     <span>to</span>
-                    <input type="number" name="max" min="0" placeholder="Max ₹" value="{{ args.get('max', '') }}" aria-label="Maximum price">
+                    <input type="number" name="max" min="0" placeholder="Max (₹)" value="{{ args.get('max', '') }}" aria-label="Maximum price">
                 </div>
-                {% for lo, hi, label in [(None, 500, 'Under ₹500'), (500, 2000, '₹500 - ₹2,000'), (2000, 10000, '₹2,000 - ₹10,000'), (10000, None, 'Over ₹10,000')] %}
+                {% for lo, hi, label in [(None, 500, 'Under ' ~ (50000|rupees)), (500, 2000, (50000|rupees) ~ ' - ' ~ (200000|rupees)), (2000, 10000, (200000|rupees) ~ ' - ' ~ (1000000|rupees)), (10000, None, 'Over ' ~ (1000000|rupees))] %}
                     <a class="f-link" href="{{ request.base_url }}?{{ ('q=' ~ q ~ '&') if q }}{{ ('min=' ~ lo ~ '&') if lo }}{{ ('max=' ~ hi ~ '&') if hi }}sort={{ sort }}">{{ label }}</a>
                 {% endfor %}
             </div>
@@ -58,7 +58,7 @@
     <section class="results">
         <div class="results-head">
             <div>
-                <nav class="crumbs"><a href="{{ url_for('index') }}">Home</a> &rsaquo; {% if category_name %}<a href="{{ url_for('category', category=category) }}">{{ category_name }}</a>{% else %}Search{% endif %}</nav>
+                <nav class="crumbs"><a href="{{ url_for('index') }}" translate="no">Yo Delivery</a> &rsaquo; {% if category_name %}<a href="{{ url_for('category', category=category) }}">{{ category_name }}</a>{% else %}Search{% endif %}</nav>
                 <h1>{% if q %}Results for "<span>{{ q }}</span>"{% else %}{{ category_name or 'All products' }}{% endif %}</h1>
                 <p class="muted small">Showing {{ results|length }} product{{ 's' if results|length != 1 }}</p>
             </div>

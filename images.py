@@ -1,14 +1,17 @@
 """
-images.py - saves pictures uploaded by the admin (products and categories).
+images.py - pictures uploaded by the admin or a seller (products and categories).
 
 Every uploaded file is opened with Pillow (so only real images are accepted),
-then saved as an 800x800 JPG - the same format as the built-in product pictures:
-    static/images/products/<slug>-1.jpg   main picture (white background)
-    static/images/products/<slug>-2.jpg   second picture (or a styled copy of the first)
-    static/images/products/<slug>-3.jpg   third picture (or a close-up of the first)
+then turned into an 800x800 JPG - the same format as the built-in product pictures:
+    products/<slug>-1.jpg   main picture (white background)
+    products/<slug>-2.jpg   second picture (or a styled copy of the first)
+    products/<slug>-3.jpg   third picture (or a close-up of the first)
+
+The pictures are saved IN THE DATABASE (table media), not in the static folder: free hosting
+deletes the server's files at every restart, the database keeps them. They are served at /img/<name>.
 """
 
-import os
+import io
 
 from PIL import Image, ImageDraw, ImageOps, UnidentifiedImageError
 
@@ -56,34 +59,33 @@ def _closeup(img):
     return sq.crop((m, m, SIZE - m, SIZE - m)).resize((SIZE, SIZE), Image.LANCZOS)
 
 
-def save_product_images(files, slug, static_root):
+def _jpeg(img, quality=88):
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=quality, optimize=True)
+    return buf.getvalue()
+
+
+def save_product_images(files, slug, store):
     """files: up to 3 uploaded files (FileStorage). Returns how many were uploaded."""
     files = [f for f in files if f and f.filename][:3]
     if not files:
         return 0
     pictures = [_open(f) for f in files]                     # check all before saving any
-    folder = os.path.join(static_root, "images", "products")
-    os.makedirs(folder, exist_ok=True)
     first = pictures[0]
     views = [_square(first),
              _square(pictures[1]) if len(pictures) > 1 else _styled(first),
              _square(pictures[2]) if len(pictures) > 2 else _closeup(first)]
     for i, view in enumerate(views, start=1):
-        view.save(os.path.join(folder, f"{slug}-{i}.jpg"), "JPEG", quality=88, optimize=True)
+        store.save_media(f"products/{slug}-{i}.jpg", "image/jpeg", _jpeg(view))
     return len(files)
 
 
-def save_category_image(file, slug, static_root):
-    """Returns the path (relative to static/images) to store in the database."""
+def save_category_image(file, slug, store):
+    """Returns the picture's name (as kept in the categories table)."""
     img = _open(file)
-    folder = os.path.join(static_root, "images", "categories")
-    os.makedirs(folder, exist_ok=True)
-    ImageOps.fit(img, (600, 600), Image.LANCZOS).save(os.path.join(folder, f"{slug}.jpg"), "JPEG", quality=86)
+    store.save_media(f"categories/{slug}.jpg", "image/jpeg", _jpeg(ImageOps.fit(img, (600, 600), Image.LANCZOS), 86))
     return f"categories/{slug}.jpg"
 
 
-def delete_product_images(slug, static_root):
-    for i in (1, 2, 3):
-        path = os.path.join(static_root, "images", "products", f"{slug}-{i}.jpg")
-        if os.path.exists(path):
-            os.remove(path)
+def delete_product_images(slug, store):
+    store.delete_media(f"products/{slug}-")

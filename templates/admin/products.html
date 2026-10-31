@@ -10,6 +10,8 @@
         <option value="">All products</option>
         <option value="low" {% if show == 'low' %}selected{% endif %}>Low stock (10 or less)</option>
         <option value="hidden" {% if show == 'hidden' %}selected{% endif %}>Hidden products</option>
+        <option value="waiting" {% if show == 'waiting' %}selected{% endif %}>Sellers' products waiting for approval</option>
+        <option value="sellers" {% if show == 'sellers' %}selected{% endif %}>All products of sellers</option>
     </select>
     <button class="btn btn-outline">Search</button>
     <a href="{{ url_for('admin_table_csv', table='products') }}" class="btn btn-outline">&#11015; CSV</a>
@@ -20,8 +22,11 @@
         <thead><tr><th>Product</th><th>Category</th><th class="num">Rating</th><th class="num">Sold</th><th>Price ₹ / MRP ₹ / Stock</th><th>Actions</th></tr></thead>
         {% for p in products %}
         <tr id="p{{ p.id }}" class="{{ 'low-row' if p.stock <= 10 }} {{ 'hidden-row' if not p.active }}">
-            <td><a href="{{ url_for('product', slug=p.slug) }}" target="_blank" class="pname"><img src="{{ url_for('static', filename=p.image) }}" alt=""><span>{{ p.name }}</span></a>
-                {% if not p.active %}<span class="st st-cancelled">hidden</span>{% endif %}{% if p.art == 'upload' %} <span class="st st-packed">added by admin</span>{% endif %}</td>
+            <td><a href="{{ url_for('product', slug=p.slug) }}" target="_blank" class="pname"><img src="{{ picture(p.image) }}" alt=""><span>{{ p.name }}</span></a>
+                {% if not p.active %}<span class="st st-cancelled">hidden</span>{% endif %}{% if p.seller_id %} <span class="st st-shipped">{{ shops.get(p.seller_id, ('seller',))[0] }}</span>{% elif p.art == 'upload' %} <span class="st st-packed">added by admin</span>{% endif %}
+                {% if not p.approved %}<span class="st st-cancelled">waiting for approval</span>
+                <form method="post" action="{{ url_for('admin_product_action', pid=p.id, action='approve') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ request.full_path }}"><button class="btn btn-orange btn-sm">&#10004; Approve</button></form>
+                <form method="post" action="{{ url_for('admin_product_action', pid=p.id, action='reject') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ request.full_path }}"><button class="btn btn-outline btn-sm">Not OK</button></form>{% endif %}</td>
             <td>{{ p.category_name }}</td>
             <td class="num">{{ p.rating if p.rating_count else '-' }}{% if p.rating_count %} &#9733;{% endif %}</td>
             <td class="num">{{ sold.get(p.id, 0) }}</td>

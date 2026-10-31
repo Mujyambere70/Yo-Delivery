@@ -4,7 +4,7 @@
 <div class="wrap narrow">
     <form method="post" class="panel review-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="rf-head"><img src="{{ url_for('static', filename=p.image) }}" alt=""><div><h1>Create review</h1><p>{{ p.name }}</p></div></div>
+        <div class="rf-head"><img src="{{ picture(p.image) }}" alt=""><div><h1>Create review</h1><p>{{ p.name }}</p></div></div>
         <h3>Overall rating</h3>
         <div class="star-pick">
             {% for n in [5, 4, 3, 2, 1] %}<input type="radio" id="r{{ n }}" name="rating" value="{{ n }}" {% if form.get('rating') == n|string %}checked{% endif %} required><label for="r{{ n }}" title="{{ n }} stars">&#9733;</label>{% endfor %}
