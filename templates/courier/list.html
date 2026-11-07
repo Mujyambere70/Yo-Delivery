@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}My shipments · Yo Courier{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <div class="row-head"><h1>&#128666; My shipments</h1><a href="{{ url_for('courier_book') }}" class="btn btn-orange">Book a pickup</a></div>
+    {% if rows %}
+    <section class="panel ship-list"><div class="tw">
+        <table class="mini-table at">
+            <thead><tr><th>Consignment</th><th>To</th><th>What</th><th>Status</th><th class="num">Price</th><th>Booked</th></tr></thead>
+            <tbody>{% for r in rows %}<tr>
+                <td><a href="{{ url_for('courier_shipment', number=r.number) }}" translate="no" class="mono">{{ r.number }}</a></td>
+                <td>{{ r.to_name }}<br><small class="muted" translate="no">{{ r.to_city }}{% if r.to_country != 'IN' %} ({{ r.to_country }}){% endif %}</small></td>
+                <td>{{ {'document': 'Documents', 'parcel': 'Parcel', 'grocery': 'Groceries'}[r.kind] }}</td>
+                <td><span class="pill-status {{ 'ok' if r.status == 'Delivered' else 'bad' if r.status in ('Cancelled', 'Returned to sender') else 'blue' }}">{{ r.status }}</span></td>
+                <td class="num">{{ r.price|rupees }}</td><td class="nowrap">{{ r.created_at|nicedate }}</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </section>
+    {% else %}
+    <section class="panel empty"><p>You have not sent anything yet.</p><a href="{{ url_for('courier_home') }}" class="btn btn-orange">Send a parcel</a></section>
+    {% endif %}
+</div>
+{% endblock %}

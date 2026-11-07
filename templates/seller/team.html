@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Team - Seller Centre{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap">
+    {% include "seller/_nav.html" %}
+    <section class="panel">
+        <h1 style="margin-top:0">&#128101; <span>My shop's team</span></h1>
+        <p class="muted">Your employees sign in with their own Yo Delivery account and see only what you tick. Only you can change the shop settings, the payouts and the team.</p>
+        <div class="tw"><table class="at">
+            <thead><tr><th>Name</th><th>Job</th><th>May do</th><th>Status</th><th></th></tr></thead>
+            <tbody>{% for m in team %}<tr><td translate="no">{{ m.name }}<br><small class="muted">{{ m.email }}</small></td><td translate="no">{{ m.title }}</td>
+                <td><small>{% for a in m.ability_set|sort %}{{ SELLER_ABILITIES.get(a, a) }}{% if not loop.last %}; {% endif %}{% endfor %}</small></td><td>{{ m.status }}</td>
+                <td>{% if m.status == 'Active' %}<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="remove"><input type="hidden" name="member_id" value="{{ m.id }}"><button class="btn btn-sm btn-outline">Remove</button></form>{% endif %}</td></tr>
+            {% else %}<tr><td colspan="5" class="muted">No employees yet.</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </section>
+    <section class="panel">
+        <h2>Add an employee</h2>
+        <form method="post" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="add">
+            <div><label for="te">E-mail of his Yo Delivery account</label><input type="email" id="te" name="email" required></div>
+            <div><label for="tt">Job</label><input type="text" id="tt" name="title" maxlength="60" placeholder="Shop assistant"></div>
+            <fieldset style="grid-column:1/-1"><legend>He may</legend>
+                {% for k, v in SELLER_ABILITIES.items() %}<label class="check"><input type="checkbox" name="abilities" value="{{ k }}" {{ 'checked' if k in ('seller.orders', 'seller.products') }}> {{ v }}</label>{% endfor %}
+            </fieldset>
+            <div><button class="btn btn-orange">Add</button></div>
+        </form>
+    </section>
+</div>
+{% endblock %}

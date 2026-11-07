@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Ticket check{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px;max-width:640px">
+    {% if v.valid %}
+    <div class="tk-verdict ok"><b>&#10003; Valid e-ticket</b><span translate="no">PNR {{ v.pnr }}</span></div>
+    <section class="panel">
+        <dl class="kv">
+            <dt>Trip</dt><dd>{{ {'bus': '🚌', 'train': '🚆', 'flight': '✈️'}[v.mode] }} <span translate="no">{{ v.number }}</span> &middot; <span translate="no">{{ v.operator }}</span></dd>
+            <dt>Route</dt><dd><span translate="no">{{ v.from_city }}</span> &rarr; <span translate="no">{{ v.to_city }}</span></dd>
+            <dt>Departure</dt><dd>{{ v.depart_local|localtime }} <span>{{ v.from_tz }}</span></dd>
+            <dt>Class</dt><dd>{{ v.class_name }}</dd>
+            <dt>Passengers</dt><dd>{{ v.passengers }}</dd>
+            <dt>Status</dt><dd><span>{{ v.status }}</span> &middot; <span>{{ v.phase }}</span></dd>
+        </dl>
+        <p class="hint">For privacy, the names are shown only to the conductor of {{ v.operator }}.</p>
+        {% if mine %}
+        <form method="post" action="{{ url_for('conductor_check') }}" style="margin-top:12px">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="token" value="{{ token }}"><input type="hidden" name="trip_id" value="{{ v.trip_id }}">
+            <button class="btn btn-orange btn-lg btn-block">Check in the passengers</button>
+        </form>
+        {% elif staff %}
+        <p class="flash error">This ticket is for {{ v.operator }}, not for {{ staff.operator }}.</p>
+        {% endif %}
+    </section>
+    {% elif v.pnr %}
+    <div class="tk-verdict bad"><b>&#10007; Not valid for travel</b><span translate="no">PNR {{ v.pnr }}</span> &middot; <span>{{ v.status }}</span></div>
+    {% else %}
+    <div class="tk-verdict bad"><b>&#10007; Not a Yo ticket</b><span>The QR code is damaged or was changed.</span></div>
+    {% endif %}
+    <p class="center"><a href="{{ url_for('tickets_home') }}">Yo Tickets</a></p>
+</div>
+{% endblock %}

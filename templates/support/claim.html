@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Claim for {{ s.number }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <section class="panel">
+        <p><a href="{{ url_for('courier_shipment', number=s.number) }}">&larr; Parcel <span translate="no">{{ s.number }}</span></a></p>
+        <h1 style="margin-top:0">&#128176; <span>Lost or damaged parcel</span></h1>
+        <p>{% if s.insured %}This parcel is <b>insured</b>: we pay up to its declared value, <b>{{ cover|rupees }}</b>.{% else %}This parcel is not insured: we pay up to <b>{{ cover|rupees }}</b> (at most {{ limit|rupees }} without insurance).{% endif %}</p>
+        <ul class="small"><li>Damaged: tell us within 7 days of the delivery, with what is broken.</li><li>Lost: you can claim 3 days after the expected day.</li><li>A person of our support team decides; the money goes to your Yo Pay wallet.</li></ul>
+        {% for c in claims %}<p class="flash {{ 'success' if c.status == 'Paid' else 'info' }}">Claim {{ kinds.get(c.kind, c.kind) }}: {{ c.status }}{% if c.payout %} &middot; {{ c.payout|rupees }}{% endif %}{% if c.note %} &middot; {{ c.note }}{% endif %}</p>{% endfor %}
+        <form method="post" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div><label for="ck">What happened</label><select id="ck" name="kind">{% for k, v in kinds.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+            <div><label for="ca">Amount you claim (₹)</label><input id="ca" type="number" name="amount" min="1" step="1" max="{{ cover // 100 }}" required></div>
+            <div style="grid-column:1/-1"><label for="cd">Tell us what happened</label><textarea id="cd" name="details" rows="4" maxlength="2000" required></textarea></div>
+            <div><button class="btn btn-orange">Send the claim</button></div>
+        </form>
+    </section>
+</div>
+{% endblock %}

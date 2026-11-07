@@ -1,0 +1,16 @@
+{% extends "admin/layout.html" %}
+{% block title %}Hub forecast{% endblock %}
+{% block heading %}Hub forecast: parcels and workers{% endblock %}
+{% block content %}
+<section class="panel">
+    <form method="get" class="v6-filters"><label class="small">Hub <select name="office">{% for o in hubs %}<option value="{{ o.id }}" {{ 'selected' if o.id == office_id }}>{{ o.name }}</option>{% endfor %}</select></label><button class="btn btn-sm btn-outline">Show</button></form>
+    {% if fc and fc.ready %}
+    <p class="small muted">Holt-Winters with a weekly season (smoothing {{ fc.params|join(', ') }}). Test on the last 14 days: error {{ fc.test.model if fc.test else '-' }} % (same day last week: {{ fc.test.naive if fc.test else '-' }} %). Workers needed = parcels / {{ fc.per_worker }} per shift (Shop Settings).</p>
+    {% set mx = [1] %}{% for d, v in fc.series %}{% if v > mx[0] %}{% set _ = mx.pop() %}{% set _ = mx.append(v) %}{% endif %}{% endfor %}{% for r in fc.forecast %}{% if r.parcels > mx[0] %}{% set _ = mx.pop() %}{% set _ = mx.append(r.parcels) %}{% endif %}{% endfor %}
+    <div class="v7-bars" role="img" aria-label="Parcels per day: 4 weeks before and 2 weeks forecast">{% for d, v in fc.series %}<span style="height:{{ (100 * v / mx[0])|round(1) }}%" title="{{ d }}: {{ v }}"></span>{% endfor %}{% for r in fc.forecast %}<span class="fc" style="height:{{ (100 * r.parcels / mx[0])|round(1) }}%" title="{{ r.day }}: {{ r.parcels }} (forecast)"></span>{% endfor %}</div>
+    <div class="v7-bars-legend"><span>4 weeks before</span><span>&#9632; forecast (orange)</span><span>+14 days</span></div>
+    <table class="at small" style="margin-top:12px"><thead><tr><th>Day</th><th>Parcels (forecast)</th><th>Workers needed</th></tr></thead><tbody>
+    {% for r in fc.forecast %}<tr><td translate="no">{{ r.day }}</td><td>{{ r.parcels }}</td><td><b>{{ r.workers }}</b></td></tr>{% endfor %}</tbody></table>
+    {% elif fc %}<p class="muted">Not enough history for this hub yet (at least two weeks with parcels).</p>{% else %}<p class="muted">No hub in your branch.</p>{% endif %}
+</section>
+{% endblock %}

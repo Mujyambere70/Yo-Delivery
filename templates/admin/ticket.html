@@ -1,0 +1,37 @@
+{% extends "admin/layout.html" %}
+{% block title %}Ticket {{ b.pnr }}{% endblock %}
+{% block heading %}Ticket {{ b.pnr }}{% endblock %}
+{% block content %}
+{% include "admin/_tickets_nav.html" %}
+<div class="od-grid two">
+    <section class="panel">
+        <h2>{{ {'bus': '🚌', 'train': '🚆', 'flight': '✈️'}[b.mode] }} {{ b.number }} &middot; {{ b.class_name }}</h2>
+        <dl class="kv">
+            <dt>Status</dt><dd><span class="st {{ 'st-delivered' if b.status in ('Confirmed', 'Completed') else 'st-cancelled' }}">{{ b.status }}</span> &middot; {{ phase }}</dd>
+            <dt>Operator</dt><dd>{{ b.operator }} &middot; {{ b.service_name }}</dd>
+            <dt>Route</dt><dd>{{ b.from_city }} &rarr; {{ b.to_city }}</dd>
+            <dt>Departure</dt><dd>{{ b.depart_local[:16] }} {{ b.from_tz }} <small class="muted">(UTC {{ b.depart_utc[:16] }})</small></dd>
+            <dt>Arrival</dt><dd>{{ b.arrive_local[:16] }} {{ b.to_tz }}</dd>
+            <dt>Trip</dt><dd>{{ b.trip_status }}{% if b.delay %} &middot; late {{ b.delay }} min{% endif %} &middot; <a href="{{ url_for('admin_ticket_trips', q=b.number) }}">open the trip</a></dd>
+            <dt>Account</dt><dd><a href="{{ url_for('admin_customer', uid=owner.id) }}">{{ owner.name }}</a> &middot; {{ owner.email }}</dd>
+            <dt>Mobile</dt><dd>{{ b.contact_mobile }}</dd>
+            <dt>Booked</dt><dd>{{ b.created_at }}{% if b.paid_at %} &middot; paid {{ b.paid_at }}{% endif %}</dd>
+            {% if b.cancelled_at %}<dt>Cancelled</dt><dd>{{ b.cancelled_at }} &middot; {{ b.cancel_reason }}</dd>{% endif %}
+        </dl>
+    </section>
+    <section class="panel">
+        <h2>Money</h2>
+        <table class="at">{% for l in b.lines %}<tr><td>{{ l[0] }}{% if l|length > 2 %} ({{ l[2] }} × {{ (l[1] // l[2])|inr }}){% endif %}</td><td class="num">{{ l[1]|inr }}</td></tr>{% endfor %}
+            <tr><td><b>Total</b></td><td class="num"><b>{{ b.total|inr }}</b></td></tr>
+            <tr><td>Payment</td><td class="num">{{ b.payment or '—' }}{% if b.card_last4 %} •••• {{ b.card_last4 }}{% endif %}{% if b.emi_months %} &middot; EMI {{ b.emi_months }} × {{ b.emi_monthly|inr }}{% endif %}</td></tr>
+            {% if b.refund or b.charge %}<tr><td>Refund / charge kept</td><td class="num">{{ b.refund|inr }} / {{ b.charge|inr }}</td></tr>{% endif %}
+        </table>
+    </section>
+</div>
+<section class="panel">
+    <h2>Passengers</h2>
+    <table class="at"><thead><tr><th>Seat</th><th>Name</th><th>Age</th><th>Fare</th><th>Boarded</th></tr></thead>
+        <tbody>{% for p in b.passengers %}<tr><td class="mono">{{ p.label }} <small class="muted">{{ p.kind }}</small></td><td>{{ p.name or '—' }}</td><td>{{ p.age or '' }} {{ p.gender }}</td><td>{{ p.fare|inr }}</td><td>{{ p.boarded_at or '—' }}</td></tr>{% endfor %}</tbody>
+    </table>
+</section>
+{% endblock %}

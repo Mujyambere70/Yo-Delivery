@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ inv.kind }} {{ inv.number }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap">
+    <section class="panel invoice-doc">
+        <p class="no-print"><a href="#" onclick="window.print();return false;">&#128424; Print / PDF</a> &middot; <a href="{{ url_for('invoice_xml', invoice_id=inv.id) }}">&#8681; E-invoice (UBL 2.1 XML)</a></p>
+        <div class="inv-head">
+            <div><h1 style="margin:0">{{ inv.kind }}</h1><p class="mono" translate="no">{{ inv.number }}</p>
+                {% if inv.of_invoice %}<p class="small">Credit note for invoice <span translate="no">{{ inv.of_invoice }}</span></p>{% endif %}
+                <p class="small">Date: <span translate="no">{{ inv.issued_at[:10] }}</span> &middot; Order <span translate="no">{{ inv.order_number }}</span></p></div>
+            <div><b translate="no">{{ inv.issuer_name }}</b>{% if inv.issuer_tax_id %}<br><small>GSTIN <span translate="no">{{ inv.issuer_tax_id }}</span></small>{% else %}<br><small>Not registered for GST: no tax charged</small>{% endif %}</div>
+            <div><small>Bill to</small><br><b translate="no">{{ inv.buyer_name }}</b><br><small translate="no">{{ inv.buyer_address }}</small></div>
+        </div>
+        <table class="at" style="margin-top:12px"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Taxable value</th><th class="num">Tax</th><th class="num">Total</th></tr></thead><tbody>
+        {% for ln in inv.line_list %}<tr><td translate="no">{{ ln.name }}</td><td class="num">{{ ln.qty }}</td><td class="num">{{ '%g'|format(ln.rate) }} %</td><td class="num" translate="no">{{ INVOICE_MONEY(ln.taxable) }}</td><td class="num" translate="no">{{ INVOICE_MONEY(ln.tax) }}</td><td class="num" translate="no">{{ INVOICE_MONEY(ln.total) }}</td></tr>{% endfor %}
+        </tbody></table>
+        <table class="at small" style="max-width:420px;margin-left:auto"><tbody>
+        {% for b in inv.by_rate %}<tr><td>Tax {{ '%g'|format(b.rate) }} % on {{ INVOICE_MONEY(b.taxable) }}</td><td class="num" translate="no">{{ INVOICE_MONEY(b.tax) }}</td></tr>{% endfor %}
+        <tr><td><b>Total</b></td><td class="num" translate="no"><b>{{ INVOICE_MONEY(inv.total) }}</b></td></tr></tbody></table>
+        <p class="small muted">Prices include the tax. Rates are the example rates of the demo (India, GST after 22 September 2025). Demo company, demo tax number.</p>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "admin/layout.html" %}
+{% block title %}Parcel claims{% endblock %}
+{% block heading %}Claims for lost or damaged parcels{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="small muted">Insured parcels are covered up to the declared value; others up to ₹2,000 (example limit). The money goes to the sender's Yo Pay wallet once. Nobody decides his own claim.</p>
+    <h2>Waiting ({{ waiting|length }})</h2>
+    <table class="at"><thead><tr><th>Parcel</th><th>Sender</th><th>What</th><th>Story</th><th>Claimed</th><th>Cover</th><th></th></tr></thead><tbody>
+    {% for c in waiting %}<tr><td translate="no">{{ c.number }} <small class="muted">{{ c.parcel_status }}</small></td><td translate="no">{{ c.name }}</td><td>{{ kinds.get(c.kind, c.kind) }}{% if c.insured %} &middot; <span class="pill-status ok">insured</span>{% endif %}</td><td><small>{{ c.details }}</small></td><td translate="no">{{ c.amount|rupees }}</td><td translate="no">{{ c.cover|rupees }}</td>
+        <td><form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ c.id }}">
+            <input type="number" name="payout" min="1" step="1" max="{{ c.cover // 100 }}" placeholder="{{ c.amount // 100 }}" aria-label="Payout in rupees" style="width:90px">
+            <input type="text" name="note" maxlength="200" placeholder="Note" aria-label="Note">
+            <button class="btn btn-sm btn-orange" name="action" value="pay">Pay</button><button class="btn btn-sm btn-outline" name="action" value="refuse">Refuse</button></form></td></tr>
+    {% else %}<tr><td colspan="7" class="muted">No claim waits.</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel">
+    <h2>All claims</h2>
+    <table class="at small"><tbody>{% for c in done %}<tr><td translate="no">{{ c.number }}</td><td>{{ kinds.get(c.kind, c.kind) }}</td><td>{{ c.status }}</td><td translate="no">{{ c.payout|rupees if c.payout else '-' }}</td><td>{{ c.note }}</td><td translate="no">{{ c.created_at[:10] }}</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

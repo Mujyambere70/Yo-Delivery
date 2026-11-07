@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Passengers and payment - {{ b.pnr }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <div class="tk-timer" data-left="{{ left }}" role="timer">&#9203; <span>Your seats are kept for you</span>: <b>{{ left // 60 }}:{{ '%02d'|format(left % 60) }}</b></div>
+    <form method="post" class="two-col" autocomplete="on">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% for k, v in keep.items() if k == 'ret' %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+        <div>
+            <section class="panel">
+                <h1 style="margin:0;font-size:22px">{{ ICONS[b.mode] }} <span translate="no">{{ b.from_city }}</span> &rarr; <span translate="no">{{ b.to_city }}</span></h1>
+                <p class="small muted" style="margin:2px 0 0"><span translate="no">{{ b.number }}</span> &middot; <span translate="no">{{ b.operator }}</span> &middot; <span>{{ b.class_name }}</span> &middot; {{ b.depart_local|localtime }} <span>{{ b.from_tz }}</span></p>
+                {% if b.linked %}<p class="small" style="margin:6px 0 0">&#10133; <b translate="no">{{ b.linked.number }}</b> <span translate="no">{{ b.linked.from_city }} &rarr; {{ b.linked.to_city }}</span> &middot; {{ b.linked.depart_local|localtime }} <span>{{ b.linked.from_tz }}</span> &middot; <span>seats</span> <span translate="no">{{ b.linked.passengers|map(attribute='label')|join(', ') }}</span> (PNR <span translate="no">{{ b.linked.pnr }}</span>)</p>{% endif %}
+                {% if b.wl %}<p class="tk-note" style="margin:8px 0 0">&#9203; <span>Waiting list: you get seats when other travellers cancel. Not confirmed</span> {{ CHART }} <span>hours before departure = all the money back.</span></p>{% endif %}
+                {% if b.return_of %}<p class="small" style="margin:6px 0 0">&#128260; <span>Way back of</span> <span translate="no">{{ b.return_of }}</span>: <span>no convenience fee.</span></p>{% endif %}
+            </section>
+            <section class="panel">
+                <h2>Passengers</h2>
+                {% for p in b.passengers %}{% set i = loop.index0 %}
+                <div class="tk-pax">
+                    <div><label>Seat</label><span class="seatno" translate="no">{{ p.label }}</span><br><small class="muted">{{ p.kind }}</small></div>
+                    <div><label for="n{{ i }}">Full name</label><input id="n{{ i }}" name="name_{{ i }}" value="{{ form.get('name_' ~ i, me.name if i == 0 else '') }}" required minlength="2" maxlength="60" autocomplete="{{ 'name' if i == 0 else 'off' }}"></div>
+                    <div><label for="a{{ i }}">Age</label><input id="a{{ i }}" name="age_{{ i }}" type="number" min="1" max="120" value="{{ form.get('age_' ~ i, '') }}" required></div>
+                    <div><label for="g{{ i }}">Gender</label><select id="g{{ i }}" name="gender_{{ i }}">{% for v, n in [('', 'Prefer not to say'), ('F', 'Female'), ('M', 'Male'), ('X', 'Other')] %}<option value="{{ v }}" {{ 'selected' if form.get('gender_' ~ i) == v }}>{{ n }}</option>{% endfor %}</select></div>
+                </div>
+                {% endfor %}
+                <p class="hint">Write the names as on an ID card: the conductor may check them.</p>
+            </section>
+            <section class="panel">
+                <h2>Contact</h2>
+                <div class="form-grid">
+                    <div><label for="cm">Mobile number</label><input id="cm" name="contact_mobile" value="{{ form.get('contact_mobile', b.contact_mobile) }}" required inputmode="tel" autocomplete="tel"></div>
+                    <div><label>Email</label><input value="{{ me.email }}" disabled translate="no"></div>
+                </div>
+                <p class="hint">The e-ticket and the reminder 3 hours before the trip go to your account messages (and by email / SMS when they are switched on).</p>
+            </section>
+            <section class="panel">
+                <h2>Payment</h2>
+                <div class="seg">
+                    <label><input type="radio" name="payment" value="wallet" {{ 'checked' if form.get('payment', 'wallet') == 'wallet' }}><span>&#128179; Yo Pay<small>{{ me.wallet|rupees }}</small></span></label>
+                    <label><input type="radio" name="payment" value="card" {{ 'checked' if form.get('payment') == 'card' }}><span>&#128179; Card<small>Test mode</small></span></label>
+                </div>
+                {% if me.wallet < total %}<p class="hint">Your Yo Pay balance is not enough. <a href="{{ url_for('pay_add') }}">Add money</a> (your seats stay kept) or pay by card.</p>{% endif %}
+                <div id="cardBox" style="margin-top:12px">
+                    <div class="form-grid">
+                        <div><label for="cc">Card number</label><input id="cc" name="card" inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242" value="{{ form.get('card', '') }}"></div>
+                        <div><label for="cn">Name on the card</label><input id="cn" name="card_name" autocomplete="cc-name" value="{{ form.get('card_name', me.name) }}"></div>
+                        <div><label for="ce">Expiry (MM/YY)</label><input id="ce" name="expiry" autocomplete="cc-exp" placeholder="12/29" value="{{ form.get('expiry', '') }}"></div>
+                        <div><label for="cv">CVC</label><input id="cv" name="cvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123"></div>
+                        {% if plans %}
+                        <div><label for="em">Pay in instalments (EMI)</label><select id="em" name="emi_months"><option value="0">No, pay the full amount</option>{% for p in plans %}<option value="{{ p.months }}" {{ 'selected' if form.get('emi_months') == p.months|string }}>{{ p.months }} months × {{ p.monthly|rupees }}{% if p.no_cost %} (no-cost){% else %} ({{ '%g'|format(p.rate) }}%){% endif %}</option>{% endfor %}</select></div>
+                        {% endif %}
+                    </div>
+                    <p class="hint">Test mode: use 4242 4242 4242 4242 with any future date and any CVC. No real money is taken.</p>
+                </div>
+            </section>
+        </div>
+        <aside>
+            <section class="panel">
+                <h2>Price</h2>
+                <ul class="quote-lines" style="font-size:14px;color:var(--text)">
+                    {% for l in b.lines %}<li><span><span>{{ l[0] }}</span>{% if l|length > 2 %} ({{ l[2] }} × {{ (l[1] // l[2])|rupees }}){% endif %}</span><b>{{ l[1]|rupees }}</b></li>{% endfor %}
+                    {% if b.linked %}<li style="border-top:1px dashed var(--line);padding-top:6px"><span><span>Second flight</span> <span translate="no">{{ b.linked.number }}</span></span><b>{{ b.linked.total|rupees }}</b></li>{% endif %}
+                </ul>
+                <p class="quote-price" style="margin:8px 0">{{ total|rupees }}</p>
+                <button class="btn btn-orange btn-block btn-lg">Pay {{ total|rupees }}</button>
+                <p class="hint">Seats: <span translate="no">{{ b.passengers|map(attribute='label')|join(', ') }}</span> &middot; PNR <span translate="no">{{ b.pnr }}</span></p>
+            </section>
+        </aside>
+    </form>
+    <form method="post" action="{{ url_for('tickets_cancel', pnr=b.pnr) }}" class="no-print">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-outline btn-sm">Give the seats back</button>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='tickets.js') }}"></script>{% endblock %}

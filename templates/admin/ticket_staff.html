@@ -1,0 +1,28 @@
+{% extends "admin/layout.html" %}
+{% block title %}Conductors{% endblock %}
+{% block heading %}Yo Tickets: conductors{% endblock %}
+{% block content %}
+{% include "admin/_tickets_nav.html" %}
+<div class="od-grid two">
+    <section class="panel">
+        <h2>Staff who can check tickets</h2>
+        <table class="at"><thead><tr><th>Person</th><th>Company</th><th></th></tr></thead>
+            <tbody>{% for r in rows %}<tr><td>{{ r.name }}<br><small class="muted">{{ r.email }}</small></td><td>{{ r.operator }} <small class="muted">({{ r.mode }})</small></td>
+                <td><form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm" name="remove" value="{{ r.id }}">Remove</button></form></td></tr>
+            {% else %}<tr><td colspan="3" class="muted">Nobody yet.</td></tr>{% endfor %}</tbody>
+        </table>
+    </section>
+    <section class="panel">
+        <h2>Add a conductor</h2>
+        <form method="post" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div><label for="se">Email of the account</label><input id="se" name="email" type="email" required></div>
+            <div><label for="so">Company</label><select id="so" name="operator">{% for o in operators %}<option value="{{ o.code }}">{{ o.name }} ({{ o.mode }})</option>{% endfor %}</select></div>
+            <div><button class="btn btn-orange">Add</button></div>
+        </form>
+        <p class="hint">The person must have a Yo Delivery account. They see the conductor app in their account menu and can check in the tickets of their company only.</p>
+        <h3 style="margin-top:18px">Companies</h3>
+        <table class="at">{% for o in operators %}<tr><td>{{ o.name }}</td><td>{{ o.code }}</td><td>{{ o.mode }}</td><td>&#9733; {{ o.rating }}</td></tr>{% endfor %}</table>
+    </section>
+</div>
+{% endblock %}

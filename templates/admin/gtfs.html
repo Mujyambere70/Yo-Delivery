@@ -1,0 +1,35 @@
+{% extends "admin/layout.html" %}
+{% block title %}Timetables (GTFS){% endblock %}
+{% block heading %}Real timetables (GTFS){% endblock %}
+{% block content %}
+<section class="panel">
+    <p>Transport companies publish their timetables in the open <b>GTFS</b> format: a ZIP file with the tables agency, stops, routes, trips, stop_times and calendar. Every stop is matched to a town or a village of our list; every trip becomes services for each pair of its stops, with the real times, days and dates. For a route with a real timetable, Yo Tickets shows only the real trips.</p>
+    <form method="post" enctype="multipart/form-data" class="form-grid v6-plan">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>GTFS file (.zip, up to 20 MB) <input type="file" name="file" accept=".zip,application/zip"></label>
+        <label>Name of the company (optional) <input type="text" name="name" maxlength="60"></label>
+        <div><button class="btn btn-orange">Import</button> <button class="btn btn-outline" name="sample" value="1">Import the sample (Kigali - Musanze)</button></div>
+    </form>
+    <p class="small muted">Fares follow the rules of Yo Tickets in this version (the fare tables of the company are not read). Live positions (GTFS-Realtime) need a contract with the company.</p>
+</section>
+<section class="panel">
+    <h2>Imported timetables</h2>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Company</th><th>Mode</th><th>Stops matched</th><th>Trips</th><th>Services</th><th>Valid</th><th>Imported</th><th></th></tr></thead>
+        <tbody>{% for f in feeds %}<tr><td translate="no">{{ f.name }} <small class="muted">({{ f.code }})</small></td><td>{{ f.mode }}</td><td>{{ f.matched }} / {{ f.stops }}</td><td>{{ f.trips }}</td><td>{{ f.services }}</td>
+            <td><small translate="no">{{ f.valid_from or '-' }} &ndash; {{ f.valid_to or '-' }}</small></td><td><small translate="no">{{ f.by_name or '' }} {{ f.created_at[:10] }}</small></td>
+            <td><form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="feed_id" value="{{ f.id }}">
+                {% if f.active %}<button class="btn btn-sm btn-outline" name="active" value="0">Stop selling</button>{% else %}<button class="btn btn-sm btn-outline" name="active" value="1">Sell again</button>{% endif %}</form>
+                <details class="small"><summary>Live delays</summary>
+                    <form method="post" action="{{ url_for('admin_gtfs_live', feed_id=f.id) }}" enctype="multipart/form-data" class="actions">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="file" name="rt" accept=".pb,.bin,application/octet-stream" aria-label="GTFS-Realtime file">
+                        <input type="url" name="rt_url" value="{{ f.rt_url or '' }}" placeholder="https://.../tripupdates.pb" aria-label="Address of the live feed">
+                        <button class="btn btn-sm btn-outline">Read / save</button>
+                    </form>
+                    {% if f.rt_checked_at %}<small class="muted">{{ f.rt_checked_at }}: {{ f.rt_result }}</small>{% endif %}
+                </details></td></tr>
+        {% else %}<tr><td colspan="8" class="muted">No timetable imported yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+{% endblock %}

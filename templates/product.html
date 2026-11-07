@@ -25,6 +25,14 @@
         <div class="info">
             {% if sold_by %}<a href="{{ url_for('storefront', slug=sold_by[1]) }}" class="brand-link">Visit the {{ sold_by[0] }} shop</a>
             {% else %}<a href="{{ url_for('search', q=p.brand) }}" class="brand-link">Visit the {{ p.brand }} Store</a>{% endif %}
+            {% if sold_by and user and (not my_shop or my_shop.id != p.seller_id) %}
+            <details class="ask-seller" style="margin:6px 0"><summary class="small" style="cursor:pointer">&#128172; <span>Ask the seller</span></summary>
+                <form method="post" action="{{ url_for('messages_new') }}" class="chat-form" style="margin-top:6px">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="product_id" value="{{ p.id }}">
+                    <textarea name="text" maxlength="1000" required placeholder="Your question about this product" aria-label="Your question about this product"></textarea>
+                    <button class="btn btn-outline btn-sm">Send</button>
+                </form></details>{% endif %}
+            {% if p.translated is defined %}<p class="small muted" style="margin:2px 0">&#127760; <span>Text written by the seller in your language.</span></p>{% endif %}
             {% if not p.approved %}<p class="flash info">This product waits for approval by Yo Delivery and is not visible in the shop yet.</p>{% endif %}
             <h1>{{ p.name }}</h1>
             <div class="rating-line">{% if p.rating_count %}{{ stars(p.rating) }} <a href="#reviews">{{ '{:,}'.format(p.rating_count) }} ratings</a>{% else %}<span class="new-badge">New arrival</span> <span class="muted small">No ratings yet</span>{% endif %}
@@ -33,6 +41,7 @@
             {% if p.discount >= 30 %}<span class="deal-badge">Limited time deal</span>{% endif %}
             {{ price(p, True) }}
             <p class="muted small">Inclusive of all taxes{% if CURRENCY != 'INR' and RATES.get(CURRENCY) %} &middot; converted from {{ p.price|inr }} with today's rate{% endif %}</p>
+            {% set emi = emi_from(p.price) %}{% if emi %}<p class="emi-line">&#129518; EMI from <b>{{ emi|rupees }}</b> a month &middot; <a href="{{ url_for('pay_emi', amount='%d'|format(p.price // 100)) }}">See plans</a></p>{% endif %}
 
             <div class="offers">
                 <h3>Available offers</h3>
@@ -60,7 +69,7 @@
                 <form method="get" action="#delivery" class="pin-form" id="delivery">
                     <label for="dcountry">&#128205; Delivery to</label>
                     <select id="dcountry" name="country" onchange="this.form.submit()">{% for code, name in countries %}<option value="{{ code }}" {% if code == country %}selected{% endif %}>{{ name }}</option>{% endfor %}</select>
-                    {% if country == 'IN' %}<div class="pin-row"><input type="text" id="pin" name="pin" value="{{ delivery.pin if delivery and delivery.pin }}" maxlength="6" inputmode="numeric" placeholder="Enter pincode"><button type="submit">Check</button></div>{% endif %}
+                    {% if country == 'IN' %}<div class="pin-row"><input type="text" id="pin" name="pin" value="{{ delivery.pin if delivery and delivery.pin }}" maxlength="6" inputmode="numeric" placeholder="Enter pincode" aria-label="PIN code"><button type="submit">Check</button></div>{% endif %}
                 </form>
                 {% if delivery and delivery.error %}<p class="err small">{{ delivery.error }}</p>
                 {% elif delivery and delivery.country != 'IN' %}<p class="small"><b class="ok">{{ 'FREE shipping' if not delivery.fee else 'Shipping ' ~ (delivery.fee|rupees) }}</b> &middot; arrives in about {{ delivery.days }} days (by <b>{{ delivery.date }}</b>)</p>
@@ -130,7 +139,7 @@
     </section>
     {% endif %}
     {{ row('Customers who viewed this item also viewed', also_viewed, wish_ids) }}
-    {{ row('Similar products', similar, wish_ids) }}
+    {{ row('Similar products', similar, wish_ids, rec=ab) }}
 </div>
 {% endblock %}
 {% block scripts %}

@@ -49,7 +49,7 @@ def luhn_ok(number):
 
 def fetch_rates(timeout=15):
     """Units of every supported currency for 1 US dollar, from open.er-api.com."""
-    with urllib.request.urlopen(FX_URL, timeout=timeout) as resp:
+    with urllib.request.urlopen(FX_URL, timeout=timeout) as resp:       # nosec B310 - a fixed https address
         data = json.loads(resp.read().decode())
     if data.get("result") != "success":
         raise RuntimeError("exchange-rate service did not answer")

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Task board{% endblock %}
+{% block content %}
+<div class="wrap">
+    {% if scope == 'seller' %}{% include "seller/_nav.html" %}{% else %}<p class="crumbs"><a href="{{ url_for('driver_home') }}">Courier app</a> &rsaquo; <span>Task board</span></p>{% endif %}
+    <h1>&#128203; Task board</h1>
+    {% include "board/_board.html" %}
+</div>
+{% endblock %}

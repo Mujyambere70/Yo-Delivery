@@ -1,0 +1,23 @@
+{% extends "admin/layout.html" %}
+{% block title %}Yo Pay{% endblock %}
+{% block heading %}Yo Pay ledger{% endblock %}
+{% block content %}
+<div class="kpis">
+    <div class="kpi"><small>Money in all wallets</small><b>{{ held|inr }}</b></div>
+    <div class="kpi"><small>Added by card</small><b>{{ totals.get('topup', 0)|inr }}</b></div>
+    <div class="kpi"><small>Courier earnings paid</small><b>{{ totals.get('earning', 0)|inr }}</b></div>
+    <div class="kpi {{ 'warn' if audit }}"><small>Ledger check</small><b>{{ 'OK' if not audit else audit|length ~ ' wrong' }}</b><span>balance = sum of the ledger lines</span></div>
+</div>
+{% if audit %}<section class="panel warn-panel"><h2>Wallets that do not match the ledger</h2>{% for a in audit %}<p>{{ a.name }} (#{{ a.id }}): balance {{ a.wallet|inr }}, ledger {{ a.ledger|inr }}</p>{% endfor %}</section>{% endif %}
+<div class="panel toolbar">
+    <a href="{{ url_for('admin_yopay') }}" class="chip {{ 'on' if not kind }}">All</a>
+    {% for k, n in KINDS.items() %}<a href="{{ url_for('admin_yopay', kind=k) }}" class="chip {{ 'on' if kind == k }}">{{ n }} ({{ (totals.get(k, 0))|inr }})</a>{% endfor %}
+</div>
+<section class="panel"><div class="tw">
+<table class="at">
+    <thead><tr><th>When</th><th>Person</th><th>Type</th><th>Reference</th><th>Details</th><th class="num">Amount</th><th class="num">Balance</th></tr></thead>
+    <tbody>{% for r in rows %}<tr><td class="nowrap">{{ r.created_at }}</td><td>{{ r.name }}<br><small class="muted">{{ r.email }}</small></td><td>{{ r.kind_name }}</td><td class="mono">{{ r.ref }}</td><td>{{ r.note }}</td>
+        <td class="num {{ 'ok' if r.amount > 0 else 'err' }}">{{ '+' if r.amount > 0 }}{{ r.amount|inr }}</td><td class="num">{{ r.balance|inr }}</td></tr>
+    {% else %}<tr><td colspan="7" class="muted">No lines.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

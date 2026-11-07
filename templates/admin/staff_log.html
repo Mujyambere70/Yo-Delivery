@@ -1,0 +1,26 @@
+{% extends "admin/layout.html" %}
+{% block title %}Staff activity log{% endblock %}
+{% block heading %}Staff activity log{% endblock %}
+{% block content %}
+{% include "admin/_staff_tabs.html" %}
+<section class="panel">
+    <p class="small muted">Every change of workers, abilities, offices, shifts, tasks and time off in your branch, and every change made on an admin page (which page and which fields - never the values). Nobody can change or delete these lines.</p>
+    <form method="get" class="v6-filters">
+        <label>Person <input type="text" name="who" value="{{ fil.get('who', '') }}" placeholder="Name"></label>
+        <label>What <input type="text" name="action" value="{{ fil.get('action', '') }}" placeholder="Task, shift, /admin/orders..."></label>
+        <label>Office <select name="office"><option value="">All my offices</option>
+            {% for o in branch_offices %}<option value="{{ o.id }}" {{ 'selected' if fil.get('office') == o.id|string }}>{{ '— ' * o.depth }}{{ o.name }}</option>{% endfor %}</select></label>
+        <label>Kind <select name="kind"><option value="">Everything</option>
+            <option value="changes" {{ 'selected' if fil.get('kind') == 'changes' }}>Staff changes</option>
+            <option value="pages" {{ 'selected' if fil.get('kind') == 'pages' }}>Admin page actions</option></select></label>
+        <label>Period <select name="days"><option value="">All</option>
+            {% for d in (1, 7, 30) %}<option value="{{ d }}" {{ 'selected' if fil.get('days') == d|string }}>{{ d }} <span>days</span></option>{% endfor %}</select></label>
+        <button class="btn btn-sm">Show</button>
+    </form>
+    <div class="tw"><table class="at">
+        <thead><tr><th>When</th><th>Who</th><th>What</th><th>Worker</th><th>Office</th><th>Details</th></tr></thead>
+        <tbody>{% for r in rows %}<tr><td class="nowrap">{{ r.at[:16] }}</td><td>{{ r.actor or '-' }}</td><td>{{ r.action }}</td><td>{{ r.worker or '' }}</td><td><small>{{ r.office or '' }}</small></td><td><small translate="no">{{ r.details }}</small></td></tr>
+        {% else %}<tr><td colspan="6" class="muted">Nothing found.</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+{% endblock %}

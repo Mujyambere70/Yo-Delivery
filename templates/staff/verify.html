@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Check a staff card{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px;max-width:560px">
+    <section class="panel" style="text-align:center">
+        {% if v and v.active %}
+        <p style="font-size:44px;margin:0">&#9989;</p>
+        <h1>Works for Yo Delivery</h1>
+        <p class="big" translate="no">{{ v.name }}</p>
+        <p translate="no">{{ v.title }} &middot; {{ v.office }}</p>
+        {% elif v %}
+        <p style="font-size:44px;margin:0">&#9888;&#65039;</p>
+        <h1>Not working now</h1>
+        <p><span translate="no">{{ v.name }}</span>: {{ v.status }}. Do not give parcels, money or documents to this person.</p>
+        {% else %}
+        <p style="font-size:44px;margin:0">&#10060;</p>
+        <h1>This card is not valid</h1>
+        <p>The code was changed or made by somebody else. Do not give parcels, money or documents to this person, and call Yo Delivery support.</p>
+        {% endif %}
+        <p class="small muted">We show only the name, the job and the office. No phone numbers, addresses or photos.</p>
+    </section>
+</div>
+{% endblock %}

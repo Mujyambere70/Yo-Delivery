@@ -1,0 +1,27 @@
+{% extends "admin/layout.html" %}
+{% block title %}Blog & News{% endblock %}
+{% block heading %}Blog &amp; News{% endblock %}
+{% block content %}
+<div class="panel toolbar">
+    {% for st in [''] + STATUSES %}<a href="{{ url_for('admin_blog', status=st) }}" class="chip {{ 'on' if st == status }}">{{ st or 'All' }}</a>{% endfor %}
+    <a href="{{ url_for('admin_post_edit') }}" class="btn btn-orange btn-sm" style="margin-left:auto">New post</a>
+</div>
+<section class="panel"><div class="tw">
+<table class="at">
+    <thead><tr><th>Title</th><th>Category</th><th>Language</th><th>Author</th><th>Status</th><th>Views</th><th>Updated</th><th></th></tr></thead>
+    <tbody>{% for p in posts %}<tr>
+        <td><b>{{ p.title }}</b><br><small class="muted mono">/blog/{{ p.slug }}</small></td>
+        <td>{{ CATS[p.category] }}</td><td>{{ p.lang }}</td>
+        <td>{{ p.author_name }}{% if p.seller_id %}<br><small class="muted">seller story</small>{% endif %}</td>
+        <td><span class="st {{ 'st-delivered' if p.status == 'Published' else 'st-shipped' if p.status == 'Review' else '' }}">{{ p.status }}</span></td>
+        <td>{{ p.views }}</td><td class="nowrap">{{ p.updated_at|nicedate }}</td>
+        <td><div class="actions">
+            <a class="btn btn-outline btn-sm" href="{{ url_for('admin_post_edit', post_id=p.id) }}">Edit</a>
+            {% if p.status == 'Published' %}<a class="btn btn-outline btn-sm" href="{{ url_for('blog_post', slug=p.slug) }}" target="_blank">View</a>{% endif %}
+            {% if p.status != 'Published' %}<form method="post" action="{{ url_for('admin_post_action', post_id=p.id, action='publish', status=status) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-orange btn-sm">Publish</button></form>{% endif %}
+            {% if p.status == 'Review' %}<form method="post" action="{{ url_for('admin_post_action', post_id=p.id, action='draft', status=status) }}" class="inline-edit"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="text" name="note" placeholder="What to change" maxlength="200" style="width:130px"><button class="btn btn-outline btn-sm">Send back</button></form>{% endif %}
+            <form method="post" action="{{ url_for('admin_post_action', post_id=p.id, action='delete', status=status) }}" onsubmit="return confirm('Delete this post?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-danger btn-sm">Delete</button></form>
+        </div></td></tr>
+    {% else %}<tr><td colspan="8" class="muted">No posts.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

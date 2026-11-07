@@ -27,6 +27,11 @@
         <h3>Payouts</h3>
         {% for p in payouts %}<div class="mini-line"><span>{{ p.created_at|nicedate }} &middot; {{ p.note or 'Payout' }}</span><b>{{ p.amount|inr }}</b></div>
         {% else %}<p class="muted">No payouts yet.</p>{% endfor %}
+        <form method="post" action="{{ url_for('seller_auto_payout') }}" style="margin:8px 0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if shop.auto_payout %}<p class="small">&#10003; <span>Automatic payouts: every day the balance of delivered sales (from ₹100) goes to your Yo Pay wallet.</span></p><button class="btn btn-outline btn-sm" name="on" value="0">Switch off</button>
+            {% else %}<p class="small">Automatic payouts are off: the admin pays you.</p><button class="btn btn-outline btn-sm" name="on" value="1">Switch on (to Yo Pay)</button>{% endif %}
+        </form>
         <p class="small muted">Payouts go to: {{ shop.payout_details }} (demo shop &mdash; no real money is sent).</p>
     </section>
 </div>

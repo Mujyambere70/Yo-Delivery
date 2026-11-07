@@ -1,0 +1,23 @@
+{% extends "admin/layout.html" %}
+{% block title %}Tax by kind of goods{% endblock %}
+{% block heading %}Tax by kind of goods{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="flash info">Examples for India after GST 2.0 (22 September 2025), from public sources - not tax advice. A rate with a price limit is for pieces up to that price; the row without a limit is for the rest. A category without a row uses the goods rate of the country (Tax rules).</p>
+    <table class="at"><thead><tr><th>Country</th><th>Category</th><th>Rate</th><th>Up to a piece</th><th>Note</th><th></th></tr></thead><tbody>
+    {% for r in rates %}<tr><td>{{ r.country }}</td><td>{{ r.category }}</td><td>{{ '%g'|format(r.rate) }} %</td><td translate="no">{{ (r.max_unit_price|rupees) if r.max_unit_price else '-' }}</td><td><small>{{ r.note }}</small></td>
+        <td>{% if can('tax.manage') %}<form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="country" value="{{ r.country }}"><input type="hidden" name="category" value="{{ r.category }}"><input type="hidden" name="rate" value="{{ r.rate }}"><input type="hidden" name="max_unit_price" value="{{ r.max_unit_price / 100 }}"><button class="linklike" name="delete" value="1">Delete</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>
+</section>
+{% if can('tax.manage') %}<section class="panel">
+    <h2>Add or change a rate</h2>
+    <form method="post" class="form-grid v6-plan">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div><label for="tc">Country (2 letters)</label><input id="tc" type="text" name="country" value="IN" maxlength="2"></div>
+        <div><label for="tk">Category</label><select id="tk" name="category">{% for c in categories %}<option value="{{ c.slug }}">{{ c.name }}</option>{% endfor %}</select></div>
+        <div><label for="tr">Rate %</label><input id="tr" type="number" name="rate" min="0" max="50" step="0.1" value="18"></div>
+        <div><label for="tm">Up to a piece (₹, 0 = no limit)</label><input id="tm" type="number" name="max_unit_price" min="0" step="1" value="0"></div>
+        <div class="wide"><label for="tn">Note (source, date)</label><input id="tn" type="text" name="note" maxlength="120"></div>
+        <div><button class="btn btn-orange">Save</button></div>
+    </form>
+</section>{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Yo Pay{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <h1>&#128179; Yo Pay</h1>
+    <div class="wallet-card">
+        <small>Balance</small>
+        <div class="bal">{{ s.balance|rupees }}</div>
+        <div class="row"><span>&#8595; In this month: <b>{{ s.in_month|rupees }}</b></span><span>&#8593; Out this month: <b>{{ s.out_month|rupees }}</b></span></div>
+    </div>
+    <div class="pay-actions">
+        <a href="{{ url_for('pay_add') }}"><span>&#10133;</span>Add money</a>
+        <a href="{{ url_for('pay_send') }}"><span>&#128228;</span>Send money</a>
+        <a href="{{ url_for('courier_book') }}"><span>&#128666;</span>Send a parcel</a>
+        <a href="{{ url_for('pay_emi') }}"><span>&#129518;</span>EMI calculator</a>
+    </div>
+    <section class="panel">
+        <div class="row-head"><h2 style="margin:0">Statement</h2><a href="{{ url_for('pay_statement_csv') }}" class="btn btn-outline btn-sm">&#11015; CSV</a></div>
+        {% for r in rows %}
+        <div class="txn">
+            <span class="ic">{{ {'topup': '&#10133;', 'order': '&#128717;', 'refund': '&#8634;', 'transfer_out': '&#128228;', 'transfer_in': '&#128229;', 'courier': '&#128666;', 'earning': '&#128757;', 'signup': '&#127881;', 'reward': '&#127873;', 'admin': '&#9881;', 'opening': '&#128203;'}.get(r.kind, '&#8226;')|safe }}</span>
+            <div><b>{{ r.kind_name }}</b><small><span>{{ r.note }}</span>{% if r.ref %} &middot; <span translate="no">{{ r.ref }}</span>{% endif %} &middot; <span>{{ r.created_at|nicedate('%d %b %Y, %H:%M') }}</span></small></div>
+            <div class="amt"><span class="{{ 'money-plus' if r.amount > 0 else 'money-minus' }}">{{ '+' if r.amount > 0 else '−' }}{{ (r.amount|abs)|rupees }}</span><small class="muted">{{ r.balance|rupees }}</small></div>
+        </div>
+        {% else %}<p class="muted">No payments yet.</p>{% endfor %}
+    </section>
+    <p class="small muted">Yo Pay is a demo wallet: the money is not real. Limits: a balance of up to ₹2,00,000; send up to ₹25,000 at a time and ₹50,000 per day.</p>
+</div>
+{% endblock %}

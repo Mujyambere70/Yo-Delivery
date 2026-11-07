@@ -1,0 +1,25 @@
+{% extends "admin/layout.html" %}
+{% block title %}Couriers{% endblock %}
+{% block heading %}Couriers{% endblock %}
+{% block content %}
+<p class="muted">Approve new couriers, pause them, and record the cash they bring to the Yo hub. The automatic photo check looks at size, sharpness, light and photos used by another account.</p>
+<section class="panel"><div class="tw">
+<table class="at">
+    <thead><tr><th>Courier</th><th>Vehicle</th><th>City</th><th>Status</th><th>Online</th><th>Jobs</th><th>Rating</th><th class="num">Earned</th><th class="num">Cash in hand</th><th>Photo check</th><th>Decision</th></tr></thead>
+    <tbody>{% for c in rows %}<tr>
+        <td><div class="cust">{% if c.photo %}<img class="photo-thumb" src="{{ url_for('admin_private', name=c.photo) }}" alt="">{% else %}<span class="avatar sm">{{ c.name[0] }}</span>{% endif %}<div><b>{{ c.name }}</b><br><small class="muted">{{ c.email }}{% if c.demo %} &middot; robot{% endif %}</small></div></div></td>
+        <td>{{ c.vehicle_name }}<br><small class="mono">{{ c.vehicle_no }}</small></td>
+        <td>{{ c.city }}</td>
+        <td><span class="st {{ 'st-delivered' if c.status == 'Approved' else 'st-cancelled' if c.status in ('Rejected', 'Suspended') else '' }}">{{ c.status }}</span>{% if c.reason %}<br><small class="muted">{{ c.reason }}</small>{% endif %}</td>
+        <td>{{ '🟢' if c.online else '⚪' }}</td>
+        <td>{{ c.jobs }} open<br><small class="muted">{{ c.jobs_done }} done</small></td>
+        <td>{{ ('★ ' ~ c.rating) if c.rating else '—' }}</td>
+        <td class="num">{{ c.earned|inr }}</td>
+        <td class="num">{{ c.cash_in_hand|inr }}{% if c.cash_in_hand %}<form method="post" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="courier_id" value="{{ c.id }}"><input type="hidden" name="action" value="cash"><button class="btn btn-outline btn-sm">Received</button></form>{% endif %}</td>
+        <td>{% if c.check %}<span class="score {{ 'bad' if c.check.score < 50 else 'mid' if c.check.score < 80 else '' }}">{{ c.check.score }}</span>{% for p in c.check.problems %}<br><small class="muted">{{ p }}</small>{% endfor %}{% else %}<small class="muted">no photo</small>{% endif %}</td>
+        <td><form method="post" class="inline-edit"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="courier_id" value="{{ c.id }}">
+            <select name="status">{% for st in STATUSES[1:] %}<option {{ 'selected' if st == ('Approved' if c.status == 'Pending' else c.status) }}>{{ st }}</option>{% endfor %}</select>
+            <input type="text" name="reason" placeholder="Reason" maxlength="200" style="width:120px"><button class="btn btn-orange btn-sm">Save</button></form></td>
+    </tr>{% else %}<tr><td colspan="11" class="muted">No couriers yet.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

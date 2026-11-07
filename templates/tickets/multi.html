@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Trip through several towns - Yo Tickets{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <section class="panel">
+        <h1 style="margin-top:0">&#128506; <span>Trip through several towns</span></h1>
+        <p class="muted">Write the towns in order (up to 5) and choose bus, train or plane for each leg. We find the first trip of each leg that leaves at least 2 hours after you arrive.</p>
+        <form method="get" class="multi-form">
+            <input type="hidden" name="go" value="1">
+            {% for i in range(5) %}
+            <div class="multi-row">
+                <label for="s{{ i }}">{{ 'From' if i == 0 else ('Then' if i < 4 else 'Last town') }}</label>
+                <input type="text" id="s{{ i }}" name="s{{ i }}" value="{{ stops[i] }}" data-place placeholder="{{ ['Ambala Cantt', 'New Delhi', 'Mumbai', '', ''][i] }}" translate="no" {{ 'required' if i < 3 }}>
+                {% if i < 4 %}<select name="m{{ i }}" aria-label="Leg {{ i + 1 }}">{% for k, v in MODES.items() %}<option value="{{ k }}" {{ 'selected' if modes[i] == k }}>{{ ICONS.get(k, '') }} {{ v }}</option>{% endfor %}</select>{% endif %}
+            </div>
+            {% endfor %}
+            <div class="multi-row">
+                <label for="md">First day</label><input type="date" id="md" name="date" value="{{ day }}" min="{{ today }}" max="{{ last_day }}">
+                <label for="mp">Passengers</label><select id="mp" name="pax">{% for n in range(1, MAX_PAX + 1) %}<option {{ 'selected' if pax == n|string }}>{{ n }}</option>{% endfor %}</select>
+                <button class="btn btn-orange">Plan the trip</button>
+            </div>
+        </form>
+    </section>
+    {% if plan %}
+    <section class="panel">
+        <h2>Your trip: {{ plan.legs|length }} <span>legs</span> &middot; <span>from</span> {{ plan.total_from|rupees }}</h2>
+        {% for l in plan.legs %}
+        <article class="tk-trip multi-leg">
+            <div class="op"><h3>{{ ICONS.get(l.mode, '') }} <span>Leg</span> {{ l.n }}</h3>
+                {% if l.wait_text %}<small><span>Time in</span> <span translate="no">{{ l['from'].name }}</span>: {{ l.wait_text }}</small>{% endif %}</div>
+            <div class="tk-times">
+                <div><b translate="no">{{ l.depart_local[11:16] }}</b><small translate="no">{{ l['from'].name }}</small><small>{{ l.depart_local[:10] }}</small></div>
+                <div class="tk-line">{% if l.conn %}<span>1 change in</span> <span translate="no">{{ l.conn.via }}</span>{% else %}<span translate="no">{{ l.trip.number }}</span>{% endif %}</div>
+                <div class="end"><b translate="no">{{ l.arrive_local[11:16] }}</b><small translate="no">{{ l['to'].name }}</small><small>{{ l.arrive_local[:10] }}</small></div>
+            </div>
+            <div class="tk-classes">
+                {% if l.trip %}<a class="btn btn-orange btn-sm" href="{{ url_for('tickets_seats', trip_id=l.trip.trip_id, pax=plan.passengers) }}">Choose seats &middot; {{ l.cheapest|rupees }}</a>
+                {% else %}<a class="btn btn-orange btn-sm" href="{{ url_for('tickets_seats', trip_id=l.conn.legs[0].trip_id, pax=plan.passengers, then=l.conn.legs[1].trip_id) }}">Choose seats &middot; {{ l.cheapest|rupees }}</a>{% endif %}
+            </div>
+        </article>
+        {% endfor %}
+        <p class="hint">Every leg is a ticket of its own: choose its seats and pay it. Prices per passenger with GST; the convenience fee is added at payment.</p>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

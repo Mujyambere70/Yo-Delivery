@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Check my ID{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <section class="panel">
+        <h1 style="margin-top:0">&#129706; <span>Check my ID</span></h1>
+        {% if user.id_verified %}<p class="flash success">Your ID is confirmed. &#10003;</p>{% endif %}
+        <p>Couriers and workers of Yo Delivery show who they are once. It protects our customers - and you.</p>
+        <div class="id-consent">
+            <h2>What we do with your photos</h2>
+            <ul>
+                <li>You send a photo of your ID document (the page with your portrait) and a selfie taken now.</li>
+                <li>A computer finds the face on both photos and tells our staff how alike they are. <b>A person always decides</b>, never the computer alone.</li>
+                <li>If you add the two lines at the bottom of your passport (MRZ), we check their check digits and the expiry date.</li>
+                <li>We keep only: the kind of document, the country, the expiry date, the last 3 characters of the number and the result. <b>The photos are deleted {{ RETENTION }} days after the decision.</b></li>
+                <li>Only staff with the ability "check courier photos and private files" can see them. You can take back your consent and delete the photos at any time on this page.</li>
+            </ul>
+        </div>
+        {% set waiting = checks|selectattr('status', 'equalto', 'Waiting')|list %}
+        {% if waiting %}<p class="flash info">Your ID check is waiting for a person (sent <span translate="no">{{ waiting[0].created_at[:16] }}</span>).</p>
+        {% else %}
+        <form method="post" enctype="multipart/form-data" class="form-grid v6-plan">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Document <select name="doc_type">{% for k, v in DOC_TYPES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+            <label>Country of the document <select name="country">{% for code, name in countries %}<option value="{{ code }}" {{ 'selected' if code == user.country }}>{{ name }}</option>{% endfor %}</select></label>
+            <label>Valid until <input type="date" name="expiry"></label>
+            <label>Photo of the document <input type="file" name="doc" accept="image/*" required></label>
+            <label>Selfie <input type="file" name="selfie" accept="image/*" capture="user" required></label>
+            <fieldset class="wide"><legend>Live check (recommended): three photos one after the other</legend>
+                <p class="small muted">It shows a person that you are really in front of the camera, not a printed photo.</p>
+                <label>1. Look at the camera <input type="file" name="live0" accept="image/*" capture="user"></label>
+                {% for s in live_steps %}<label>{{ loop.index + 1 }}. {{ s }} <input type="file" name="live{{ loop.index }}" accept="image/*" capture="user"></label>{% endfor %}
+            </fieldset>
+            <label class="wide">Passport only (optional): the two lines at the bottom
+                <input type="text" name="mrz1" maxlength="44" placeholder="P&lt;RWAUWASE&lt;&lt;AMANI&lt;&lt;&lt;..." autocomplete="off" spellcheck="false" translate="no">
+                <input type="text" name="mrz2" maxlength="44" autocomplete="off" spellcheck="false" translate="no"></label>
+            <label class="check wide"><input type="checkbox" name="consent" value="yes" required> <span>I have read what you do with my photos and I agree.</span></label>
+            <div><button class="btn btn-orange">Send for checking</button></div>
+        </form>
+        {% endif %}
+    </section>
+    {% if checks %}<section class="panel">
+        <h2>My checks</h2>
+        <table class="at"><tbody>{% for c in checks %}<tr><td translate="no">{{ c.created_at[:10] }}</td><td>{{ DOC_TYPES.get(c.doc_type, c.doc_type) }}</td>
+            <td><span class="pill-status {{ 'ok' if c.status == 'Approved' else 'warn' }}">{{ c.status }}</span>{% if c.note %} <small>{{ c.note }}</small>{% endif %}</td>
+            <td><small>{{ 'Photos kept until ' + c.purge_after[:10] if c.doc_image and c.purge_after else ('Photos deleted' if not c.doc_image else 'Photos kept while waiting') }}</small></td></tr>{% endfor %}</tbody></table>
+        <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="withdraw"><button class="linklike">Take back my consent and delete my ID photos now</button></form>
+    </section>{% endif %}
+</div>
+{% endblock %}

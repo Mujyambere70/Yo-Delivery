@@ -31,7 +31,7 @@
                 </form>
             </div>
         </div>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+        <script src="{{ url_for('static', filename='vendor/qrcode.js') }}"></script>
         <script>
         (function () {
             var box = document.getElementById('qr');

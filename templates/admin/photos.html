@@ -1,0 +1,19 @@
+{% extends "admin/layout.html" %}
+{% block title %}Photo checks{% endblock %}
+{% block heading %}Automatic photo checks{% endblock %}
+{% block content %}
+<p class="muted">Every product picture, courier photo and delivery photo is checked when it is uploaded: size, sharpness (how much detail a light blur removes), light, white background, and a dHash fingerprint that finds the same photo used twice. Lowest scores first.</p>
+<div class="panel toolbar">{% for p in ['', 'product', 'courier', 'pod'] %}<a href="{{ url_for('admin_photos', purpose=p) }}" class="chip {{ 'on' if p == purpose }}">{{ {'': 'All', 'product': 'Products', 'courier': 'Couriers', 'pod': 'Delivery photos'}[p] }}</a>{% endfor %}</div>
+<section class="panel"><div class="tw">
+<table class="at">
+    <thead><tr><th>Photo</th><th>Type</th><th>Score</th><th>Problems and tips</th><th>Size</th><th>Sharpness</th><th>Light</th><th>White border</th><th>Checked</th></tr></thead>
+    <tbody>{% for r in rows %}<tr>
+        <td><img class="photo-thumb" src="{{ url_for('admin_private', name=r.name) if r.name.startswith('private/') else url_for('img', name=r.name) }}" alt=""><br><small class="mono">{{ r.name }}</small></td>
+        <td>{{ r.purpose }}</td>
+        <td><span class="score {{ 'bad' if r.score < 50 else 'mid' if r.score < 80 else '' }}">{{ r.score }}</span></td>
+        <td class="small">{% for p in r.problems %}{{ p }}<br>{% else %}<span class="ok">Good</span>{% endfor %}</td>
+        <td>{{ r.details.width }}&times;{{ r.details.height }}</td><td>{{ r.details.sharpness }}</td><td>{{ r.details.brightness }}</td><td>{{ r.details.white_border }}%</td>
+        <td class="nowrap">{{ r.created_at|nicedate }}</td></tr>
+    {% else %}<tr><td colspan="9" class="muted">No photos checked yet.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

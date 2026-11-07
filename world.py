@@ -31,15 +31,45 @@ RTL_LANGUAGES = {"ar"}
 BABEL_LOCALE = {"en": "en", "ru": "ru", "fr": "fr", "es": "es", "ar": "ar", "zh": "zh_Hans_CN", "rw": "rw"}
 
 # ---------- currencies prices can be shown and paid in ----------
-CURRENCIES = ["INR", "RUB", "USD", "EUR", "GBP", "CNY", "AED", "RWF"]
+MAIN_CURRENCIES = ["INR", "RUB", "USD", "EUR", "GBP", "CNY", "AED", "RWF"]      # shown first in the menu
 SHOP_CURRENCY = "INR"
-ZERO_DECIMAL = {"RWF"}                       # no cents: amounts are whole francs (also for Stripe)
 HOME_COUNTRY = "IN"                          # the warehouse is in Ambala, India
+# currencies that card payments use directly (widely supported by card gateways); other currencies are shown,
+# but the card is charged in US dollars
+CARD_CURRENCIES = {"INR", "RUB", "USD", "EUR", "GBP", "CNY", "AED", "RWF", "AUD", "CAD", "CHF", "JPY", "SGD", "HKD",
+                   "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "ZAR", "NZD", "MXN", "BRL", "KRW",
+                   "THB", "MYR", "IDR", "PHP", "SAR", "QAR", "ILS", "KES", "UGX", "TZS", "NGN", "EGP", "MAD", "PKR",
+                   "BDT", "LKR", "NPR", "KZT", "UAH", "GEL", "VND", "CLP", "COP", "PEN", "ARS"}
+
+
+def _world_currencies():
+    """The currencies of every country today (Unicode CLDR via Babel), the 8 main ones first."""
+    from babel.numbers import get_territory_currencies
+    found = set()
+    for cc in DIAL_CODES:
+        try:
+            found.update(get_territory_currencies(cc))
+        except Exception:
+            pass
+    found -= {"XXX", "XAU", "XAG", "XDR"}
+    return MAIN_CURRENCIES + sorted(found - set(MAIN_CURRENCIES))
+
+
+def _zero_decimal(codes):
+    from babel.numbers import get_currency_precision
+    out = set()
+    for c in codes:
+        try:
+            if get_currency_precision(c) == 0:
+                out.add(c)
+        except Exception:
+            pass
+    return out | {"RWF"}
 
 
 def default_currency(country, lang="en"):
-    """Russian interface -> rubles. Otherwise the currency of the country if the shop has it, else US dollars."""
-    if lang == "ru":
+    """The currency of the country (every country has one now); without a country: Russian interface -> rubles."""
+    if lang == "ru" and not country:
         return "RUB"
     try:
         local = get_territory_currencies(country)
@@ -51,15 +81,38 @@ def default_currency(country, lang="en"):
     return "INR" if country == HOME_COUNTRY else "USD"
 
 
+def country_from_languages(accept):
+    """'ru-RU,ru;q=0.9' -> 'RU'; 'rw-RW' -> 'RW'; 'en-US' -> 'US' (the region of the browser language)."""
+    for part in str(accept or "").split(","):
+        tag = part.split(";")[0].strip().replace("_", "-")
+        bits = tag.split("-")
+        if len(bits) >= 2 and len(bits[-1]) == 2 and bits[-1].isalpha() and bits[-1].upper() in DIAL_CODES:
+            return bits[-1].upper()
+    return None
+
+
+def card_currency(code):
+    """The currency a card is charged in for a visitor who sees prices in `code`."""
+    return code if code in CARD_CURRENCIES else "USD"
+
+
 def currency_name(code, lang="en"):
+    """The name of a currency in the language (English when the language has no name for it, e.g. Kinyarwanda)."""
     try:
-        return Locale.parse(BABEL_LOCALE.get(lang, "en")).currencies.get(code, code)
+        name = Locale.parse(BABEL_LOCALE.get(lang, "en")).currencies.get(code, code)
+        if name == code and lang != "en":
+            name = Locale.parse("en").currencies.get(code, code)
+        return name
     except Exception:
         return code
 
 
 # ---------- countries ----------
 DIAL_CODES = {'AF': '93', 'AL': '355', 'DZ': '213', 'AS': '1684', 'AD': '376', 'AO': '244', 'AI': '1264', 'AG': '1268', 'AR': '54', 'AM': '374', 'AW': '297', 'AC': '247', 'AU': '61', 'AT': '43', 'AZ': '994', 'BS': '1242', 'BH': '973', 'BD': '880', 'BB': '1246', 'BY': '375', 'BE': '32', 'BZ': '501', 'BJ': '229', 'BM': '1441', 'BT': '975', 'BO': '591', 'BA': '387', 'BW': '267', 'BR': '55', 'IO': '246', 'VG': '1284', 'BN': '673', 'BG': '359', 'BF': '226', 'BI': '257', 'KH': '855', 'CM': '237', 'CA': '1', 'CV': '238', 'BQ': '599', 'KY': '1345', 'CF': '236', 'TD': '235', 'CL': '56', 'CN': '86', 'CX': '61', 'CC': '61', 'CO': '57', 'KM': '269', 'CG': '242', 'CK': '682', 'CR': '506', 'HR': '385', 'CU': '53', 'CW': '599', 'CY': '357', 'CZ': '420', 'CI': '225', 'CD': '243', 'DK': '45', 'DJ': '253', 'DM': '1767', 'DO': '1809', 'EC': '593', 'EG': '20', 'SV': '503', 'GQ': '240', 'ER': '291', 'EE': '372', 'SZ': '268', 'ET': '251', 'FK': '500', 'FO': '298', 'FJ': '679', 'FI': '358', 'FR': '33', 'GF': '594', 'PF': '689', 'GA': '241', 'GM': '220', 'GE': '995', 'DE': '49', 'GH': '233', 'GI': '350', 'GR': '30', 'GL': '299', 'GD': '1473', 'GP': '590', 'GU': '1671', 'GT': '502', 'GG': '44', 'GN': '224', 'GW': '245', 'GY': '592', 'HT': '509', 'HN': '504', 'HK': '852', 'HU': '36', 'IS': '354', 'IN': '91', 'ID': '62', 'IR': '98', 'IQ': '964', 'IE': '353', 'IM': '44', 'IL': '972', 'IT': '39', 'JM': '1876', 'JP': '81', 'JE': '44', 'JO': '962', 'KZ': '7', 'KE': '254', 'KI': '686', 'XK': '383', 'KW': '965', 'KG': '996', 'LA': '856', 'LV': '371', 'LB': '961', 'LS': '266', 'LR': '231', 'LY': '218', 'LI': '423', 'LT': '370', 'LU': '352', 'MO': '853', 'MG': '261', 'MW': '265', 'MY': '60', 'MV': '960', 'ML': '223', 'MT': '356', 'MH': '692', 'MQ': '596', 'MR': '222', 'MU': '230', 'YT': '262', 'MX': '52', 'FM': '691', 'MD': '373', 'MC': '377', 'MN': '976', 'ME': '382', 'MS': '1664', 'MA': '212', 'MZ': '258', 'MM': '95', 'NA': '264', 'NR': '674', 'NP': '977', 'NL': '31', 'NC': '687', 'NZ': '64', 'NI': '505', 'NE': '227', 'NG': '234', 'NU': '683', 'NF': '672', 'KP': '850', 'MK': '389', 'MP': '1670', 'NO': '47', 'OM': '968', 'PK': '92', 'PW': '680', 'PS': '970', 'PA': '507', 'PG': '675', 'PY': '595', 'PE': '51', 'PH': '63', 'PN': '64', 'PL': '48', 'PT': '351', 'PR': '1787', 'QA': '974', 'RO': '40', 'RU': '7', 'RW': '250', 'RE': '262', 'WS': '685', 'SM': '378', 'SA': '966', 'SN': '221', 'RS': '381', 'SC': '248', 'SL': '232', 'SG': '65', 'SX': '1721', 'SK': '421', 'SI': '386', 'SB': '677', 'SO': '252', 'ZA': '27', 'KR': '82', 'SS': '211', 'ES': '34', 'LK': '94', 'BL': '590', 'SH': '290', 'KN': '1869', 'LC': '1758', 'MF': '590', 'PM': '508', 'VC': '1784', 'SD': '249', 'SR': '597', 'SJ': '47', 'SE': '46', 'CH': '41', 'SY': '963', 'ST': '239', 'TW': '886', 'TJ': '992', 'TZ': '255', 'TH': '66', 'TL': '670', 'TG': '228', 'TK': '690', 'TO': '676', 'TT': '1868', 'TA': '290', 'TN': '216', 'TM': '993', 'TC': '1649', 'TV': '688', 'TR': '90', 'VI': '1340', 'UG': '256', 'UA': '380', 'AE': '971', 'GB': '44', 'US': '1', 'UY': '598', 'UZ': '998', 'VU': '678', 'VA': '39', 'VE': '58', 'VN': '84', 'WF': '681', 'EH': '212', 'YE': '967', 'ZM': '260', 'ZW': '263', 'AX': '358'}
+
+
+CURRENCIES = _world_currencies()             # about 155 currencies (version 5); was 8 before
+ZERO_DECIMAL = _zero_decimal(CURRENCIES)     # no cents (RWF, JPY, KRW, UGX ...): amounts are whole units
 
 
 def _names(lang):
@@ -127,6 +180,10 @@ def clean_postcode(country, value):
     rule = POSTCODE_RULES.get(country)
     if rule:
         return value if re.fullmatch(rule[0], value) else None
+    import addresscheck                       # version 6: the form of the postal code of 186 countries
+    ok = addresscheck.postcode_ok(country, value)
+    if ok is not None:
+        return value if ok else None
     return value if re.fullmatch(r"[A-Z0-9][A-Z0-9 -]{1,9}", value) else None
 
 
@@ -161,7 +218,43 @@ _currency = ContextVar("currency", default=SHOP_CURRENCY)
 _rates = ContextVar("rates", default={})
 
 
-def set_context(lang=None, currency=None, rates=None):
+_tz = ContextVar("tz", default="")
+try:                                                     # the time zone of this server (naive times are in it)
+    from zoneinfo import ZoneInfo as _ZoneInfo
+except ImportError:                                      # pragma: no cover
+    _ZoneInfo = None
+SERVER_TZ = datetime.now().astimezone().tzinfo
+
+
+def valid_tz(name):
+    """'Asia/Krasnoyarsk' -> True; anything else (or no zoneinfo) -> False."""
+    if not name or len(name) > 64 or _ZoneInfo is None:
+        return False
+    try:
+        _ZoneInfo(name)
+        return True
+    except Exception:
+        return False
+
+
+def to_viewer_time(d):
+    """A naive server time -> the visitor's time zone (when the browser told us), else unchanged."""
+    tz = _tz.get()
+    if not tz or _ZoneInfo is None:
+        return d
+    try:
+        return d.replace(tzinfo=SERVER_TZ).astimezone(_ZoneInfo(tz)).replace(tzinfo=None)
+    except Exception:
+        return d
+
+
+def current_tz():
+    return _tz.get()
+
+
+def set_context(lang=None, currency=None, rates=None, tz=None):
+    if tz is not None:
+        _tz.set(tz if valid_tz(tz) else "")
     if lang:
         _lang.set(lang if lang in LANGUAGES else "en")
     if currency:
@@ -233,10 +326,16 @@ def price(paise):
     return format_money(local, cur)
 
 
-def format_when(value, with_time=True, lang=None):
-    """'2026-10-31 01:48:00' -> '31 Oct 2026, 01:48 AM' (English) or '31 окт. 2026 г., 01:48' (Russian)."""
+def format_when(value, with_time=True, lang=None, convert=True):
+    """'2026-10-31 01:48:00' -> '31 Oct 2026, 01:48 AM' (English) or '31 окт. 2026 г., 01:48' (Russian).
+    convert=True: a server time is shown in the visitor's time zone (version 5); False: the time is already local
+    (e.g. the departure of a train in the time of its city)."""
     lang = lang or _lang.get()
+    if not isinstance(value, datetime) and len(str(value)) == 10:        # a date without the time ('2026-11-06')
+        value, with_time = datetime.strptime(str(value), "%Y-%m-%d"), False
     d = value if isinstance(value, datetime) else datetime.strptime(str(value)[:19], "%Y-%m-%d %H:%M:%S")
+    if with_time and convert:
+        d = to_viewer_time(d)
     if lang == "en":
         return d.strftime("%d %b %Y, %I:%M %p" if with_time else "%d %b %Y")
     loc = babel_locale(lang)

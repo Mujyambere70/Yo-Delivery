@@ -1,0 +1,29 @@
+{% extends "admin/layout.html" %}
+{% block title %}Customs rules{% endblock %}
+{% block heading %}Customs rules{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="flash info">The rules that came with the demo are <b>examples</b>, not the law of any country. Enter the real duty-free value and rate of each country before real use. Rows you save yourself lose the "example" mark.</p>
+    <p class="small muted">Duties and taxes are estimated for the receiver: nothing up to the duty-free value, then the percentage of the declared value. Never accepted anywhere: {{ FORBIDDEN.values()|join(', ') }}.</p>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Country</th><th>Duty-free up to</th><th>Rate</th><th>More forbidden goods</th><th>Note</th><th></th></tr></thead>
+        <tbody>{% for r in rules %}<tr>
+            <td><b>{{ 'Every other country' if r.country == '*' else r.country }}</b>{% if r.example %} <span class="tag">Example</span>{% endif %}</td>
+            <td>{{ r.duty_free|rupees }}</td><td>{{ r.rate_pct }} %</td><td><small>{{ r.forbidden or '-' }}</small></td><td><small>{{ r.note }}</small></td>
+            <td>{% if r.country != '*' %}<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="country" value="{{ r.country }}"><button class="btn btn-outline btn-sm" name="action" value="delete">Delete</button></form>{% endif %}</td></tr>
+        {% endfor %}</tbody>
+    </table></div>
+</section>
+<section class="panel">
+    <h2>Add or change a rule</h2>
+    <form method="post" class="form-grid three">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="save">
+        <div><label for="cc">Country (2 letters, * for every other)</label><input type="text" id="cc" name="country" maxlength="2" required placeholder="RW"></div>
+        <div><label for="cf">Duty-free up to (₹)</label><input type="number" id="cf" name="duty_free" min="0" step="1" value="0"></div>
+        <div><label for="cp">Rate (%)</label><input type="number" id="cp" name="rate_pct" min="0" max="100" step="0.1" value="0"></div>
+        <div style="grid-column:1/-1"><label for="cx">More forbidden goods (words, with commas)</label><input type="text" id="cx" name="forbidden" maxlength="400" placeholder="e.g. alcohol, plants, seeds"></div>
+        <div style="grid-column:1/-1"><label for="cn">Note</label><input type="text" id="cn" name="note" maxlength="200"></div>
+        <div><button class="btn btn-orange">Save</button></div>
+    </form>
+</section>
+{% endblock %}

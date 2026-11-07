@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Yo Tickets - bus, train and flight tickets{% endblock %}
+{% block meta %}<meta name="description" content="Book bus, train and flight tickets with Yo Tickets: choose your seat on the seat map, pay with Yo Pay, show the QR e-ticket. Ambala, Chandigarh, Delhi, all India and flights abroad.">{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="wrap">
+        <span class="pill" translate="no">Yo Tickets</span>
+        <h1>Bus, train and flight tickets</h1>
+        <p>Choose your seat on the seat map, pay with Yo Pay or a card, and show the QR e-ticket when you board. From any town or village of the world, with one change when there is no direct flight.</p>
+        <div style="margin-top:16px">{% with compact=False %}{% include "tickets/_search.html" %}{% endwith %}</div>
+    </div>
+</section>
+
+<div class="wrap">
+    {% if nxt %}
+    <section class="panel">
+        <h2>Your next trip</h2>
+        <a class="tk-mini" href="{{ url_for('tickets_booking', pnr=nxt.pnr) }}">
+            <span class="ico">{{ ICONS[nxt.mode] }}</span>
+            <span style="flex:1"><b><span translate="no">{{ nxt.from_city }}</span> &rarr; <span translate="no">{{ nxt.to_city }}</span></b><br>
+                <small class="muted"><span translate="no">{{ nxt.number }}</span> &middot; {{ nxt.depart_local|localtime }} <span>{{ nxt.from_tz }}</span> &middot; <span>Seats</span>: <span translate="no">{{ nxt.passengers|map(attribute='label')|join(', ') }}</span></small></span>
+            <span class="btn btn-outline btn-sm">Open the e-ticket</span>
+        </a>
+    </section>
+    {% endif %}
+
+    <div class="tile-row">
+        <div class="tile"><div class="ico">&#128269;</div><h3>1. Search</h3><p>Buses, trains and flights with times, seats left and the price for your date.</p></div>
+        <div class="tile"><div class="ico">&#128186;</div><h3>2. Choose your seat</h3><p>Window or aisle, lower berth or upper deck: you see every free seat on the map.</p></div>
+        <div class="tile"><div class="ico">&#9203;</div><h3>3. Pay in {{ HOLD }} minutes</h3><p>Your seats are kept for you while you pay with Yo Pay or a card (EMI for bigger amounts).</p></div>
+        <div class="tile"><div class="ico">&#128242;</div><h3>4. Show the QR code</h3><p>The conductor scans your e-ticket. You get a reminder 3 hours before the trip.</p></div>
+    </div>
+
+    <section class="panel tk-multi-cta">
+        <h2>&#128506; <span>Several towns in one trip?</span></h2>
+        <p>Plan a trip through up to 5 towns by bus, train and plane: we find the trips that fit together. <a class="btn btn-outline btn-sm" href="{{ url_for('tickets_multi') }}">Plan a multi-city trip</a></p>
+    </section>
+    <section class="panel">
+        <h2>Popular routes</h2>
+        <div class="tk-routes">
+            {% for r in popular %}
+            <a class="tk-route" href="{{ r.url }}"><span class="ico">{{ ICONS[r.mode] }}</span><span><b><span translate="no">{{ r['from'] }}</span> &rarr; <span translate="no">{{ r.to }}</span></b><small>{{ MODES[r.mode] }} timetable and fares</small></span></a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="od-grid two">
+        <section class="panel">
+            <h2>Cancellation and refund</h2>
+            <table class="tk-rules">
+                <thead><tr>{% for m in ['bus', 'train', 'flight'] %}<th>{{ ICONS[m] }} {{ MODES[m] }}</th>{% endfor %}</tr></thead>
+                <tbody>
+                    {% for i in range(4) %}
+                    <tr>{% for m in ['bus', 'train', 'flight'] %}
+                        <td>{% if i < 3 %}<b>{{ RULES[m][i][0] }}+</b> <span>hours before</span>{% else %}<span>Less than</span> <b>{{ RULES[m][2][0] }}</b> <span>hours</span>{% endif %}<br>
+                            {% if RULES[m][i][1] == 100 %}<span class="money-minus">No refund</span>{% else %}{{ RULES[m][i][1] }}% <span>charge</span>{% endif %}</td>
+                    {% endfor %}</tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="hint">The charge is taken from the ticket price; the convenience fee ({{ 2000|rupees }} per passenger) is not refunded. When the operator cancels a trip, you get all your money back. Refunds to Yo Pay arrive at once.</p>
+        </section>
+        <section class="panel">
+            <h2>Good to know</h2>
+            <ul class="small" style="padding-inline-start:18px;margin:0">
+                <li>Booking closes {{ CLOSE.bus }} minutes before a bus, {{ CLOSE.train }} minutes before a train and {{ CLOSE.flight }} minutes before a flight.</li>
+                <li>One booking can have up to {{ MAX_PAX }} passengers. Every passenger has a seat.</li>
+                <li>Bus and flight fares go up when the trip fills up; train fares are fixed.</li>
+                <li>Times are local: IST in India, the local time of the city abroad.</li>
+                <li>No airport in your town? We show the flights from the nearest airport.</li>
+                <li>You get Yo Rewards points after the trip: 1 point for every {{ 10000|rupees }}.</li>
+            </ul>
+        </section>
+    </div>
+    <p class="small muted">Yo Tickets is part of a demo project: the bus, train and airline companies are fictional and no real tickets are sold. Some seats are already taken by "other travellers" so the seat maps look real.</p>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='tickets.js') }}"></script>{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "admin/layout.html" %}
+{% block title %}Staff{% endblock %}
+{% block heading %}Staff{% endblock %}
+{% block content %}
+{% include "admin/_staff_tabs.html" %}
+<div class="kpis">
+    <div class="kpi"><small>Workers</small><b>{{ nums.workers }}</b></div>
+    <div class="kpi"><small>Managers</small><b>{{ nums.managers }}</b></div>
+    <div class="kpi"><small>On shift now</small><b>{{ nums.on_shift }}</b></div>
+    <div class="kpi"><small>Suspended</small><b>{{ nums.suspended }}</b></div>
+    <div class="kpi"><small>Time off to decide</small><b>{{ nums.waiting_leave }}</b></div>
+</div>
+<section class="panel">
+    <div class="ph"><h2>Workers of my branch ({{ rows|length }})</h2><a class="btn btn-outline btn-sm" href="{{ url_for('admin_staff_log') }}">Change log</a></div>
+    <form method="get" class="filters">
+        <select name="office" aria-label="Office"><option value="">All offices</option>{% for o in branch_offices %}<option value="{{ o.id }}" {{ 'selected' if office == o.id|string }}>{{ '— ' * o.depth }}{{ o.name }}</option>{% endfor %}</select>
+        <select name="status" aria-label="Status"><option value="">Any status</option>{% for st in ['Active', 'Suspended', 'Removed'] %}<option {{ 'selected' if status == st }}>{{ st }}</option>{% endfor %}</select>
+        <input type="text" name="q" value="{{ q }}" placeholder="Name, e-mail or job" aria-label="Search">
+        <button class="btn btn-outline btn-sm">Filter</button>
+    </form>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Name</th><th>Job</th><th>Kind</th><th>Office</th><th>Abilities</th><th>Status</th></tr></thead>
+        <tbody>{% for r in rows %}<tr>
+            <td><a href="{{ url_for('admin_staff_edit', staff_id=r.id) }}">{{ r.name }}</a>{% if r.is_manager %} <span class="tag ok-tag">Manager</span>{% endif %}<br><small class="muted">{{ r.email }}</small></td>
+            <td>{{ r.title }}</td><td>{{ WORKER_KINDS.get(r.kind, r.kind) }}</td><td>{{ r.office }}</td>
+            <td><small>{{ 'Everything' if ALL in r.ability_set else r.ability_set|length ~ ' abilities' }}</small></td>
+            <td><span class="pill-status {{ 'ok' if r.status == 'Active' else 'warn' if r.status == 'Suspended' else '' }}">{{ r.status }}</span></td></tr>
+        {% else %}<tr><td colspan="6" class="muted">No workers yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+{% if can('staff.manage') %}
+<section class="panel" id="add">
+    <h2>Add a worker</h2>
+    <p class="small muted">The worker needs a Yo Delivery account. If there is none for this e-mail, write the name and the mobile number: we make the account and show you a one-time link for the worker to choose a password. You can give only the abilities you have yourself.</p>
+    <form method="post" class="form-grid three">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div><label for="se">E-mail</label><input type="email" id="se" name="email" required value="{{ f.get('email', '') }}"></div>
+        <div><label for="sn">Name (new account)</label><input type="text" id="sn" name="name" value="{{ f.get('name', '') }}"></div>
+        <div><label for="sm">Mobile (new account)</label><input type="text" id="sm" name="mobile" inputmode="tel" value="{{ f.get('mobile', '') }}"></div>
+        <div><label for="so">Office</label><select id="so" name="office_id" required>{% for o in branch_offices if o.active %}<option value="{{ o.id }}">{{ '— ' * o.depth }}{{ o.name }} ({{ OFFICE_KINDS.get(o.kind, o.kind) }})</option>{% endfor %}</select></div>
+        <div><label for="sk">Kind of worker</label><select id="sk" name="kind">{% for k, v in WORKER_KINDS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+        <div><label for="sr">Ready set of abilities</label><select id="sr" name="role"><option value="">Choose below</option>{% for k, v in ROLES.items() %}<option value="{{ k }}">{{ v[0] }}</option>{% endfor %}</select></div>
+        <div><label for="st">Job title</label><input type="text" id="st" name="title" maxlength="60" placeholder="e.g. Support agent"></div>
+        <div><label for="sv">Vehicle (couriers)</label><select id="sv" name="vehicle"><option>Motorbike</option><option>Bicycle</option><option>Car</option><option>Van</option></select></div>
+        <div><label class="check"><input type="checkbox" name="is_manager" value="1"> Manager of this office</label></div>
+        {% include "admin/_abilities.html" %}
+        <div><button class="btn btn-orange">Add the worker</button></div>
+    </form>
+</section>
+<script>
+(function () {   // a ready set ticks its boxes; the boxes can still be changed one by one
+    var roles = {{ ROLES|tojson }}, sel = document.getElementById("sr");
+    if (!sel) { return; }
+    sel.addEventListener("change", function () {
+        var set = (roles[sel.value] || ["", []])[1];
+        document.querySelectorAll("input[name=abilities]").forEach(function (b) { if (!b.disabled) { b.checked = set.indexOf(b.value) >= 0; } });
+        var t = document.getElementById("st"); if (t && !t.value && roles[sel.value]) { t.value = roles[sel.value][0]; }
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

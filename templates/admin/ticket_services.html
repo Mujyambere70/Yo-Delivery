@@ -1,0 +1,25 @@
+{% extends "admin/layout.html" %}
+{% block title %}Services{% endblock %}
+{% block heading %}Yo Tickets: services{% endblock %}
+{% block content %}
+{% include "admin/_tickets_nav.html" %}
+<div class="panel toolbar">
+    {% for m, n in MODES.items() %}<a href="{{ url_for('admin_ticket_services', mode='' if mode == m else m, q=q) }}" class="chip {{ 'on' if mode == m }}">{{ n }}</a>{% endfor %}
+    <form method="get" class="inline" style="flex:1"><input type="hidden" name="mode" value="{{ mode }}"><input type="search" name="q" value="{{ q }}" placeholder="Number, name or city"><button class="btn btn-outline btn-sm">Search</button></form>
+</div>
+<section class="panel"><div class="tw">
+<table class="at">
+    <thead><tr><th>Service</th><th>Route</th><th>Departs</th><th>Time</th><th>Days</th><th>Classes</th><th>Running</th></tr></thead>
+    <tbody>{% for r in rows %}<tr class="{{ '' if r.active else 'muted' }}">
+        <td>{{ {'bus': '🚌', 'train': '🚆', 'flight': '✈️'}[r.mode] }} <b>{{ r.number }}</b><br><small class="muted">{{ r.operator }} &middot; {{ r.name }}</small></td>
+        <td>{{ r.from_city }} &rarr; {{ r.to_city }}<br><small class="muted">{{ '%.0f'|format(r.distance_km) }} km</small></td>
+        <td>{{ r.depart_local }}</td>
+        <td>{{ r.duration_min // 60 }}h {{ '%02d'|format(r.duration_min % 60) }}m</td>
+        <td class="mono">{% for d in 'MTWTFSS' %}{{ d if r.days[loop.index0] == '1' else '·' }}{% endfor %}</td>
+        <td>{{ r.classes|join(', ') }}</td>
+        <td><form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="service_id" value="{{ r.id }}">
+            <button class="btn btn-sm {{ 'btn-outline' if r.active else 'btn-orange' }}">{{ 'Switch off' if r.active else 'Switch on' }}</button></form></td></tr>
+    {% else %}<tr><td colspan="7" class="muted">No services yet. They are made when somebody searches a route.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+<p class="small muted">The timetable of a route is made the first time somebody searches for it, and is always the same for the same route. A service that is switched off is not shown in the search and sells no new tickets.</p>
+{% endblock %}

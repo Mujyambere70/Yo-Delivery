@@ -92,6 +92,12 @@ class RecommendMixin:
         return cats, brands, bought
 
     def recommended(self, visitor, user_id=None, limit=10, exclude=()):
+        try:                                     # version 5: the learned model first (learn.py), when it is in use
+            learned = self.learned_for(visitor, user_id, limit, exclude)
+        except Exception:
+            learned = None
+        if learned:
+            return learned
         cats, brands, bought = self.taste(visitor, user_id)
         items = self.products(order="popular")
         if not cats:

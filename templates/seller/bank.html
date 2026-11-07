@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Bank payouts - Seller Centre{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap">
+    {% include "seller/_nav.html" %}
+    <section class="panel">
+        <h1 style="margin-top:0">&#127974; <span>Bank payouts</span></h1>
+        <p class="flash info">Test mode: we check your account number like a bank does, but no real money is sent. We keep only the bank and the last 4 digits of your account.</p>
+        {% if account %}
+        <p><b translate="no">{{ account.holder }}</b> &middot; <span translate="no">{{ account.bank }} ****{{ account.last4 }}</span> &middot; <small class="muted">{{ SCHEMES[account.scheme] }}</small></p>
+        <form method="post" class="v6-filters">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="payout_to">
+            <label>Send my payouts to <select name="payout_to"><option value="bank" {{ 'selected' if shop.payout_to == 'bank' }}>My bank account</option><option value="wallet" {{ 'selected' if shop.payout_to != 'bank' }}>My Yo Pay wallet</option></select></label>
+            <button class="btn btn-sm">Save</button>
+        </form>
+        <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="remove"><button class="linklike">Remove this bank account</button></form>
+        {% else %}<p class="muted">Your payouts go to your Yo Pay wallet. Add a bank account to get them in your bank.</p>{% endif %}
+    </section>
+    <section class="panel">
+        <h2>{{ 'Change the bank account' if account else 'Add a bank account' }}</h2>
+        <form method="post" class="form-grid v6-plan" id="bankForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Country of the bank <select name="country" id="bankCountry">{% for code, name in countries %}<option value="{{ code }}" {{ 'selected' if code == (shop.country or 'IN') }}>{{ name }}</option>{% endfor %}</select></label>
+            <label>Account holder <input type="text" name="holder" maxlength="80" required value="{{ shop.shop_name }}"></label>
+            <label data-bank="iban">IBAN <input type="text" name="iban" placeholder="GB82 WEST 1234 5698 7654 32" autocomplete="off"></label>
+            <label data-bank="ifsc">IFSC code <input type="text" name="ifsc" placeholder="SBIN0001234" autocomplete="off"></label>
+            <label data-bank="bik">BIK <input type="text" name="bik" placeholder="044525974" inputmode="numeric" autocomplete="off"></label>
+            <label data-bank="local">Bank name <input type="text" name="bank" placeholder="Bank of Kigali" autocomplete="off"></label>
+            <label data-bank="ifsc bik local">Account number <input type="text" name="account" inputmode="numeric" autocomplete="off"></label>
+            <div><button class="btn btn-orange">Check and save</button></div>
+        </form>
+    </section>
+    <section class="panel">
+        <h2>Bank transfers</h2>
+        <div class="tw"><table class="at"><thead><tr><th>Reference</th><th>Amount</th><th>Account</th><th>Status</th><th>Sent</th></tr></thead>
+        <tbody>{% for t in transfers %}<tr><td translate="no">{{ t.ref }}</td><td>{{ t.amount|inr }}</td><td translate="no">{{ t.bank }} ****{{ t.last4 }}</td><td><span class="pill-status {{ 'ok' if t.status == 'Paid' else 'warn' }}">{{ t.status }}</span></td><td><small>{{ t.created_at|nicedate }}</small></td></tr>
+        {% else %}<tr><td colspan="5" class="muted">No bank transfers yet.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+</div>
+<script>
+(function () {
+    var iban = {{ IBAN|tojson }}, sel = document.getElementById("bankCountry");
+    function show() {
+        var c = sel.value, kind = iban.indexOf(c) >= 0 ? "iban" : c === "IN" ? "ifsc" : c === "RU" ? "bik" : "local";
+        document.querySelectorAll("#bankForm [data-bank]").forEach(function (el) {
+            el.hidden = el.getAttribute("data-bank").split(" ").indexOf(kind) < 0;
+        });
+    }
+    sel.addEventListener("change", show); show();
+})();
+</script>
+{% endblock %}

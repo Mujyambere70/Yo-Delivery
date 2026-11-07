@@ -1,0 +1,50 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ w.name }} - contract and training{% endblock %}
+{% block heading %}{{ w.name }}: contract, training, other offices{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('admin_staff_edit', staff_id=w.id) }}">&larr; Back to the worker</a> &middot; <span class="small muted" translate="no">{{ w.office }} &middot; {{ w.title }}</span></p>
+<div class="v7-grid">
+<section class="panel">
+    <h2>Contract</h2>
+    {% if contract %}<p class="small">Now: {{ kinds.get(contract.kind) }} from <span translate="no">{{ contract.start_day }}</span>{% if contract.end_day %} to <span translate="no">{{ contract.end_day }}</span>{% endif %},
+        <span translate="no">{{ minor_money(contract.pay_amount, contract.currency) }}</span> {{ 'a month' if contract.pay_kind == 'month' else 'an hour' }}, {{ contract.hours_week }} h a week, {{ contract.leave_days }} holiday days.</p>
+        {% if balance %}<p class="small">Holiday balance {{ balance.year }}: earned {{ '%g'|format(balance.earned) }}, used {{ balance.used }}, left <b>{{ '%g'|format(balance.left) }}</b>.</p>{% endif %}{% endif %}
+    <form method="post" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="what" value="contract">
+        <div><label for="ck">Kind</label><select id="ck" name="kind">{% for k, v in kinds.items() %}<option value="{{ k }}" {{ 'selected' if contract and contract.kind == k }}>{{ v }}</option>{% endfor %}</select></div>
+        <div><label for="cs">First day</label><input id="cs" type="date" name="start_day" value="{{ contract.start_day if contract else '' }}" required></div>
+        <div><label for="ce">Last day (fixed term)</label><input id="ce" type="date" name="end_day" value="{{ contract.end_day if contract else '' }}"></div>
+        <div><label for="ch">Hours a week</label><input id="ch" type="number" name="hours_week" min="1" max="60" value="{{ contract.hours_week if contract else 40 }}"></div>
+        <div><label for="cp">Pay</label><select id="cp" name="pay_kind"><option value="month">a month</option><option value="hour" {{ 'selected' if contract and contract.pay_kind == 'hour' }}>an hour</option></select></div>
+        <div><label for="ca">Amount ({{ currency }})</label><input id="ca" type="number" name="pay_amount" min="1" step="0.01" value="{{ (contract.pay_amount / 100) if contract else '' }}" required></div>
+        <div><label for="cl">Holiday days a year</label><input id="cl" type="number" name="leave_days" min="0" max="60" value="{{ contract.leave_days if contract else 20 }}"></div>
+        <div><button class="btn btn-orange">Save the contract</button></div>
+    </form>
+    <p class="small muted">A new contract ends the old one. The pay is never written to the activity log.</p>
+</section>
+<section class="panel">
+    <h2>Training and certificates</h2>
+    <table class="at small"><tbody>{% for t in trainings %}<tr><td>{{ t.name }}</td><td translate="no">{{ t.done_on }}</td><td><span class="pill-status {{ 'ok' if t.valid else 'bad' }}">{{ 'until ' ~ t.expires_on if t.valid else 'expired' }}</span></td><td translate="no">{{ t.certificate }}</td></tr>
+    {% else %}<tr><td class="muted">No courses yet.</td></tr>{% endfor %}</tbody></table>
+    <form method="post" class="form-grid" style="margin-top:10px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="what" value="training">
+        <div><label for="tc">Course</label><select id="tc" name="course">{% for k, c in courses.items() %}<option value="{{ k }}">{{ c[0] }} ({{ c[2] }} months)</option>{% endfor %}</select></div>
+        <div><label for="td">Done on</label><input id="td" type="date" name="done_on" required></div>
+        <div><label for="tn">Certificate number</label><input id="tn" type="text" name="certificate" maxlength="40"></div>
+        <div><button class="btn btn-outline">Add</button></div>
+    </form>
+</section>
+<section class="panel">
+    <h2>Helps in another office</h2>
+    <ul class="small">{% for x in helps %}<li translate="no">{{ x.office }}: {{ x.from_day }} &ndash; {{ x.to_day }}</li>{% else %}<li class="muted">Only in the own office.</li>{% endfor %}</ul>
+    <form method="post" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="what" value="helper">
+        <div><label for="ho">Office</label><select id="ho" name="office_id">{% for o in offices if o.active and o.id != w.office_id %}<option value="{{ o.id }}">{{ o.name }}</option>{% endfor %}</select></div>
+        <div><label for="hf">From</label><input id="hf" type="date" name="from_day" required></div>
+        <div><label for="ht">To</label><input id="ht" type="date" name="to_day" required></div>
+        <div><button class="btn btn-outline">Save</button></div>
+    </form>
+    <p class="small muted">The manager of that office can then plan this worker's shifts there; the worker can clock in there.</p>
+</section>
+</div>
+{% endblock %}

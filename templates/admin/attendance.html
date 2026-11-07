@@ -1,0 +1,25 @@
+{% extends "admin/layout.html" %}
+{% block title %}Attendance{% endblock %}
+{% block heading %}Attendance{% endblock %}
+{% block content %}
+{% include "admin/_staff_tabs.html" %}
+<section class="panel">
+    <form method="get" class="v6-filters">
+        <a class="btn btn-sm btn-outline" href="{{ url_for('admin_attendance', day=r.prev, office=office) }}">&larr; <span>Day before</span></a>
+        <label>Day <input type="date" name="day" value="{{ r.day }}" onchange="this.form.submit()"></label>
+        <a class="btn btn-sm btn-outline" href="{{ url_for('admin_attendance', day=r.next, office=office) }}"><span>Next day</span> &rarr;</a>
+        <label>Office <select name="office" onchange="this.form.submit()"><option value="">All my offices</option>
+            {% for o in branch_offices %}<option value="{{ o.id }}" {{ 'selected' if office == o.id|string }}>{{ '— ' * o.depth }}{{ o.name }}</option>{% endfor %}</select></label>
+    </form>
+    <div class="kpis">{% for k, v in r.counts.items() %}<div class="kpi"><small>{{ k }}</small><b>{{ v }}</b></div>{% endfor %}</div>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Worker</th><th>Office</th><th>Plan</th><th>Clock in</th><th>Clock out</th><th>Worked</th><th>State</th></tr></thead>
+        <tbody>{% for x in r.rows %}<tr><td translate="no">{{ x.worker.name }}</td><td translate="no">{{ x.worker.office }}</td>
+            <td translate="no">{% if x.plan %}{{ x.plan.start_hm }}&ndash;{{ x.plan.end_hm }}{% else %}-{% endif %}</td>
+            <td translate="no">{{ x.first_in.strftime('%H:%M') if x.first_in else '-' }}</td><td translate="no">{{ x.last_out.strftime('%H:%M') if x.last_out else '-' }}</td>
+            <td translate="no">{{ x.worked // 60 }}h{{ '%02d'|format(x.worked % 60) }}</td>
+            <td><span class="pill-status {{ 'ok' if x.state == 'On time' else 'warn' if x.state in ('Late', 'Absent') else '' }}">{{ x.state }}</span></td></tr>
+        {% else %}<tr><td colspan="7" class="muted">No shifts planned or worked on this day.</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+{% endblock %}

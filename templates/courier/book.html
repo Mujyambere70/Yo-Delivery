@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Book a pickup · Yo Courier{% endblock %}
+{% block content %}
+<div class="wrap">
+    <h1>&#128666; Book a pickup</h1>
+    <form method="post" class="two-col" id="quoteForm" data-url="{{ url_for('courier_quote_api') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="from_lat" value="{{ form.get('from_lat', '') }}"><input type="hidden" name="from_lng" value="{{ form.get('from_lng', '') }}">
+        <input type="hidden" name="to_lat" value="{{ form.get('to_lat', '') }}"><input type="hidden" name="to_lng" value="{{ form.get('to_lng', '') }}">
+        <div>
+            <fieldset class="box">
+                <legend>1. What are you sending?</legend>
+                <div class="seg">{% for k, n in KINDS.items() %}<label><input type="radio" name="kind" value="{{ k }}" {{ 'checked' if form.get('kind', 'parcel') == k }}><span>{{ {'document': '&#128196;', 'parcel': '&#128230;', 'grocery': '&#129370;'}[k]|safe }} {{ n }}</span></label>{% endfor %}</div>
+                <label for="contents">What is inside</label>
+                <input id="contents" type="text" name="contents" value="{{ form.get('contents', '') }}" maxlength="120" placeholder="e.g. University documents, a phone charger, fresh vegetables" required>
+                <div class="form-grid">
+                    <div><label for="weight">Weight (kg)</label><input id="weight" type="number" name="weight" value="{{ form.get('weight', '1') }}" min="0.05" max="50" step="0.05" required></div>
+                    <div><label for="declared">Value (₹, optional)</label><input id="declared" type="number" name="declared" value="{{ form.get('declared', '') }}" min="0" max="50000" step="1"></div>
+                </div>
+                <label>Size of the box in cm (optional: length × width × height)</label>
+                <div class="form-grid three" style="grid-template-columns:repeat(3,1fr)">
+                    <input type="number" name="length" value="{{ form.get('length', '') }}" min="0" max="120" placeholder="L" aria-label="Length in cm">
+                    <input type="number" name="width" value="{{ form.get('width', '') }}" min="0" max="120" placeholder="W" aria-label="Width in cm">
+                    <input type="number" name="height" value="{{ form.get('height', '') }}" min="0" max="120" placeholder="H" aria-label="Height in cm">
+                </div>
+                <div class="radio-row">
+                    <label><input type="checkbox" name="fragile" value="1" {{ 'checked' if form.get('fragile') }}> Fragile (careful handling)</label>
+                    <label><input type="checkbox" name="insured" value="1" {{ 'checked' if form.get('insured') }}> Insure it (2% of the value)</label>
+                </div>
+            </fieldset>
+
+            <fieldset class="box">
+                <legend>2. Pickup (sender)</legend>
+                <div class="form-grid">
+                    <div><label for="fn">Name</label><input id="fn" type="text" name="from_name" value="{{ form.get('from_name', '') }}" maxlength="80" required></div>
+                    <div><label for="fm">Mobile number</label><input id="fm" type="tel" name="from_mobile" value="{{ form.get('from_mobile', '') }}" maxlength="18" required></div>
+                    <div><label for="fcc">Country</label><select id="fcc" name="from_country">{% for code, name in countries %}<option value="{{ code }}" {{ 'selected' if code == form.get('from_country', 'IN') }}>{{ name }}</option>{% endfor %}</select></div>
+                    <div><label for="fc">Town or village</label><input id="fc" type="text" name="from_city" value="{{ form.get('from_city', '') }}" maxlength="80" data-place="from_place" data-cc="#fcc" placeholder="Start typing: Mullana, Mugunga, Krasnoyarsk..." required translate="no">
+                        <input type="hidden" name="from_place" value="{{ form.get('from_place', '') }}"><span class="pl-note" data-place-note="from_city"></span></div>
+                    <div class="full"><label for="fa">Address (house, street, area)</label><input id="fa" type="text" name="from_address" value="{{ form.get('from_address', '') }}" maxlength="160" required></div>
+                    <div class="full"><button type="button" class="btn btn-outline btn-sm" id="useLocation">&#128205; Use my location</button>
+                        <span class="hint" id="locNote">Optional: the courier sees the exact point on the map.</span></div>
+                </div>
+                <div class="pin-map" data-pin-for="from_city" data-lat="from_lat" data-lng="from_lng" hidden></div>
+                <p class="pin-help" data-pin-help hidden>Tap the map to put the pin on the door (you can drag it).</p>
+            </fieldset>
+
+            <fieldset class="box">
+                <legend>3. Delivery (receiver)</legend>
+                <div class="form-grid">
+                    <div><label for="tc">Country</label><select id="tc" name="to_country" data-country>{% for code, name in countries %}<option value="{{ code }}" {{ 'selected' if code == form.get('to_country', 'IN') }}>{{ name }}</option>{% endfor %}</select></div>
+                    <div><label for="tci">Town or village</label><input id="tci" type="text" name="to_city" value="{{ form.get('to_city', '') }}" maxlength="80" data-place="to_place" data-cc="#tc" placeholder="Start typing the name or a PIN code" required translate="no">
+                        <input type="hidden" name="to_place" value="{{ form.get('to_place', '') }}"><span class="pl-note" data-place-note="to_city"></span></div>
+                    <div><label for="tn">Name</label><input id="tn" type="text" name="to_name" value="{{ form.get('to_name', '') }}" maxlength="80" required></div>
+                    <div><label for="tm">Mobile number</label><input id="tm" type="tel" name="to_mobile" value="{{ form.get('to_mobile', '') }}" maxlength="18" required></div>
+                    <div class="full"><label for="ta">Address (house, street, area)</label><input id="ta" type="text" name="to_address" value="{{ form.get('to_address', '') }}" maxlength="160" required></div>
+                    <div data-abroad hidden><label for="tp">Post code</label><input id="tp" type="text" name="to_postcode" value="{{ form.get('to_postcode', '') }}" maxlength="10" disabled></div>
+                </div>
+                <div class="pin-map" data-pin-for="to_city" data-lat="to_lat" data-lng="to_lng" hidden></div>
+                <p class="pin-help" data-pin-help hidden>Tap the map to put the pin on the receiver's door (optional).</p>
+                <p class="hint">Every town and village: India (with the PIN code), Rwanda (sectors, cells and villages), Russia and the whole world. Mobile numbers of another country with the country code, e.g. +250 788 123 456.</p>
+            </fieldset>
+
+            <fieldset class="box customs-box" id="customsBox" {{ '' if form.get('to_country', 'IN') != form.get('from_country', 'IN') else 'hidden' }}>
+                <legend>Customs declaration (parcels to another country)</legend>
+                <p class="hint">Customs of the receiver's country reads this. Write every kind of thing inside, how many and the value. We cannot send weapons, explosives, drugs, cash, live animals, flammable liquids or gas, or loose lithium batteries.</p>
+                <div class="form-grid">
+                    <div><label for="cr">Why you send it</label><select id="cr" name="customs_reason">{% for k, v in CUSTOMS_REASONS.items() %}<option value="{{ k }}" {{ 'selected' if form.get('customs_reason') == k }}>{{ v }}</option>{% endfor %}</select></div>
+                </div>
+                <table class="customs-lines"><thead><tr><th>What (in simple words)</th><th>Pieces</th><th>Value of the line (₹)</th><th>HS code (optional)</th></tr></thead><tbody>
+                {% for i in range(3) %}<tr>
+                    <td><input type="text" name="customs_desc" maxlength="80" aria-label="Item {{ i + 1 }}" placeholder="{{ ['e.g. Cotton shirt', 'e.g. Book', ''][i] }}"></td>
+                    <td><input type="number" name="customs_qty" min="1" max="999" value="1" aria-label="Pieces of item {{ i + 1 }}"></td>
+                    <td><input type="number" name="customs_value" min="0" step="1" aria-label="Value of item {{ i + 1 }}"></td>
+                    <td><input type="text" name="customs_hs" inputmode="numeric" maxlength="10" pattern="[0-9 .]{6,12}" aria-label="HS code of item {{ i + 1 }}" placeholder="{{ ['610910', '490199', ''][i] }}"></td></tr>{% endfor %}
+                </tbody></table>
+                <p class="hint">The receiver may have to pay duties and taxes when the parcel arrives. We show an estimate on the next page.</p>
+            </fieldset>
+
+            <fieldset class="box">
+                <legend>4. Service and payment</legend>
+                <div class="form-grid"><div><label for="tw">When is the receiver at home? (his time)</label>
+                    <select id="tw" name="time_window">{% for k, v in DELIVERY_WINDOWS.items() %}<option value="{{ k }}" {{ 'selected' if form.get('time_window') == k }}>{{ v }}</option>{% endfor %}</select></div></div>
+                <div class="seg">
+                    {% for k, n in SERVICES.items() %}<label><input type="radio" name="service" value="{{ k }}" {{ 'checked' if form.get('service', 'standard') == k }}><span>{{ n }}<small>{{ 'Normal speed' if k == 'standard' else 'About twice as fast' }}</small></span></label>{% endfor %}
+                </div>
+                <div class="seg" style="margin-top:10px">
+                    <label><input type="radio" name="payment" value="wallet" {{ 'checked' if form.get('payment', 'wallet') == 'wallet' }}><span>&#128179; Yo Pay<small>Balance {{ wallet|rupees }}</small></span></label>
+                    <label><input type="radio" name="payment" value="cash" {{ 'checked' if form.get('payment') == 'cash' }}><span>&#128181; Cash at pickup<small>Same country only</small></span></label>
+                </div>
+                <p class="hint"><a href="{{ url_for('pay_add') }}">Add money to Yo Pay</a></p>
+            </fieldset>
+        </div>
+        <aside>
+            <section class="panel">
+                <h2>Price</h2>
+                <div class="quote-out" id="quoteOut" aria-live="polite"><span class="muted small">Fill in the weight and the towns.</span></div>
+                <button class="btn btn-orange btn-block btn-lg">Book and pay</button>
+                <p class="hint">You can cancel for free until the courier picks it up. The money comes back to Yo Pay.</p>
+            </section>
+            <section class="panel small">
+                <b>Not allowed:</b> cash, jewellery, medicines without a prescription, liquids that can leak, anything dangerous or illegal.
+            </section>
+        </aside>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='courier.js') }}"></script>
+<script>
+(function () {   // the customs part is shown only when the parcel goes to another country
+    var f = document.getElementById("fcc"), t = document.getElementById("tc"), box = document.getElementById("customsBox");
+    if (!f || !t || !box) { return; }
+    function show() { box.hidden = f.value === t.value; }
+    f.addEventListener("change", show); t.addEventListener("change", show); show();
+})();
+</script>{% endblock %}

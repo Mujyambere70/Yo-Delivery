@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{% if r %}{{ MODES[r.mode] }} {{ r['from'].name }} - {{ r.to.name }}{% else %}Search tickets{% endif %}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    {% with compact=True %}{% include "tickets/_search.html" %}{% endwith %}
+
+    {% if r %}
+    {% if back_trip %}<div class="tk-note">&#128260; <span>Return trip for</span> <b translate="no">{{ back_trip.pnr }}</b> (<span translate="no">{{ back_trip.from_city }}</span> &rarr; <span translate="no">{{ back_trip.to_city }}</span>). <span>The convenience fee of the way back is free.</span></div>
+    {% elif f.ret %}<div class="tk-note">&#128260; <span>Round trip: first choose the way there. After payment you choose the way back</span> ({{ f.ret|nicedate }}) <span>with no convenience fee.</span></div>{% endif %}
+    <div class="tk-days">
+        {% for d in days %}<a href="{{ link(date=d) }}" class="{{ 'on' if d == r.day }}" {{ 'aria-current=date' if d == r.day }}>{{ d|nicedate }}</a>{% endfor %}
+    </div>
+    {% for n in r.notes %}<div class="tk-note">&#9992;&#65039; <span>{{ n }}</span></div>{% endfor %}
+    <h1 style="font-size:22px;margin:4px 0">{{ ICONS[r.mode] }} <span translate="no">{{ r['from'].name }}</span> &rarr; <span translate="no">{{ r.to.name }}</span></h1>
+    <div class="tk-sort">
+        <span class="muted">{% if r.connections %}{{ r.connections|length }} <span>{{ 'connections' if r.connections|length != 1 else 'connection' }}</span>{% else %}{{ r.trips|length }} <span>{{ 'trips' if r.trips|length != 1 else 'trip' }}</span>{% endif %} &middot; <span>{{ r.day|nicedate }}</span> &middot; <span>Sort by</span>:</span>
+        {% for key, label in [('depart', 'Departure'), ('price', 'Price'), ('duration', 'Duration')] %}
+        <a href="{{ link(sort=key) }}" class="{{ 'on' if sort == key }}">{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    {% for t in r.trips %}
+    <article class="tk-trip {{ 'off' if not t.bookable }}">
+        <div class="op">
+            <h3 translate="no">{{ t.number }}</h3>
+            <small translate="no">{{ t.operator }} &#9733; {{ t.rating }}</small>
+            <small>{{ t.name }}</small>
+            {% if t.days != '1111111' %}<small><span>Runs on</span>: {% for d in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}{% if t.days[loop.index0] == '1' %}<span>{{ d }}</span> {% endif %}{% endfor %}</small>{% endif %}
+        </div>
+        <div class="tk-times">
+            <div><b>{{ t.depart_time }}</b><small translate="no">{{ t.from_city }}{% if t.from_code %} ({{ t.from_code }}){% endif %}</small><small>{{ t.from_tz }}</small></div>
+            <div class="tk-line">{{ t.duration_text }}<br>{{ '%.0f'|format(t.km) }} km</div>
+            <div class="end"><b>{{ t.arrive_time }}{% if t.plus_days %}<span class="tk-plus">+{{ t.plus_days }}</span>{% endif %}</b><small translate="no">{{ t.to_city }}{% if t.to_code %} ({{ t.to_code }}){% endif %}</small><small>{{ t.to_tz }}</small></div>
+        </div>
+        <div class="tk-classes">
+            {% if t.status == 'Cancelled' %}<span class="pill-status bad">Cancelled by the operator</span>
+            {% elif not t.bookable %}<span class="pill-status grey">Booking closed</span>
+            {% else %}
+            {% for c in t.classes %}
+            <a class="tk-class {{ 'full' if c.seats < r.passengers and not c.waitlist }}" href="{{ seats_link(t.trip_id, c.cls) }}">
+                <small>{{ c.name }}</small>
+                <b>{{ c['from']|rupees }}</b>
+                <small class="left {{ 'few' if c.seats < 10 }}">{% if c.seats %}{{ c.seats }} <span>{{ 'seats left' if c.seats != 1 else 'seat left' }}</span>{% elif c.waitlist and not t.chart_done %}<span>Waiting list</span>{% else %}<span>Full</span>{% endif %}</small>
+            </a>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </article>
+    {% else %}
+    {% if not r.connections %}<section class="panel"><h2>No trips on this day</h2><p>Please try another date{% if r.mode == 'train' %} (some long-distance trains run only on some days of the week){% endif %}.</p></section>{% endif %}
+    {% endfor %}
+    {% for c in r.connections %}
+    {% set l1, l2 = c.legs[0], c.legs[1] %}
+    <article class="tk-trip tk-conn {{ 'off' if not c.bookable }}">
+        <div class="op">
+            <h3><span translate="no">{{ l1.number }}</span> + <span translate="no">{{ l2.number }}</span></h3>
+            <small><span>1 change in</span> <b translate="no">{{ c.via }}{% if c.via_code %} ({{ c.via_code }}){% endif %}</b></small>
+            <small><span>Time to change</span>: {{ c.change_text }}</small>
+            <small translate="no">{{ l1.operator }}{% if l2.operator != l1.operator %} &middot; {{ l2.operator }}{% endif %}</small>
+        </div>
+        <div class="tk-times">
+            <div><b>{{ c.depart_time }}</b><small translate="no">{{ l1.from_city }} ({{ l1.from_code }})</small><small>{{ l1.from_tz }}</small></div>
+            <div class="tk-line">{{ c.duration_text }}<br><span translate="no">{{ l1.to_code }}</span></div>
+            <div class="end"><b>{{ c.arrive_time }}{% if c.plus_days %}<span class="tk-plus">+{{ c.plus_days }}</span>{% endif %}</b><small translate="no">{{ l2.to_city }} ({{ l2.to_code }})</small><small>{{ l2.to_tz }}</small></div>
+        </div>
+        <div class="tk-classes">
+            {% if not c.bookable %}<span class="pill-status grey">Booking closed</span>
+            {% elif not c.enough %}<span class="pill-status grey">Full</span>
+            {% else %}
+            {% for cl in l1.classes %}{% set cl2 = l2.classes|selectattr('cls', 'equalto', cl.cls)|first %}
+            {% if cl2 %}<a class="tk-class" href="{{ seats_link(l1.trip_id, cl.cls, then=l2.trip_id) }}"><small>{{ cl.name }}</small><b>{{ (cl['from'] + cl2['from'])|rupees }}</b><small class="left">2 <span>{{ 'flights' if r.mode == 'flight' else 'trips' }}</span></small></a>{% endif %}
+            {% endfor %}
+            {% endif %}
+        </div>
+    </article>
+    {% endfor %}
+    {% if r.connections %}<p class="hint">{{ 'You choose the seats of the first flight, then of the second one.' if r.mode == 'flight' else 'You choose the seats of the first trip, then of the second one.' }} <span>Both are paid together; if you cancel, both are cancelled.</span></p>{% endif %}
+    {% if r.trips %}<p class="hint"><span>Prices per passenger with GST.</span> <span>{{ 'The convenience fee and airport fees are added at payment.' if r.mode == 'flight' else 'The convenience fee is added at payment.' }}</span></p>{% endif %}
+    {% else %}
+    <section class="panel">
+        <h2>Popular routes</h2>
+        <div class="tk-routes">{% for p in popular %}<a class="tk-route" href="{{ p.url }}"><span class="ico">{{ ICONS[p.mode] }}</span><span><b><span translate="no">{{ p['from'] }}</span> &rarr; <span translate="no">{{ p.to }}</span></b><small>{{ MODES[p.mode] }}</small></span></a>{% endfor %}</div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='tickets.js') }}"></script>{% endblock %}

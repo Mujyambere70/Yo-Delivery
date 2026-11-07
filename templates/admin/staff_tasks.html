@@ -1,0 +1,44 @@
+{% extends "admin/layout.html" %}
+{% block title %}Staff tasks{% endblock %}
+{% block heading %}Staff tasks{% endblock %}
+{% block content %}
+{% include "admin/_staff_tabs.html" %}
+{% set can_give = ALL in my_abilities or 'tasks.manage' in my_abilities %}
+{% if can_give %}
+<section class="panel">
+    <h2>Give a task</h2>
+    <form method="post" class="form-grid v6-plan">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Worker <select name="staff_id" required>{% for w in workers %}<option value="{{ w.id }}">{{ w.name }} ({{ w.office }})</option>{% endfor %}</select></label>
+        <label>Task <input type="text" name="title" maxlength="120" required placeholder="Count the parcels at gate 2"></label>
+        <label>Priority <select name="priority">{% for p in PRIORITIES %}<option {{ 'selected' if p == 'Normal' }}>{{ p }}</option>{% endfor %}</select></label>
+        <label>Due day <input type="date" name="due"></label>
+        <label class="wide">Details <textarea name="details" rows="2" maxlength="2000"></textarea></label>
+        <div><button class="btn btn-orange">Give the task</button></div>
+    </form>
+</section>
+{% endif %}
+<section class="panel">
+    <form method="get" class="v6-filters">
+        <label>Status <select name="status" onchange="this.form.submit()"><option value="">All</option>{% for s in TASK_STATUSES %}<option {{ 'selected' if fil.get('status') == s }}>{{ s }}</option>{% endfor %}</select></label>
+        <label>Office <select name="office" onchange="this.form.submit()"><option value="">All my offices</option>
+            {% for o in branch_offices %}<option value="{{ o.id }}" {{ 'selected' if fil.get('office') == o.id|string }}>{{ '— ' * o.depth }}{{ o.name }}</option>{% endfor %}</select></label>
+        <label>Worker <select name="worker" onchange="this.form.submit()"><option value="">Everybody</option>{% for w in workers %}<option value="{{ w.id }}" {{ 'selected' if fil.get('worker') == w.id|string }}>{{ w.name }}</option>{% endfor %}</select></label>
+    </form>
+    <p class="small">{% for s, n in task_counts.items() %}<span class="pill-status">{{ s }}: {{ n }}</span> {% endfor %}</p>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Task</th><th>Worker</th><th>Priority</th><th>Due</th><th>Status</th><th></th></tr></thead>
+        <tbody>{% for t in rows %}<tr class="{{ 'overdue' if t.overdue }}">
+            <td><b>{{ t.title }}</b>{% if t.details %}<br><small>{{ t.details[:140] }}</small>{% endif %}{% if t.note %}<br><small class="muted">{{ t.note }}</small>{% endif %}</td>
+            <td><span translate="no">{{ t.worker }}</span><br><small class="muted" translate="no">{{ t.office }}</small></td>
+            <td>{{ t.priority }}</td><td translate="no">{{ t.due_day or '-' }}{% if t.overdue %} <b class="warn-text">late</b>{% endif %}</td>
+            <td><span class="pill-status {{ 'ok' if t.status == 'Done' else 'warn' if t.overdue else '' }}">{{ t.status }}</span></td>
+            <td>{% if can_give %}<form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="task_id" value="{{ t.id }}">
+                {% if t.status in ('To do', 'In progress') %}<button class="btn btn-sm btn-outline" name="status" value="Done">Done</button> <button class="btn btn-sm btn-outline" name="status" value="Cancelled">Cancel</button>{% endif %}
+                {% if t.status == 'Cancelled' %}<button class="btn btn-sm btn-outline" name="status" value="To do">Open again</button>{% endif %}
+                {% if t.status == 'Done' %}<button class="btn btn-sm btn-outline" name="status" value="In progress">Not finished</button>{% endif %}
+            </form>{% endif %}</td></tr>
+        {% else %}<tr><td colspan="6" class="muted">No tasks.</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+{% endblock %}

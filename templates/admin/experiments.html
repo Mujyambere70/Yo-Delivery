@@ -1,0 +1,15 @@
+{% extends "admin/layout.html" %}
+{% block title %}A/B tests{% endblock %}
+{% block heading %}A/B test: similar products{% endblock %}
+{% block content %}
+<section class="panel">
+    <p>{{ r.note }}</p>
+    <p class="small muted">A visitor always stays in the same group (a hash of the test and his id). We count when the similar products are shown (views) and clicked. The click rates are compared with a two-proportion z-test; we need at least {{ min_views }} views in each group.</p>
+    <table class="at"><thead><tr><th>Group</th><th>Views</th><th>Clicks</th><th>Click rate</th></tr></thead><tbody>
+    {% for g in r.groups %}<tr><td><b>{{ g.variant }}</b></td><td>{{ g.views }}</td><td>{{ g.clicks }}</td><td>{{ g.rate if g.rate is not none else '-' }}{{ ' %' if g.rate is not none }}</td></tr>{% endfor %}</tbody></table>
+    <p><b>{{ r.verdict }}</b>{% if r.z is not none %} <small class="muted">z = {{ r.z }}</small>{% endif %}</p>
+    <form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="key" value="{{ r.key }}">
+        <span>The test is <b>{{ 'running' if r.active else 'stopped' }}</b>.</span>
+        <button class="btn btn-sm btn-outline" name="on" value="{{ '0' if r.active else '1' }}">{{ 'Stop' if r.active else 'Start again' }}</button></form>
+</section>
+{% endblock %}

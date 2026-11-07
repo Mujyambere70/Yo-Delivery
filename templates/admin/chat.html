@@ -1,0 +1,27 @@
+{% extends "admin/layout.html" %}
+{% block title %}Chat moderation{% endblock %}
+{% block heading %}Chat moderation{% endblock %}
+{% block content %}
+{% if model %}<section class="panel">
+    <div class="ph"><h2>&#129302; <span>The moderation model</span></h2></div>
+    <p class="small">A small Naive Bayes model reads groups of letters (it works in every language) and sends a message to you when the chance that you would hide it is {{ (model.hold_p * 100)|int }} % or more. It never hides a message by itself, and it learns from every decision you make here.</p>
+    <div class="kpis"><div class="kpi"><small>Examples</small><b>{{ model.examples }}</b></div><div class="kpi"><small>Learned from your decisions</small><b>{{ model.learned }}</b></div>
+    {% if model.check %}<div class="kpi"><small>Right answers (test)</small><b>{{ model.check.accuracy }} %</b></div><div class="kpi"><small>Bad messages caught (test)</small><b>{{ model.check.caught }} %</b></div><div class="kpi"><small>False alarms (test)</small><b>{{ model.check.false_alarms }} %</b></div>{% endif %}</div>
+    <p class="small muted">Tested by cross-validation: the model learns from 4/5 of the examples and is checked on the other 1/5. With few examples it is often wrong - that is why a person decides.</p>
+</section>{% endif %}
+<section class="panel">
+    <div class="ph"><h2>Messages waiting for a decision ({{ queue|length }})</h2></div>
+    <p class="small muted">Held by the automatic filter (rude words, payment outside the shop, also written with tricks like "id1ot" or "p.a.y"), by the moderation model or reported by the other person. Phone numbers, e-mails and links are already hidden.</p>
+    <div class="tw"><table class="at">
+        <thead><tr><th>#</th><th>From</th><th>Conversation</th><th>Message</th><th>Why</th><th></th></tr></thead>
+        <tbody>{% for m in queue %}<tr>
+            <td>{{ m.id }}</td><td>{{ m.sender }}<br><small class="muted">{{ m.side }}</small></td><td>{{ m.subject }}</td>
+            <td style="max-width:380px">{{ m.body }}</td><td><small>{{ m.reason }}</small>{% if m.reported %}<br><span class="tag">Reported</span>{% endif %}</td>
+            <td><div class="actions">
+                <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="message_id" value="{{ m.id }}"><input type="hidden" name="action" value="approve"><button class="btn btn-outline btn-sm">Let it through</button></form>
+                <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="message_id" value="{{ m.id }}"><input type="hidden" name="action" value="hide"><button class="btn btn-outline btn-sm">Hide</button></form>
+            </div></td></tr>
+        {% else %}<tr><td colspan="6" class="muted">Nothing to check.</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+{% endblock %}

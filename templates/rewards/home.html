@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Yo Rewards{% endblock %}
+{% block meta %}<meta name="description" content="Yo Rewards: play the daily quiz, collect points and get coupons and Yo Pay money.">{% endblock %}
+{% block content %}
+<div class="wrap">
+    <h1>&#127873; Yo Rewards</h1>
+    <div class="two-col">
+        <div>
+            <section class="panel quiz-cta">
+                <div>
+                    <h2>&#129504; Daily quiz</h2>
+                    {% if not user %}<p class="muted">5 questions every day. Sign in to play and collect points.</p>
+                    {% elif today and today.finished_at %}<p><span>Today:</span> <b>{{ today.correct }}/{{ R.QUESTIONS_PER_DAY }}</b> <span>right</span> &middot; <span>+{{ today.points }} points</span>{% if today.streak > 1 %} &middot; <span>&#128293; {{ today.streak }} days in a row</span>{% endif %}. <span>Come back tomorrow!</span></p>
+                    {% else %}<p class="muted">5 questions, {{ R.QUIZ_MINUTES }} minutes, one try a day. {{ R.POINTS_RIGHT }} points for every right answer, +{{ R.POINTS_ALL }} for all 5, and a bonus for every day in a row.</p>{% endif %}
+                </div>
+                {% if not user %}<a href="{{ url_for('login', next=url_for('rewards_quiz')) }}" class="btn btn-orange btn-lg">Sign in to play</a>
+                {% elif today and today.finished_at %}<a href="{{ url_for('rewards_quiz') }}" class="btn btn-outline">See my answers</a>
+                {% else %}<a href="{{ url_for('rewards_quiz') }}" class="btn btn-orange btn-lg">{{ 'Continue' if today else 'Play now' }}</a>{% endif %}
+            </section>
+
+            <section class="panel" id="redeem">
+                <h2>Use your points</h2>
+                <div class="reward-tiles">
+                    {% for key, r in REWARDS.items() %}
+                    <div class="reward">
+                        <span class="cost">{{ r[0] }} points</span>
+                        <b>{{ r[1]|rupees }} {{ 'off' if r[3] == 'coupon' else 'in Yo Pay' }}</b>
+                        <span class="small muted">{% if r[3] == 'coupon' %}Coupon for orders from {{ r[2]|rupees }}, {{ R.COUPON_DAYS }} days{% else %}Money for shopping, courier and sending{% endif %}</span>
+                        <form method="post" action="{{ url_for('rewards_redeem') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="reward" value="{{ key }}">
+                            <button class="btn btn-sm btn-block {{ 'btn-orange' if points >= r[0] else 'btn-outline' }}" {{ 'disabled' if points < r[0] }}>Get it</button></form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            {% if user %}
+            <section class="panel" id="coupons">
+                <h2>My coupons</h2>
+                {% for c in coupons %}
+                <div class="note-row"><div><span class="coupon-chip" translate="no">{{ c.code }}</span> &nbsp;{{ c.amount|rupees }} off orders from {{ c.min_order|rupees }}</div>
+                    <div class="small"><span class="pill-status {{ 'ok' if c.state == 'Active' else 'grey' }}">{{ c.state }}</span> {% if c.state == 'Active' %}until {{ c.expires_at|nicedate }}{% elif c.used_order %}<span translate="no">{{ c.used_order }}</span>{% endif %}</div></div>
+                {% else %}<p class="muted small">No coupons yet. Collect {{ REWARDS['c50'][0] }} points for the first one.</p>{% endfor %}
+            </section>
+            <section class="panel">
+                <h2>Points history</h2>
+                {% for p in history %}<div class="mini-line small"><span><span>{{ p.reason }}</span>{% if p.ref %} &middot; <span translate="no">{{ p.ref }}</span>{% endif %}<br><span class="muted">{{ p.created_at|nicedate('%d %b %Y, %H:%M') }}</span></span><b class="{{ 'money-plus' if p.points > 0 else 'money-minus' }}">{{ '+' if p.points > 0 }}{{ p.points }}</b></div>
+                {% else %}<p class="muted small">Play the quiz, write reviews, shop and travel to collect points.</p>{% endfor %}
+            </section>
+            {% endif %}
+        </div>
+        <aside>
+            <div class="points-card">
+                <small>My points</small>
+                <div class="pts">{{ points }}</div>
+                <small>+1 point for every ₹100 of a delivered order &middot; +{{ R.POINTS_REVIEW }} for a review</small>
+            </div>
+            <section class="panel" style="margin-top:16px">
+                <h3>&#127942; Top players this week</h3>
+                <ol class="leaders">{% for l in leaders %}<li><span>{{ l.name }}</span><b>{{ l.points }}</b></li>{% else %}<li><span class="muted">Nobody yet - be the first!</span></li>{% endfor %}</ol>
+            </section>
+        </aside>
+    </div>
+</div>
+{% endblock %}

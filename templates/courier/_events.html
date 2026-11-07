@@ -1,0 +1,3 @@
+<ul class="events">
+    {% for e in s.events %}<li><b>{{ e.status }}</b>{{ e.note }}<br><small>{% if e.place %}<span translate="no">{{ e.place }}</span> &middot; {% endif %}{{ e.at|nicedate('%d %b %Y, %H:%M') }}</small></li>{% endfor %}
+</ul>

@@ -1,0 +1,5 @@
+<div class="post-product">
+    <img src="{{ picture(p.image) }}" alt="" loading="lazy">
+    <div><span class="brand-name">{{ p.brand }}</span><b>{{ p.name }}</b><span class="small">{{ p.price|rupees }}{% if p.mrp > p.price %} &middot; <s class="muted">{{ p.mrp|rupees }}</s> &middot; <span class="ok">{{ p.discount }}% off</span>{% endif %}</span></div>
+    <a class="btn btn-yellow btn-sm" href="{{ url_for('product', slug=p.slug) }}">View product</a>
+</div>

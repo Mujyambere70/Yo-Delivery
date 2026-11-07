@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Yo Courier - send documents, parcels and groceries{% endblock %}
+{% block meta %}<meta name="description" content="Yo Courier: send documents, parcels and groceries in the Ambala Division, across India and abroad. Instant price, pickup from your door, live map and delivery code.">{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="wrap hero-grid">
+        <div>
+            <span class="pill">Yo Courier</span>
+            <h1>Send anything, anywhere</h1>
+            <p>Documents, parcels and groceries. A courier picks them up at your door, you follow them on the live map, and the receiver gets them with a secret delivery code.</p>
+            <div class="btn-row">
+                <a href="{{ url_for('courier_book') }}" class="btn btn-orange btn-lg">Book a pickup</a>
+                <a href="{{ url_for('courier_track') }}" class="btn btn-outline btn-lg">Track a shipment</a>
+            </div>
+            <p class="small" style="margin-top:14px">&#9989; Pickup in {{ '{:,}'.format(stats.total) }} towns and villages of {{ stats.countries }} countries &middot; &#127757; delivery to every country &middot; &#128179; pay with Yo Pay or cash</p>
+        </div>
+        <form class="quote-card" id="quoteForm" data-url="{{ url_for('courier_quote_api') }}" data-token="{{ csrf_token() }}" action="{{ url_for('courier_book') }}" method="get">
+            <h2>Get a price in seconds</h2>
+            <div class="form-grid">
+                <div><label for="qfc">From (country)</label><select id="qfc" name="from_country">{% for code, name in countries %}<option value="{{ code }}" {{ 'selected' if code == from_cc }}>{{ name }}</option>{% endfor %}</select></div>
+                <div><label for="qf">From (town or village)</label><input id="qf" type="text" name="from_city" value="{{ from_city }}" data-place="from_place" data-cc="#qfc" translate="no"><input type="hidden" name="from_place" value="{{ from_place }}"></div>
+                <div><label for="qc">To (country)</label><select id="qc" name="to_country" data-country>{% for code, name in countries %}<option value="{{ code }}" {{ 'selected' if code == from_cc }}>{{ name }}</option>{% endfor %}</select></div>
+                <div><label for="qt">To (town or village)</label><input id="qt" type="text" name="to_city" value="{{ to_city }}" data-place="to_place" data-cc="#qc" placeholder="e.g. Chandigarh, Mugunga, Kazan" translate="no"><input type="hidden" name="to_place" value="{{ to_place }}"></div>
+                <div><label for="qk">What</label><select id="qk" name="kind">{% for k, n in KINDS.items() %}<option value="{{ k }}" {{ 'selected' if k == 'parcel' }}>{{ n }}</option>{% endfor %}</select></div>
+                <div><label for="qw">Weight (kg)</label><input id="qw" type="number" name="weight" value="1" min="0.05" max="50" step="0.05"></div>
+                <div><label for="qs">Service</label><select id="qs" name="service">{% for k, n in SERVICES.items() %}<option value="{{ k }}">{{ n }}</option>{% endfor %}</select></div>
+            </div>
+            <div class="quote-out" id="quoteOut" aria-live="polite"><span class="muted small">The price appears here.</span></div>
+            <button class="btn btn-orange btn-block">Book this pickup</button>
+        </form>
+    </div>
+</section>
+
+<div class="wrap">
+    <div class="tile-row">
+        <div class="tile"><div class="ico">&#128221;</div><h3>1. Book</h3><p>Tell us what, from where and to where. The price is fixed before you pay.</p></div>
+        <div class="tile"><div class="ico">&#128757;</div><h3>2. Pickup</h3><p>The nearest free courier gets your job automatically and comes to your door.</p></div>
+        <div class="tile"><div class="ico">&#128506;</div><h3>3. Live map</h3><p>Follow the courier on the map. Share the tracking link with the receiver.</p></div>
+        <div class="tile"><div class="ico">&#128273;</div><h3>4. Safe delivery</h3><p>The courier hands it over only with your 4-digit delivery code.</p></div>
+    </div>
+
+    <div class="od-grid two">
+        <section class="panel">
+            <h2>Prices</h2>
+            <table class="rate-table">
+                <thead><tr><th>Zone</th><th>First 0.5 kg</th><th>Every next 0.5 kg</th><th>Per km</th></tr></thead>
+                <tbody>{% for z, r in RATE_CARD.items() %}<tr><td>{{ ZONE_NAMES[z] }}</td><td>{{ r[0]|rupees }}</td><td>{{ r[1]|rupees }}</td><td>{{ (r[2]|rupees) if r[2] else '—' }}</td></tr>{% endfor %}</tbody>
+            </table>
+            <p class="hint">Weight = the bigger of the real weight and the volume weight (length × width × height in cm ÷ 5000). Express: +60%. Documents up to 0.5 kg: −20%. Fragile handling, insurance (2% of the value) and GST 18% in India are added.</p>
+        </section>
+        <section class="panel">
+            <h2>Where we pick up</h2>
+            <p class="small muted">Home area (next-day delivery between these towns):</p>
+            <div class="city-cloud" translate="no">{% for c in home %}<span class="home">{{ c }}</span>{% endfor %}</div>
+            <p class="small muted" style="margin-top:12px">Big cities of India:</p>
+            <div class="city-cloud" translate="no">{% for c in india %}<span>{{ c }}</span>{% endfor %}</div>
+            <p class="small muted" style="margin-top:12px">And every other town and village of the world &mdash; {{ '{:,}'.format(stats.total) }} places, among them {{ '{:,}'.format(stats.ru_villages) }} villages of Russia, {{ '{:,}'.format(stats.rw_villages) }} villages of Rwanda and {{ '{:,}'.format(stats.in_post) }} post offices of India (with their PIN code). <a href="{{ url_for('places_page') }}">Find your place</a></p>
+            <p class="hint">Where Yo has no courier yet, a partner company picks up or delivers. Abroad: Yo Global Express takes parcels to every country.</p>
+        </section>
+    </div>
+
+    <section class="panel quiz-cta">
+        <div><h2>Do you have a motorbike, a car or a bicycle?</h2><p class="muted">Deliver with Yo in your free time. Your earning goes to your Yo Pay wallet after every job.</p></div>
+        <a href="{{ url_for('driver_home') }}" class="btn btn-yellow btn-lg">Deliver with Yo</a>
+    </section>
+    <p class="small muted">Yo Courier is part of a demo project: no real parcels are moved. The demo couriers drive by themselves so you can watch the live map.</p>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='courier.js') }}"></script>{% endblock %}

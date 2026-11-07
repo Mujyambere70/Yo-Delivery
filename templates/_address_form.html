@@ -8,16 +8,22 @@
         <input type="tel" id="a_mobile" name="mobile" value="{{ form.get('mobile', '') }}" maxlength="18" required></div></div>
     <div class="full"><label for="a_line1">House no., building, street</label><input type="text" id="a_line1" name="line1" value="{{ form.get('line1', '') }}" required></div>
     <div class="full"><label for="a_line2">Area, landmark (optional)</label><input type="text" id="a_line2" name="line2" value="{{ form.get('line2', '') }}"></div>
-    <div><label for="a_city">City / Town</label><input type="text" id="a_city" name="city" value="{{ form.get('city', '') }}" required></div>
-    <div><label for="a_pin">Postal code / PIN code</label><input type="text" id="a_pin" name="pincode" value="{{ form.get('pincode', '') }}" maxlength="10" placeholder="{{ 'Leave empty if your country has none'|tr }}"></div>
+    <div><label for="a_city">Town or village</label><input type="text" id="a_city" name="city" value="{{ form.get('city', '') }}" required data-place="place_id" data-cc="#a_country" placeholder="{{ 'Start typing, then choose from the list'|tr }}" translate="no">
+        <input type="hidden" name="place_id" value="{{ form.get('place_id', '') }}"><input type="hidden" name="lat" value="{{ form.get('lat', '') }}"><input type="hidden" name="lng" value="{{ form.get('lng', '') }}">
+        <span class="pl-note" data-place-note="city"></span></div>
+    <div><label for="a_pin">Postal code / PIN code</label><input type="text" id="a_pin" name="pincode" value="{{ form.get('pincode', '') }}" maxlength="10" placeholder="{{ 'Leave empty if your country has none'|tr }}" aria-describedby="a_pin_check"><small id="a_pin_check" class="pin-check" aria-live="polite"></small></div>
     <div class="india-only"><label for="a_state">State</label><select id="a_state" name="state">{% for st in states %}<option {% if form.get('state', 'Haryana') == st %}selected{% endif %}>{{ st }}</option>{% endfor %}</select></div>
     <div class="abroad-only"><label for="a_region">Region / province (optional)</label><input type="text" id="a_region" name="state_abroad" value="{{ form.get('state', '') if cc != 'IN' else '' }}"></div>
     <div><label>Address type</label><div class="radio-row"><label><input type="radio" name="kind" value="Home" checked> Home</label><label><input type="radio" name="kind" value="Work"> Work</label></div></div>
 </div>
+<div class="pin-map" data-pin-for="city" data-lat="lat" data-lng="lng" hidden></div>
+<p class="pin-help" data-pin-help hidden>Tap the map to put the pin on your door: the courier finds you faster (optional).</p>
 <label class="check"><input type="checkbox" name="is_default" value="yes"> Make this my default address</label>
 <script>
 (function () {
-    var box = document.currentScript.previousElementSibling.previousElementSibling, dial = JSON.parse(box.dataset.dial);
+    var box = document.currentScript.previousElementSibling;
+    while (box && !box.classList.contains('addr-form')) box = box.previousElementSibling;
+    var dial = JSON.parse(box.dataset.dial);
     var sel = box.querySelector('[name=country]'), state = box.querySelector('[name=state]'), region = box.querySelector('[name=state_abroad]');
     function update() {
         var india = sel.value === 'IN';
@@ -28,5 +34,32 @@
         box.querySelector('.dial').textContent = '+' + (dial[sel.value] || '');
     }
     sel.addEventListener('change', update); update();
+    // a place chosen from the list fills the state and the PIN code (India) or the region
+    box.querySelector('[name=city]').addEventListener('place', function (e) {
+        var p = e.detail, pin = box.querySelector('[name=pincode]');
+        if (p.cc !== sel.value) { sel.value = p.cc; update(); }
+        if (sel.value === 'IN') {
+            for (var i = 0; i < state.options.length; i++) if (state.options[i].text === p.region) state.selectedIndex = i;
+        } else if (!region.value) region.value = p.region || '';
+        if (p.pin && !pin.value) pin.value = p.pin;
+        checkPin();
+    });
+    // version 6: check the postal code against the country (and the PIN code against the place) while typing
+    var pinBox = box.querySelector('[name=pincode]'), out = box.querySelector('#a_pin_check'), timer = null;
+    function checkPin() {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+            var place = box.querySelector('[name=place_id]');
+            var url = '/places/check-address?country=' + encodeURIComponent(sel.value) + '&postcode=' +
+                encodeURIComponent(pinBox.value) + '&city=' + encodeURIComponent(box.querySelector('[name=city]').value) +
+                '&place=' + encodeURIComponent(place ? place.value : '');
+            fetch(url).then(function (r) { return r.json(); }).then(function (r) {
+                var text = (r.errors || []).concat(r.warnings || []).join(' ') || r.hint || '';
+                out.textContent = text;
+                out.className = 'pin-check ' + ((r.errors || []).length ? 'bad' : (r.warnings || []).length ? 'warn' : 'ok');
+            }).catch(function () { out.textContent = ''; });
+        }, 350);
+    }
+    pinBox.addEventListener('input', checkPin); sel.addEventListener('change', checkPin);
 })();
 </script>

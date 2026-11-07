@@ -107,7 +107,7 @@ table.at { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tw.db { max-height: 65vh; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
 .tw.db th { position: sticky; top: 0; z-index: 1; }
 .tw.db td { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: Consolas, monospace; font-size: 13px; }
-.admin-link { font-weight: 700; color: var(--orange) !important; }
+.admin-link { font-weight: 700; color: var(--orange-ink) !important; }
 
 @media (max-width: 1000px) {
     body.adm { grid-template-columns: 1fr; background: #f4f6fb; }

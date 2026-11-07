@@ -1,0 +1,12 @@
+{% extends "admin/layout.html" %}
+{% block title %}Invoices{% endblock %}
+{% block heading %}Tax invoices, bills of supply and credit notes{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="small muted">An order gets one invoice per seller and one of Yo Delivery for the delivery charge; numbers are gapless per issuer and financial year. Every invoice can be downloaded as a UBL 2.1 e-invoice (XML).</p>
+    <table class="at"><thead><tr><th>Number</th><th>Kind</th><th>Issuer</th><th>Order</th><th>Taxable</th><th>Tax</th><th>Total</th><th>Date</th><th></th></tr></thead><tbody>
+    {% for i in invoices %}<tr><td translate="no">{{ i.number }}</td><td>{{ i.kind }}</td><td translate="no">{{ i.issuer_name }}</td><td translate="no">{{ i.order_number }}</td><td translate="no">{{ INVOICE_MONEY(i.taxable) }}</td><td translate="no">{{ INVOICE_MONEY(i.tax) }}</td><td translate="no">{{ INVOICE_MONEY(i.total) }}</td><td translate="no">{{ i.issued_at[:10] }}</td>
+        <td><a href="{{ url_for('invoice_page', invoice_id=i.id) }}">Open</a> &middot; <a href="{{ url_for('invoice_xml', invoice_id=i.id) }}">XML</a></td></tr>
+    {% else %}<tr><td colspan="9" class="muted">No invoices yet.</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

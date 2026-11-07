@@ -1,0 +1,13 @@
+{% extends "admin/layout.html" %}
+{% block title %}Safety checks{% endblock %}
+{% block heading %}Orders held by the safety check{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="small muted">Every new order gets points from simple rules: new account 25, big amount 20, 4+ orders in an hour 25, big cash on delivery 15, 3+ failed payments in a day 30, the same phone on 3+ other accounts 20. With {{ hold }} points or more the order waits here and the customer sees "Safety check".</p>
+    <table class="at"><thead><tr><th>Order</th><th>Customer</th><th>Since</th><th>Total</th><th>Points</th><th>Why</th><th></th></tr></thead><tbody>
+    {% for o in rows %}<tr><td translate="no">{{ o.number }}</td><td translate="no">{{ o.name }} <small>{{ o.email }}</small></td><td translate="no">{{ o.user_since[:10] }}</td><td translate="no">{{ o.total|rupees }}</td><td><b>{{ o.risk_score }}</b></td><td><small>{{ o.risk_reasons }}</small></td>
+        <td>{% if can('risk.review') %}<form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="number" value="{{ o.number }}">
+            <button class="btn btn-sm btn-orange" name="action" value="release">Release</button><button class="btn btn-sm btn-outline" name="action" value="cancel">Cancel and refund</button></form>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="7" class="muted">No order waits.</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}My trips{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <div class="ship-head"><h1 style="margin:0">&#127915; My trips</h1><a class="btn btn-orange" href="{{ url_for('tickets_home') }}">Book a ticket</a></div>
+    {% for title, rows in [('Upcoming', up), ('Past and cancelled', past)] %}
+    <section class="panel" style="margin-top:14px">
+        <h2><span>{{ title }}</span> ({{ rows|length }})</h2>
+        {% for b in rows %}
+        <a class="tk-mini" href="{{ url_for('tickets_booking', pnr=b.pnr) }}">
+            <span class="ico">{{ ICONS[b.mode] }}</span>
+            <span style="flex:1"><b><span translate="no">{{ b.from_city }}</span> &rarr; <span translate="no">{{ b.to_city }}</span></b>
+                <br><small class="muted"><span translate="no">{{ b.number }}</span> &middot; {{ b.depart_local|localtime }} <span>{{ b.from_tz }}</span> &middot; <span>{{ b.passengers|length }} {{ 'passenger' if b.passengers|length == 1 else 'passengers' }}</span> &middot; PNR <span translate="no">{{ b.pnr }}</span></small></span>
+            <span class="pill-status {{ 'ok' if b.status in ('Confirmed', 'Completed') else 'bad' if b.status == 'Cancelled' else '' }}">{{ b.status }}</span>
+        </a>
+        {% else %}
+        <p class="muted">{{ 'No upcoming trips.' if title == 'Upcoming' else 'Nothing here yet.' }}</p>
+        {% endfor %}
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "admin/layout.html" %}
+{% block title %}Reconcile payments{% endblock %}
+{% block heading %}Reconcile payments with the providers{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="small muted">Upload the settlement statement of a provider (CSV with the columns <code>date, reference, amount, currency, status</code>). Every line is compared with the payments in our books.</p>
+    {% if can('payments.manage') %}<form method="post" enctype="multipart/form-data" class="form-grid v6-plan">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div><label for="rp">Provider</label><select id="rp" name="provider">{% for k, v in providers.items() %}<option value="{{ k }}">{{ v[0] }}</option>{% endfor %}</select></div>
+        <div><label for="rf">Statement (CSV)</label><input id="rf" type="file" name="statement" accept=".csv,text/csv"></div>
+        <div><button class="btn btn-orange">Compare</button></div>
+    </form>{% endif %}
+</section>
+{% if result %}<section class="panel">
+    <h2>Result {{ result.first }} &ndash; {{ result.last }}</h2>
+    <div class="kpis"><div class="kpi"><small>Lines</small><b>{{ result.lines }}</b></div><div class="kpi"><small>Matched</small><b>{{ result.matched|length }}</b></div>
+        <div class="kpi"><small>Different amount</small><b>{{ result.different|length }}</b></div><div class="kpi"><small>Missing in our books</small><b>{{ result.missing_ours|length }}</b></div><div class="kpi"><small>Missing in the statement</small><b>{{ result.missing_theirs|length }}</b></div></div>
+    {% for title, key in [('Different amount', 'different'), ('Missing in our books', 'missing_ours'), ('Missing in the statement', 'missing_theirs')] if result[key] %}
+    <h3>{{ title }}</h3><table class="at small"><tbody>{% for r in result[key] %}<tr><td translate="no">{{ r.ref }}</td><td translate="no">{{ r.day }}</td><td translate="no">{{ minor_money(r.amount, r.currency or 'INR') }}</td>{% if r.ours is defined %}<td>ours: <span translate="no">{{ minor_money(r.ours, r.our_currency) }}</span></td>{% endif %}</tr>{% endfor %}</tbody></table>
+    {% endfor %}
+</section>{% endif %}
+<section class="panel">
+    <h2>Earlier comparisons</h2>
+    <table class="at small"><thead><tr><th>Provider</th><th>Days</th><th>Lines</th><th>Matched</th><th>Different</th><th>Missing (ours / theirs)</th><th>By</th></tr></thead><tbody>
+    {% for h in history %}<tr><td>{{ providers[h.provider][0] }}</td><td translate="no">{{ h.first_day }} &ndash; {{ h.last_day }}</td><td>{{ h.lines }}</td><td>{{ h.matched }}</td><td>{{ h.different }}</td><td>{{ h.missing_ours }} / {{ h.missing_theirs }}</td><td translate="no">{{ h.made_by_name }} {{ h.made_at[:16] }}</td></tr>
+    {% else %}<tr><td colspan="7" class="muted">None yet.</td></tr>{% endfor %}</tbody></table>
+    <h2>Signed callbacks of the providers</h2>
+    <table class="at small"><tbody>{% for e in events %}<tr><td>{{ e.provider }}</td><td translate="no">{{ e.event_id }}</td><td>{{ e.kind }}</td><td translate="no">{{ e.ref }}</td><td>{{ e.result }}</td><td translate="no">{{ e.received_at[:16] }}</td></tr>
+    {% else %}<tr><td class="muted">No callbacks yet. A provider's secret is set with an environment variable (for example MOMO_WEBHOOK_SECRET).</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

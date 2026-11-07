@@ -23,7 +23,8 @@ if PG_URL:
         import pgmini as DRIVER                       # small built-in client for tests
 
 # tests never call real services: no exchange-rate download, no email/SMS keys, no Stripe key
-TEST_ENV = {"FX_ON_SEED": "0"}
+TEST_ENV = {"FX_ON_SEED": "0", "FX_AUTO": "0", "YO_ROUTING": "0"}
+os.environ.setdefault("YO_ROUTING", "0")            # also for code that reads the environment directly
 
 
 def target(path=None):

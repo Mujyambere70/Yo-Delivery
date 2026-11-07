@@ -4,6 +4,7 @@ maintenance.py - jobs that keep the shop running by themselves, and backups (mix
 Every minute (on the first visit of that minute):
     * card orders that were not paid in time are cancelled (their stock comes back)
     * customers get a message for every order whose status moved on
+    * Yo Courier: the network moves parcels between hubs, waiting jobs go to couriers, demo couriers drive
 Once a day:
     * today's exchange rates are downloaded
     * a full backup is saved in the database (the last 7 are kept) and emailed to BACKUP_EMAIL if set
@@ -22,7 +23,24 @@ from core import ShopError, now
 
 DATA_TABLES = ["users", "addresses", "categories", "sellers", "products", "media", "cart", "wishlist", "coupons",
                "orders", "order_items", "order_events", "payments", "returns", "reviews", "payouts", "views",
-               "notifications", "push_subscriptions", "activity", "settings", "fx_rates"]
+               "notifications", "push_subscriptions", "activity", "settings", "fx_rates",
+               # version 3 (parents before children: a restore inserts in this order and deletes in reverse)
+               "wallet_txns", "couriers", "shipments", "shipment_events", "courier_track", "posts", "quiz_questions",
+               "quiz_attempts", "points_ledger", "user_coupons", "board_tasks", "photo_checks",
+               # version 4 - Yo Tickets
+               "ticket_operators", "ticket_services", "ticket_trips", "ticket_bookings", "ticket_passengers",
+               "ticket_seats", "ticket_staff",
+               # version 5 - chat, product texts in other languages
+               "chat_threads", "chat_messages", "product_texts",
+               # version 6 - staff, customs, mobile money
+               "offices", "staff", "staff_log", "staff_shifts", "staff_leave", "seller_team", "customs_rules",
+               "customs_declarations", "mobile_payments", "staff_rota", "staff_tasks", "tax_rules", "bank_accounts",
+               "bank_transfers", "gtfs_feeds", "id_checks", "chat_examples",
+               # version 7 - people, money, partners, support, analytics
+               "staff_contracts", "income_tax_rules", "payroll_runs", "payslips", "approvals", "staff_trainings",
+               "staff_offices", "tax_category_rates", "invoice_counters", "invoices", "payment_events",
+               "reconciliations", "partners", "partner_events", "support_tickets", "support_messages",
+               "parcel_claims", "privacy_requests", "experiments", "exp_events", "fact_daily"]
 
 
 class MaintenanceMixin:
@@ -34,7 +52,10 @@ class MaintenanceMixin:
             return None
         self._last_minute = time.time()
         done = {}
-        for name, job in (("expired", self.expire_unpaid), ("messages", self.sync_order_updates)):
+        for name, job in (("expired", self.expire_unpaid), ("messages", self.sync_order_updates),
+                          ("courier", self.courier_tick), ("tickets", self.tickets_tick), ("fx", self.hourly_fx),
+                          ("jobs", self.run_jobs), ("alerts", self.check_alerts), ("bank", self.settle_bank_transfers),
+                          ("cache", self.cache_clean)):
             try:
                 done[name] = job()
             except Exception as e:                        # one failing job must not stop the shop
@@ -42,19 +63,50 @@ class MaintenanceMixin:
         done.update(self.daily_tasks(today) or {})
         return done
 
+    def hourly_fx(self, hour=None):
+        """Exchange rates every hour (version 5; before: once a day). Only one server process does it."""
+        if str(self.env.get("FX_AUTO", "1")) == "0":
+            return None
+        hour = hour or now()[:13]
+        if not self.claim_period("last_fx_hour", hour):
+            return None
+        return self.refresh_fx_rates()
+
+    def claim_period(self, key, value):
+        """Version 7: True for exactly one process (of all the machines) per key and value - an atomic claim in the
+        database instead of "read, then write" (two machines could both read the old value)."""
+        with self.db() as conn:
+            if conn.execute("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO NOTHING",
+                            (key, value)).rowcount:
+                return True
+            return bool(conn.execute("UPDATE settings SET value = ? WHERE key = ? AND value != ?",
+                                     (value, key, value)).rowcount)
+
     def daily_tasks(self, today=None):
         today = (today or date.today()).isoformat()
-        with self.db() as conn:                           # only one process does it per day
-            if conn.execute("SELECT 1 FROM settings WHERE key = 'last_daily_tasks' AND value = ?",
-                            (today,)).fetchone():
-                return None
-            conn.execute("INSERT INTO settings (key, value) VALUES ('last_daily_tasks', ?) "
-                         "ON CONFLICT (key) DO UPDATE SET value = excluded.value", (today,))
+        if not self.claim_period("last_daily_tasks", today):      # only one process of one machine does it per day
+            return None
         done = {}
         try:
             done["fx"] = self.refresh_fx_rates()
         except Exception as e:
             done["fx_error"] = str(e)[:120]
+        # version 6: seller payouts and the recommendation model go through the job queue (jobs.py): if one
+        # fails it is tried again later, and the monitoring page shows it
+        self.enqueue("payouts", {"day": today}, unique_key=f"payouts:{today}")
+        self.enqueue("learn", {}, unique_key=f"learn:{today}")
+        self.enqueue("content", {}, unique_key=f"content:{today}")      # version 6: text + picture neighbours
+        try:
+            done["id_images_deleted"] = self.purge_id_images()             # version 6: ID photos are not kept
+        except Exception:
+            pass
+        # version 7: the data warehouse of the managers, the keeping times of personal data
+        self.enqueue("warehouse", {}, unique_key=f"warehouse:{today}")
+        try:
+            done["retention"] = self.apply_retention()
+        except Exception as e:
+            done["retention_error"] = str(e)[:120]
+        done["jobs"] = self.run_jobs(limit=5)
         bid, blob = self.save_backup("auto", "system")
         done["backup"] = bid
         to = self.notifier.env.get("BACKUP_EMAIL") if self.notifier else ""
@@ -71,7 +123,7 @@ class MaintenanceMixin:
     # ===== backups =====
 
     def export_data(self):
-        data = {"app": "Yo Delivery", "version": 2, "created_at": now(), "tables": {}}
+        data = {"app": "Yo Delivery", "version": 7, "created_at": now(), "tables": {}}
         with self.db() as conn:
             for t in DATA_TABLES:
                 rows = conn.execute(f"SELECT * FROM {t}").fetchall()
@@ -107,6 +159,9 @@ class MaintenanceMixin:
                 if "id" in have:
                     conn.reset_sequence(t)
         self.refresh_categories()
+        for fill in ("ensure_tax_rules", "ensure_chat_model"):     # version 6: a backup of an older version
+            if hasattr(self, fill):
+                getattr(self, fill)()
         return {t: len(tables.get(t, [])) for t in DATA_TABLES}
 
     def save_backup(self, kind, by=""):

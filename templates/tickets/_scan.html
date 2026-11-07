@@ -1,0 +1,16 @@
+{# scan box of the conductor app: the camera (where the browser can read QR codes) or the PNR by hand #}
+<section class="panel">
+    <h2>&#128247; Check a ticket</h2>
+    <form id="scanForm" method="post" action="{{ url_for('conductor_check') }}" data-jsqr="{{ url_for('static', filename='vendor/jsQR.js') }}" {% if trip_id %}data-reload="1"{% endif %}>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% if trip_id %}<input type="hidden" name="trip_id" value="{{ trip_id }}">{% endif %}
+        <div class="tk-scan">
+            <input name="token" placeholder="PNR or QR code text" aria-label="PNR or QR code text" autocomplete="off" autocapitalize="characters" required>
+            <button class="btn btn-orange">Check in</button>
+            <button type="button" class="btn btn-outline" id="camBtn" hidden>&#128247; Camera</button>
+        </div>
+    </form>
+    <video id="camVideo" class="tk-video" hidden playsinline muted></video>
+    <div id="scanResult" class="tk-result" hidden aria-live="polite"></div>
+    <span id="noCam" hidden>The camera is not available. Please type the PNR.</span>
+    <p class="hint">Scan the QR code on the passenger's phone, or type the 6-character PNR. Every passenger of the ticket is checked in at once.</p>
+</section>

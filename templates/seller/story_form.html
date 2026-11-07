@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Write a story · Seller Centre{% endblock %}
+{% block content %}
+<div class="wrap">
+    {% include "seller/_nav.html" %}
+    <form method="post" enctype="multipart/form-data" class="two-col">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <section class="panel">
+            <h1>{{ 'Edit the story' if post else 'Write a story' }}</h1>
+            <label for="title">Title</label><input id="title" type="text" name="title" value="{{ f.get('title', '') }}" maxlength="120" required>
+            <label for="summary">Short summary (shown in the list and on Google)</label><input id="summary" type="text" name="summary" value="{{ f.get('summary', '') }}" maxlength="300">
+            <label for="body">Text</label>
+            <textarea id="body" name="body" rows="16" required>{{ f.get('body', '') }}</textarea>
+            <p class="hint">## heading &middot; **bold** &middot; *italic* &middot; - list &middot; > quote &middot; [link](https://...) &middot; [[product:your-product-slug]] shows a product card.</p>
+        </section>
+        <aside>
+            <section class="panel">
+                <label for="lang">Language of the story</label>
+                <select id="lang" name="lang" translate="no">{% for code, name in LANGUAGES.items() %}<option value="{{ code }}" {{ 'selected' if f.get('lang', 'en') == code }}>{{ name }}</option>{% endfor %}</select>
+                <label for="tags">Tags (with commas)</label><input id="tags" type="text" name="tags" value="{{ f.get('tags', '') }}" maxlength="200">
+                <label for="cover">Cover picture (wide, 1200 × 630)</label><input id="cover" type="file" name="cover_file" accept="image/jpeg,image/png,image/webp">
+                {% if post and post.cover %}<img src="{{ picture(post.cover) }}" alt="" style="margin-top:8px;border-radius:8px">{% endif %}
+                <button class="btn btn-orange btn-block" name="status" value="Review">Send to Yo for a check</button>
+                <button class="btn btn-outline btn-block" name="status" value="Draft">Save as draft</button>
+            </section>
+        </aside>
+    </form>
+</div>
+{% endblock %}

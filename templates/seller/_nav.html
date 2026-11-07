@@ -1,10 +1,16 @@
+{% set sa = request.shop_abilities or [] %}
 <nav class="seller-nav">
     <span class="seller-badge">&#127978; Seller Centre &middot; <b>{{ shop.shop_name }}</b></span>
     <a href="{{ url_for('seller_dashboard') }}" class="{{ 'on' if request.endpoint == 'seller_dashboard' }}">Dashboard</a>
     {% if shop.status == 'Approved' %}
-    <a href="{{ url_for('seller_products') }}" class="{{ 'on' if request.endpoint in ('seller_products', 'seller_product_new', 'seller_product_edit') }}">My products</a>
-    <a href="{{ url_for('seller_orders') }}" class="{{ 'on' if request.endpoint == 'seller_orders' }}">Sales &amp; payouts</a>
-    <a href="{{ url_for('seller_settings') }}" class="{{ 'on' if request.endpoint == 'seller_settings' }}">Shop settings</a>
+    {% if 'seller.products' in sa %}<a href="{{ url_for('seller_products') }}" class="{{ 'on' if request.endpoint in ('seller_products', 'seller_product_new', 'seller_product_edit') }}">My products</a>{% endif %}
+    {% if 'seller.orders' in sa %}<a href="{{ url_for('seller_orders') }}" class="{{ 'on' if request.endpoint == 'seller_orders' }}">Sales &amp; payouts</a>{% endif %}
+    {% if 'seller.board' in sa %}<a href="{{ url_for('board_page', scope='seller') }}" class="{{ 'on' if request.endpoint == 'board_page' }}">Task board</a>{% endif %}
+    {% if 'seller.stories' in sa %}<a href="{{ url_for('seller_stories') }}" class="{{ 'on' if request.endpoint in ('seller_stories', 'seller_story_edit') }}">Stories</a>{% endif %}
+    {% if 'owner' in sa %}<a href="{{ url_for('seller_team_page') }}" class="{{ 'on' if request.endpoint == 'seller_team_page' }}">Team</a>
+    <a href="{{ url_for('seller_bank') }}" class="{{ 'on' if request.endpoint == 'seller_bank' }}">Bank payouts</a>
+    <a href="{{ url_for('seller_tax') }}" class="{{ 'on' if request.endpoint == 'seller_tax' }}">Tax &amp; invoices</a>
+    <a href="{{ url_for('seller_settings') }}" class="{{ 'on' if request.endpoint == 'seller_settings' }}">Shop settings</a>{% endif %}
     <a href="{{ url_for('storefront', slug=shop.slug) }}" target="_blank">My shop page &#8599;</a>
     {% endif %}
 </nav>

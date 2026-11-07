@@ -30,6 +30,9 @@
     <h2 class="mt">Announcement bar</h2>
     <label for="ann">Message shown at the top of every shop page (leave empty to hide)</label>
     <input type="text" id="ann" name="announcement" value="{{ st.announcement }}" maxlength="160" placeholder="e.g. Diwali Sale is live! Extra 10% off with code YO10">
+    <label class="check" style="margin-top:12px"><input type="checkbox" name="staff_need_2fa" value="1" {{ 'checked' if st.staff_need_2fa }}> <span>Workers must turn on two-step sign-in (an app code) before they can open the admin pages</span></label>
+    <label class="check" style="margin-top:8px"><input type="checkbox" name="require_training" value="1" {{ 'checked' if st.require_training }}> <span>Abilities that need a course work only with a valid certificate (for example the hub scan needs "Safety at the hub")</span></label>
+    <label style="margin-top:8px;display:block">Parcels one hub worker handles in a shift (for the forecast) <input type="number" name="parcels_per_worker" min="10" max="2000" value="{{ st.parcels_per_worker }}" style="max-width:120px"></label>
     <button class="btn btn-orange btn-lg" style="margin-top:16px">Save settings</button>
 </form>
 

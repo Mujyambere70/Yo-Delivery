@@ -1,0 +1,31 @@
+{% extends "admin/layout.html" %}
+{% block title %}ID checks{% endblock %}
+{% block heading %}ID checks{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="small muted">The computer compares the face on the document with the selfie (local binary pattern histograms) and checks the passport lines (MRZ). Score {{ SAME }}+ = the faces look alike, below {{ DIFF }} = they look different. It is a hint: <b>you decide</b>. The photos are deleted 30 days after your decision; only the result is kept.</p>
+    <nav class="v6-tabs">{% for s in ('Waiting', 'Approved', 'Refused', 'Withdrawn', '') %}<a href="{{ url_for('admin_id_checks', status=s) }}" class="{{ 'on' if status == s }}">{{ s or 'All' }}</a>{% endfor %}</nav>
+    {% for c in rows %}
+    <div class="id-row">
+        <div class="id-pics">
+            {% if c.doc_image %}<a href="{{ url_for('admin_private', name=c.doc_image) }}" target="_blank"><img src="{{ url_for('admin_private', name=c.doc_image) }}" alt="Document of {{ c.name }}" loading="lazy"></a>
+            <a href="{{ url_for('admin_private', name=c.selfie_image) }}" target="_blank"><img src="{{ url_for('admin_private', name=c.selfie_image) }}" alt="Selfie of {{ c.name }}" loading="lazy"></a>
+            {% else %}<p class="muted small">Photos deleted.</p>{% endif %}
+        </div>
+        <div class="id-info">
+            <b translate="no">{{ c.name }}</b> <small class="muted" translate="no">{{ c.email }}</small><br>
+            <span>{{ DOC_TYPES.get(c.doc_type, c.doc_type) }}</span> &middot; <span translate="no">{{ c.country or '-' }}</span>{% if c.doc_last3 %} &middot; <span translate="no">&hellip;{{ c.doc_last3 }}</span>{% endif %}{% if c.expiry %} &middot; <span>valid until</span> <span translate="no">{{ c.expiry }}</span>{% endif %}<br>
+            <span>Faces:</span> {{ c.faces_doc }} / {{ c.faces_selfie }} &middot; <span>Score:</span> <b class="{{ 'ok-text' if c.score is not none and c.score >= SAME else 'warn-text' if c.score is not none and c.score < DIFF else '' }}">{{ c.score if c.score is not none else '-' }}</b>
+            {% if c.mrz_ok is not none %} &middot; MRZ {{ '&#10003;'|safe if c.mrz_ok else '&#10007;'|safe }}{% endif %}
+            <p class="small">{{ c.hint }}</p>
+            {% if c.status == 'Waiting' %}
+            <form method="post" class="v6-filters"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="check_id" value="{{ c.id }}">
+                <label>Note <input type="text" name="note" maxlength="200" placeholder="Reason if you refuse"></label>
+                <button class="btn btn-sm btn-orange" name="decision" value="approve">Approve</button>
+                <button class="btn btn-sm btn-outline" name="decision" value="refuse">Refuse</button></form>
+            {% else %}<p class="small"><span class="pill-status {{ 'ok' if c.status == 'Approved' else 'warn' }}">{{ c.status }}</span> <span translate="no">{{ c.decided_by }} {{ c.decided_at[:16] }}</span> {{ c.note }}</p>{% endif %}
+        </div>
+    </div>
+    {% else %}<p class="muted">No ID checks here.</p>{% endfor %}
+</section>
+{% endblock %}

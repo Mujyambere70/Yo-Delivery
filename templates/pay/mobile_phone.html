@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Approve the payment{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <div class="mm-phone" role="group" aria-label="Test phone">
+        <div class="mm-phone-top">{{ p.method_name }} &middot; <span>test mode</span></div>
+        <div class="mm-phone-body">
+            {% if p.status == 'Waiting' %}
+            <p class="small muted">Request from</p>
+            <p class="big">Yo Delivery (Yo Pay)</p>
+            <p class="mm-amount">{{ '{:,.2f}'.format(p.amount_local) }} <span translate="no">{{ p.currency }}</span></p>
+            {% if p.currency != 'INR' %}<p class="small muted">= {{ p.amount|rupees }}</p>{% endif %}
+            <p class="small"><span translate="no">{{ p.account_masked }}</span> &middot; <span>ref.</span> <span class="mono" translate="no">{{ p.ref }}</span></p>
+            <form method="post" class="actions" style="justify-content:center">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-orange" name="answer" value="approve">Approve</button>
+                <button class="btn btn-outline" name="answer" value="decline">Decline</button>
+            </form>
+            <p class="small muted">On a real phone you would enter your PIN here. The request ends in 10 minutes.</p>
+            {% else %}
+            <p class="big">{{ {'Paid': '✅ Paid', 'Declined': 'Declined', 'Expired': 'Expired'}.get(p.status, p.status) }}</p>
+            <p class="small"><span class="mono" translate="no">{{ p.ref }}</span></p>
+            <p><a class="btn btn-outline" href="{{ url_for('pay_home') }}">Yo Pay</a></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "admin/layout.html" %}
+{% block title %}Offices{% endblock %}
+{% block heading %}Offices{% endblock %}
+{% block content %}
+{% include "admin/_staff_tabs.html" %}
+<section class="panel">
+    <div class="ph"><h2>The office tree</h2></div>
+    <p class="small muted">Each worker belongs to one office. A manager manages his office and every office under it.</p>
+    <ul class="office-tree">
+    {% for o in tree %}
+        <li style="margin-left:{{ o.depth * 22 }}px" class="{{ '' if o.active else 'muted' }}">
+            <span class="ot-icon" aria-hidden="true">{{ {'head': '🏢', 'country': '🌍', 'region': '🗺️', 'city': '🏙️', 'hub': '📦', 'warehouse': '🏭', 'support': '🎧', 'transport': '🚌', 'team': '👥'}.get(o.kind, '•') }}</span>
+            <b>{{ o.name }}</b> <small class="muted">{{ OFFICE_KINDS.get(o.kind, o.kind) }}{% if o.place %} &middot; {{ o.place if o.place|length < 30 else '' }}{% endif %}{% if o.country %} &middot; {{ o.country }}{% endif %}</small>
+            <small>&middot; {{ o.people }} {{ 'person' if o.people == 1 else 'people' }}</small>
+            {% if managers.get(o.id) %}<small>&middot; manager: {{ managers[o.id]|join(', ') }}</small>{% endif %}
+            {% if not o.active %}<span class="tag">Closed</span>{% endif %}
+            <a class="small" href="{{ url_for('admin_staff', office=o.id) }}">workers</a>
+            {% if can('offices.manage') and o.active and o.kind != 'head' %}
+            <details class="ot-edit"><summary class="small">change</summary>
+                <form method="post" class="actions">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="office_id" value="{{ o.id }}">
+                    <input type="text" name="name" value="{{ o.name }}" aria-label="Name of the office" maxlength="80">
+                    <button class="btn btn-sm btn-outline" name="action" value="save">Save</button>
+                    <button class="btn btn-sm btn-outline" name="action" value="close">Close</button>
+                </form>
+                <form method="post" class="actions" action="{{ url_for('admin_office_place', office_id=o.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <small>Clock-in place:</small>
+                    <input type="text" name="lat" value="{{ o.lat if o.lat is not none else '' }}" aria-label="Latitude" placeholder="lat" size="8">
+                    <input type="text" name="lng" value="{{ o.lng if o.lng is not none else '' }}" aria-label="Longitude" placeholder="lng" size="8">
+                    <input type="number" name="geofence_m" value="{{ o.geofence_m or 300 }}" min="50" max="5000" aria-label="Distance allowed in metres" style="width:90px"> m
+                    <label class="small"><input type="checkbox" name="remote_ok" value="1" {{ 'checked' if o.remote_ok }}> remote work allowed</label>
+                    <button class="btn btn-sm btn-outline">Save the place</button>
+                </form>
+            </details>
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+</section>
+{% if can('offices.manage') %}
+<section class="panel">
+    <h2>Add an office</h2>
+    <form method="post" class="form-grid three">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="add">
+        <div><label for="op">Under</label><select id="op" name="parent_id">{% for o in tree if o.active %}<option value="{{ o.id }}">{{ '— ' * o.depth }}{{ o.name }}</option>{% endfor %}</select></div>
+        <div><label for="on">Name</label><input type="text" id="on" name="name" required maxlength="80" placeholder="e.g. Kigali hub"></div>
+        <div><label for="ok">Kind</label><select id="ok" name="kind">{% for k, v in OFFICE_KINDS.items() if k != 'head' %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+        <div><label for="oc">Country (2 letters)</label><input type="text" id="oc" name="country" maxlength="2" placeholder="RW"></div>
+        <div><label for="opl">Town or village (hubs, city offices)</label><input type="text" id="opl" name="place" data-place placeholder="Kigali"></div>
+        <div><label for="oo">Transport company (for its staff)</label><select id="oo" name="operator_id"><option value="">-</option>{% for op in operators %}<option value="{{ op.id }}">{{ op.name }} ({{ op.mode }})</option>{% endfor %}</select></div>
+        <div><button class="btn btn-orange">Add the office</button></div>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}My data and privacy{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap acc">
+    {% include "_account_nav.html" %}
+    <div>
+        <h1>My data and privacy</h1>
+        <section class="panel">
+            <h2>Download my data</h2>
+            <p>One file (JSON) with everything Yo Delivery keeps about you: profile, addresses, orders, returns, reviews, Yo Pay statement, parcels, tickets, points, messages and the pages you looked at. Passwords and secret keys are never included.</p>
+            <a class="btn btn-orange" href="{{ url_for('my_data_download') }}">&#11015; Download my data</a>
+        </section>
+        <section class="panel danger-zone">
+            <h2>Delete my account</h2>
+            <p>Your name, contacts, addresses, cart, wishlist, notifications and messages are removed, and you cannot sign in any more. Orders, tickets and payments stay without your name, because a shop must keep its invoices.</p>
+            <p class="small muted">Before deleting: your Yo Pay balance must be zero and no order, parcel or trip may be on the way.</p>
+            <form method="post" action="{{ url_for('my_account_delete') }}" class="form-grid" style="align-items:end">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div><label for="dp">Your password</label><input id="dp" type="password" name="password" required autocomplete="current-password"></div>
+                <div><label for="dc">Type DELETE</label><input id="dc" name="confirm" required autocomplete="off"></div>
+                <div><button class="btn btn-outline" style="border-color:#dc2626;color:#dc2626">Delete my account</button></div>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}

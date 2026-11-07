@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Mobile money · Yo Pay{% endblock %}
+{% block content %}
+<div class="wrap narrow two-col">
+    <form method="post" class="panel" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <h1>&#128241; <span>Add money with your phone</span></h1>
+        <div class="test-banner">TEST MODE - no real money moves. The next page stands for your phone.</div>
+        <fieldset class="mm-methods"><legend>How to pay</legend>
+        {% for key, m in methods %}
+            <label class="mm-method"><input type="radio" name="method" value="{{ key }}" {{ 'checked' if (f.get('method') or methods[0][0]) == key }} required>
+                <span><b>{{ m[0] }}</b><small>{% for c in m[1] %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}</small></span></label>
+        {% endfor %}
+        </fieldset>
+        <label for="mma">Amount (₹)</label>
+        <input id="mma" type="number" name="amount" value="{{ f.get('amount', '500') }}" min="{{ low // 100 }}" max="{{ high // 100 }}" step="1" required>
+        <label for="mmc">Country of the phone</label>
+        <input id="mmc" type="text" name="country" maxlength="2" value="{{ f.get('country', country) }}" placeholder="RW" translate="no">
+        <label for="mmx">Phone number with the country code (or UPI ID)</label>
+        <input id="mmx" type="text" name="account" required value="{{ f.get('account', '') }}" placeholder="+250 788 123 456 / name@okbank" translate="no">
+        <button class="btn btn-orange btn-block btn-lg">Send the request to my phone</button>
+    </form>
+    <aside class="panel small">
+        <h3>How it works</h3>
+        <ol><li>We send a payment request to your phone.</li><li>You approve it with your PIN.</li><li>The money is in Yo Pay at once.</li></ol>
+        <p class="muted">M-Pesa: Kenya, Tanzania. MTN MoMo: Rwanda, Uganda, Ghana and more. SBP: Russia. UPI: India. The amount is shown in your currency with the rate of the shop.</p>
+        <p><a href="{{ url_for('pay_add') }}">Pay with a card instead</a></p>
+    </aside>
+</div>
+{% endblock %}

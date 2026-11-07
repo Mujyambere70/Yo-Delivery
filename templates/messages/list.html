@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Messages{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap acc">
+    {% include "_account_nav.html" %}
+    <div>
+        <h1>Messages</h1>
+        <p class="small muted">Questions to sellers and their answers. For your safety phone numbers, e-mails and links are hidden: talk and pay only on Yo Delivery. Messages with rude words wait for a moderator.</p>
+        <section class="panel">
+        {% for t in threads %}
+            <a class="thread" href="{{ url_for('messages_thread', thread_id=t.id) }}">
+                <span><b translate="no">{{ t.other }}</b>{% if t.side == 'seller' %} <small class="muted">(<span>customer of your shop</span>)</small>{% endif %}<br>
+                    <small><span translate="no">{{ t.subject }}</span> &middot; <span class="muted">{{ (t.last_body or '')[:80] }}</span></small></span>
+                <span class="small muted nowrap">{% if t.unread %}<span class="dot"></span> {{ t.unread }} &middot; {% endif %}{{ t.last_at|nicedate('%d %b, %H:%M') }}</span>
+            </a>
+        {% else %}<p class="muted">No messages yet. Open a product of a seller and press "Ask the seller".</p>{% endfor %}
+        </section>
+    </div>
+</div>
+{% endblock %}

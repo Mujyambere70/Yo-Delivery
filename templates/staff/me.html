@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}My contract and payslips{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap">
+    <h1>&#128196; <span>My contract, holidays and payslips</span></h1>
+    <p><a href="{{ url_for('staff_home') }}">&larr; My work</a></p>
+    <div class="v7-grid">
+        <section class="panel">
+            <h2>My contract</h2>
+            {% if contract %}
+            <dl class="v7-kv">
+                <dt>Kind</dt><dd>{{ kinds.get(contract.kind, contract.kind) }}</dd>
+                <dt>First day</dt><dd translate="no">{{ contract.start_day }}</dd>
+                <dt>Last day</dt><dd translate="no">{{ contract.end_day or '-' }}</dd>
+                <dt>Hours a week</dt><dd>{{ contract.hours_week }}</dd>
+                <dt>Salary</dt><dd><span translate="no">{{ minor_money(contract.pay_amount, contract.currency) }}</span> <span>{{ 'a month' if contract.pay_kind == 'month' else 'an hour' }}</span></dd>
+                <dt>Holiday days a year</dt><dd>{{ contract.leave_days }}</dd>
+            </dl>
+            {% else %}<p class="muted">Your manager has not saved a contract yet.</p>{% endif %}
+        </section>
+        <section class="panel">
+            <h2>Holiday balance {{ balance.year if balance }}</h2>
+            {% if balance %}
+            <div class="kpis"><div class="kpi"><small>Earned so far</small><b>{{ '%g'|format(balance.earned) }}</b></div>
+                <div class="kpi"><small>Used or asked</small><b>{{ balance.used }}</b></div>
+                <div class="kpi"><small>Left</small><b>{{ '%g'|format(balance.left) }}</b></div></div>
+            <p class="small muted">Days are earned month by month ({{ balance.per_year }} a year). Holidays count working days (Monday to Friday). Sick days and unpaid days do not use the balance.</p>
+            {% else %}<p class="muted">No contract, so no balance yet.</p>{% endif %}
+        </section>
+        <section class="panel">
+            <h2>My training</h2>
+            {% if missing %}<p class="flash error">You still need: {{ missing|join(', ') }}. Ask your manager for the course.</p>{% endif %}
+            <table class="at small"><tbody>{% for t in trainings %}<tr><td>{{ t.name }}</td><td translate="no">{{ t.done_on }}</td><td><span class="pill-status {{ 'ok' if t.valid else 'bad' }}">{{ 'valid until ' ~ t.expires_on if t.valid else 'expired' }}</span></td></tr>
+            {% else %}<tr><td class="muted">No courses yet.</td></tr>{% endfor %}</tbody></table>
+        </section>
+        {% if helps %}<section class="panel">
+            <h2>I help in other offices</h2>
+            <ul>{% for x in helps %}<li translate="no">{{ x.office }}: {{ x.from_day }} &ndash; {{ x.to_day }}</li>{% endfor %}</ul>
+        </section>{% endif %}
+    </div>
+    <section class="panel" id="payslips">
+        <h2>My payslips</h2>
+        <table class="at"><thead><tr><th>Month</th><th>Gross</th><th>Tax and contributions</th><th>Net</th><th></th></tr></thead><tbody>
+        {% for s in slips %}<tr><td translate="no">{{ s.month }}</td><td translate="no">{{ minor_money(s.gross, s.currency) }}</td><td translate="no">{{ minor_money(s.tax + s.social, s.currency) }}</td><td translate="no"><b>{{ minor_money(s.net, s.currency) }}</b></td><td><a href="{{ url_for('staff_payslip', slip_id=s.id) }}">Open</a></td></tr>
+        {% else %}<tr><td colspan="5" class="muted">No payslips yet.</td></tr>{% endfor %}</tbody></table>
+    </section>
+</div>
+{% endblock %}

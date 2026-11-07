@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Daily quiz · Yo Rewards{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <p class="crumbs"><a href="{{ url_for('rewards_home') }}">Yo Rewards</a> &rsaquo; <span>Daily quiz</span></p>
+    {% if result %}
+    <section class="panel quiz-cta">
+        <div><h1 style="margin:0">Today's result</h1><p class="muted">Come back tomorrow for 5 new questions.</p></div>
+        <div class="center"><div class="score-big">{{ result.correct }}/{{ R.QUESTIONS_PER_DAY }}</div><b>+{{ result.points }} points</b>{% if result.streak > 1 %}<br><small>&#128293; {{ result.streak }} days in a row</small>{% endif %}</div>
+    </section>
+    {% for q in result.questions %}{% set picked = result.given.get(q.id|string, -1) %}
+    <div class="qcard">
+        <h3><span class="qnum">{{ loop.index }}</span>{{ q.question }}</h3>
+        <div class="opts">{% for o in q.options %}<label><span class="{{ 'right' if loop.index0 == q.answer else ('wrong' if loop.index0 == picked else '') }}">{{ o }}</span></label>{% endfor %}</div>
+        {% if q.explanation %}<p class="explain">&#128161; {{ q.explanation }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    <p class="center"><a href="{{ url_for('rewards_home') }}#redeem" class="btn btn-orange">Use my points</a></p>
+    {% else %}
+    <div class="row-head"><h1 style="margin:0">&#129504; Daily quiz</h1><span class="quiz-timer" id="quizTimer" data-left="{{ seconds_left }}"></span></div>
+    {% if english %}<p class="info-box small">Today's questions are in English (there are not enough questions in your language yet).</p>{% endif %}
+    <form method="post" id="quizForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% for q in questions %}
+        <fieldset class="qcard" style="border:0">
+            <legend class="sr-only" hidden>{{ q.question }}</legend>
+            <h3><span class="qnum">{{ loop.index }}</span>{{ q.question }} <small class="muted">&middot; <span>{{ q.topic }}</span></small></h3>
+            <div class="opts">{% set qi = q.id %}{% for o in q.options %}<label><input type="radio" name="q{{ qi }}" value="{{ loop.index0 }}" required><span>{{ o }}</span></label>{% endfor %}</div>
+        </fieldset>
+        {% endfor %}
+        <button class="btn btn-orange btn-lg btn-block">Check my answers</button>
+        <p class="hint center">One try per day. Answers sent after {{ R.QUIZ_MINUTES }} minutes do not count.</p>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var t = document.getElementById("quizTimer");
+  if (!t) return;
+  var end = Date.now() + Number(t.getAttribute("data-left")) * 1000;
+  function tick() {
+    var left = Math.max(0, Math.round((end - Date.now()) / 1000));
+    t.textContent = "⏱ " + Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+    if (left > 0) setTimeout(tick, 1000);
+  }
+  tick();
+})();
+</script>
+{% endblock %}

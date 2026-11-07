@@ -1,0 +1,26 @@
+{% extends "admin/layout.html" %}
+{% block title %}Recommendation model{% endblock %}
+{% block heading %}Recommendation model{% endblock %}
+{% block content %}
+<div class="kpis">
+    <div class="kpi"><small>Status</small><b>{{ 'In use' if report and report.used else 'Rules (not learned)' }}</b><span>{{ report.trained_at|nicedate('%d %b, %H:%M') if report else 'never trained' }}</span></div>
+    <div class="kpi"><small>Customers / actions</small><b>{{ report.users if report else 0 }} / {{ report.actions if report else 0 }}</b><span>{{ report.products if report and report.products else 0 }} products</span></div>
+    <div class="kpi"><small>Hit rate @10 (model)</small><b>{{ '%.1f'|format((report.hit_rate or 0) * 100) if report and report.hit_rate is defined else '—' }}%</b><span>{{ report.tested if report and report.tested else 0 }} customers tested</span></div>
+    <div class="kpi"><small>Hit rate @10 (most popular)</small><b>{{ '%.1f'|format((report.popular_hit_rate or 0) * 100) if report and report.popular_hit_rate is defined else '—' }}%</b><span>the simple baseline</span></div>
+</div>
+<section class="panel">
+    <h2>How it works</h2>
+    <p>Matrix factorization for implicit feedback (alternating least squares, NumPy): every customer and every product gets 16 numbers learned from views (1), wishlists (2) and purchases (3). Before it is used, one product of each customer is hidden and the model must find it in its top 10 more often than the list of the most popular products. Otherwise the shop keeps the simple rules. It trains every day by itself.</p>
+    {% if report and report.reason %}<p class="flash info">{{ report.reason }}</p>{% endif %}
+    <form method="post" style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-orange">Train now</button>
+        <button class="btn btn-outline" name="force" value="1">Train even with little data</button>
+    </form>
+</section>
+<section class="panel">
+    <h2>&#128444; <span>Similar products from texts and pictures</span></h2>
+    <p class="small">For every product the shop finds the closest products by the words of its name and description (TF-IDF) and by its main picture (colours and shapes). New products are recommended from the first day, before anybody buys them. The page "Similar products" mixes these with the learned model when the model knows the product.</p>
+    <div class="kpis"><div class="kpi"><small>Products</small><b>{{ content.products }}</b></div><div class="kpi"><small>Pairs saved</small><b>{{ content.pairs }}</b></div><div class="kpi"><small>Pairs with a picture score</small><b>{{ content.with_picture_pairs }}</b></div><div class="kpi"><small>Made</small><b translate="no">{{ content.made_at[:16] or '-' }}</b></div></div>
+</section>
+{% endblock %}

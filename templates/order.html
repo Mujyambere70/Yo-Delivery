@@ -7,7 +7,9 @@
         <div><h1>Order details</h1><p class="muted">Ordered on {{ o.placed_at|nicedate('%d %B %Y, %I:%M %p') }} &middot; Order# <span translate="no">{{ o.number }}</span></p></div>
         <div class="btn-row">
             {% if o.status == 'Awaiting payment' %}<a href="{{ url_for('pay_order', number=o.number) }}" class="btn btn-orange btn-sm">&#128179; Pay now {{ o.total|omoney(o) }}</a>{% endif %}
-            {% if o.payment_status in ('Paid', 'COD') %}<a href="{{ url_for('invoice', number=o.number) }}" class="btn btn-outline btn-sm">&#128462; Invoice</a>{% endif %}
+            {% if o.payment_status in ('Paid', 'COD') %}<a href="{{ url_for('invoice', number=o.number) }}" class="btn btn-outline btn-sm">&#128462; Invoice</a>
+            <a href="{{ url_for('order_invoices', number=o.number) }}" class="btn btn-outline btn-sm">&#129534; Tax invoices</a>{% endif %}
+            <a href="{{ url_for('support_home', topic='order', about=o.number) }}" class="btn btn-outline btn-sm">&#127911; Help</a>
             {% if o.can_cancel %}
             <form method="post" action="{{ url_for('cancel', number=o.number) }}" onsubmit="return confirmCancel(this)">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -61,7 +63,7 @@
         </section>
         <section class="panel">
             <h3>Payment method</h3>
-            <p><b>{{ o.payment_method }}</b><br><span class="small muted">{{ o.payment_note }}</span></p>
+            <p><b>{{ o.payment_method }}</b><br><span class="small muted">{{ o.payment_note }}</span>{% if o.emi_months %}<br><span class="small">EMI: {{ o.emi_months }} &times; {{ o.emi_monthly|inr }} a month</span>{% endif %}</p>
             {% if o.currency != 'INR' %}<p class="small muted">Paid in {{ o.currency }} ({{ o.total|inr }} in shop rupees).</p>{% endif %}
             {% if o.refunded %}<p class="ok small">Refunded: {{ o.refunded|omoney(o) }} to your {{ 'card' if o.payment_method == 'Card' else 'Yo Pay wallet' }}</p>{% endif %}
         </section>

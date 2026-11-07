@@ -125,6 +125,10 @@ class NoticesMixin:
                     continue                                   # another process sent it
                 self.notify(conn, o["user_id"], *self.step_message(o, step), order_number=o["number"],
                             url=f"/orders/{o['number']}")
+                if step == 4:                                   # delivered: 1 Yo Rewards point per ₹100
+                    pts = o["total"] // 10000
+                    if pts > 0:
+                        self.add_points(conn, o["user_id"], pts, "Order delivered", o["number"], once=True)
                 sent += 1
         return sent
 

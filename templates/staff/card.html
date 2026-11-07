@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}My staff ID card{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <div class="staff-card" role="group" aria-label="Staff ID card">
+        <div class="staff-card-top"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="" width="34" height="34"><b>yo<span>delivery</span></b><small>Staff</small></div>
+        <div class="staff-card-body">
+            <div>
+                <p class="big" translate="no">{{ w.name }}</p>
+                <p translate="no">{{ w.title }}</p>
+                <p class="small muted" translate="no">{{ w.office }}</p>
+                <p class="small">{{ w.kind|replace('hub', 'Hub / warehouse')|capitalize }} &middot; <b>{{ w.status }}</b></p>
+            </div>
+            <div id="staffQr" class="tk-qr-box" data-qr="{{ verify_url }}" aria-label="QR code to check this card"></div>
+        </div>
+        <p class="small muted staff-card-foot">Anybody can scan this code to check that you work for Yo Delivery today. It shows your name, job and office only.</p>
+    </div>
+    <p style="text-align:center"><a href="{{ verify_url }}">Open the check page</a> &middot; <a href="#" onclick="window.print();return false">Print</a></p>
+</div>
+<script src="{{ url_for('static', filename='vendor/qrcode.js') }}"></script>
+<script>
+(function () {
+    var box = document.getElementById("staffQr");
+    if (!box || typeof qrcode === "undefined") { return; }
+    var q = qrcode(0, "M"); q.addData(box.getAttribute("data-qr")); q.make();
+    box.innerHTML = q.createSvgTag({cellSize: 4, margin: 2});
+})();
+</script>
+{% endblock %}

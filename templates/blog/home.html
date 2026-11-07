@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ CATS[category] if category else 'Blog & News' }}{% endblock %}
+{% block meta %}<meta name="description" content="Yo Delivery Blog &amp; News: deals and offers, stories of our sellers, shopping guides and news about Yo Courier, Yo Pay and Yo Rewards.">
+<link rel="canonical" href="{{ request.base_url }}">{% endblock %}
+{% block content %}
+<div class="wrap">
+    <h1>&#128240; {{ CATS[category] if category else 'Blog & News' }}</h1>
+    <nav class="blog-cats">
+        <a href="{{ url_for('blog_home') }}" class="{{ 'on' if not category }}">All</a>
+        {% for k, n in CATS.items() %}<a href="{{ url_for('blog_home', category=k) }}" class="{{ 'on' if category == k }}">{{ n }}</a>{% endfor %}
+        <form method="get" role="search"><input type="search" name="q" value="{{ q }}" placeholder="Search the blog" aria-label="Search the blog"><button class="btn btn-outline btn-sm">&#128269;</button></form>
+    </nav>
+    {% if posts %}
+    <div class="blog-grid">
+        {% for p in posts %}
+        <a class="bcard {{ 'blog-feature' if loop.first and not q and not category }}" href="{{ url_for('blog_post', slug=p.slug) }}">
+            <div class="cover" style="background-image:url('{{ picture(p.cover) if p.cover else url_for('static', filename='images/photos/courier.jpg') }}')"></div>
+            <div class="bbody">
+                <span class="bcat">{{ p.category_name }}</span>
+                <h2 {% if p.lang != 'en' %}lang="{{ p.lang }}"{% endif %}>{{ p.title }}</h2>
+                <p {% if p.lang != 'en' %}lang="{{ p.lang }}"{% endif %}>{{ p.summary }}</p>
+                <span class="meta"><span>{{ p.published_at|nicedate }}</span> &middot; <span>{{ p.minutes }} min read</span>{% if p.seller_id %} &middot; <span translate="no">{{ p.author_name }}</span>{% endif %}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}<section class="panel empty"><p>No posts found.</p></section>{% endif %}
+    <p class="small muted" style="margin-top:16px"><a href="{{ url_for('blog_feed') }}">RSS feed</a> &middot; Sellers can tell the story of their shop in the Seller Centre.</p>
+</div>
+{% endblock %}

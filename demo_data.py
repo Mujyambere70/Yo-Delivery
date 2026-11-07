@@ -12,6 +12,12 @@ ever sent to them.
 import random
 from datetime import datetime, timedelta
 
+import demo_v3
+import demo_v4
+import demo_v5
+import demo_v6
+import demo_v7
+
 DEMO_EMAIL = "demo@example.com"
 DEMO_MOBILE = "9876543210"
 DEMO_PASSWORD = "Demo@1234"
@@ -49,21 +55,36 @@ def _ago(days, hours=0, minutes=0):
 
 
 def ensure_admin(store):
-    """Create the admin account if it does not exist yet (also for older databases)."""
+    """Make sure the shop has an admin (also for older databases). Never creates a second one:
+    if the admin already changed their email or mobile, the existing account is kept as it is."""
+    from core import ShopError
     with store.db() as conn:
-        row = conn.execute("SELECT id FROM users WHERE email = ?", (ADMIN_EMAIL,)).fetchone()
+        row = conn.execute("SELECT id FROM users WHERE is_admin = 1 ORDER BY id LIMIT 1").fetchone()
+        if row is None:
+            row = conn.execute("SELECT id FROM users WHERE email = ? OR mobile = ?", (ADMIN_EMAIL, ADMIN_MOBILE)).fetchone()
     if row:
         uid = row["id"]
     else:
-        uid = store.register(ADMIN_NAME, ADMIN_EMAIL, ADMIN_MOBILE, ADMIN_PASSWORD, wallet=0, when=_ago(90))
+        try:
+            uid = store.register(ADMIN_NAME, ADMIN_EMAIL, ADMIN_MOBILE, ADMIN_PASSWORD, wallet=0, when=_ago(90))
+        except ShopError:                                   # another process created it at the same moment
+            return None
     store.make_admin(uid)
     return uid
 
 
 def seed(store):
     if not store.is_empty():
+        ensure_admin(store)
+        demo_v3.ensure_v3(store)            # a version 2 database gets the new demo content once
+        demo_v4.ensure_v4(store)            # and the Yo Tickets demo content (version 4) once
+        demo_v5.ensure_v5(store)            # and the whole-world demo content (version 5) once
+        demo_v6.ensure_v6(store)            # and the staff of Yo Delivery (version 6) once
+        demo_v7.ensure_v7(store)            # and pay, invoices, partners, help desk and numbers (version 7) once
         return
     store.load_catalog()
+    rng = random.Random(11)
+    ensure_admin(store)
 
     uid = store.register("Ravi Kumar", DEMO_EMAIL, DEMO_MOBILE, DEMO_PASSWORD, wallet=5000 * 100, when=_ago(60))
     store.log(uid, "Signed up", "New account with email " + DEMO_EMAIL, "49.36.12.8", when=_ago(60))
@@ -220,3 +241,8 @@ def seed(store):
         for o in orders:
             conn.execute("UPDATE orders SET notified_step = ? WHERE id = ?", (store._order_step(o) - 1, o["id"]))
     store.sync_order_updates()          # in-site messages only: demo emails end with example.com and are skipped
+    demo_v3.ensure_v3(store)            # version 3: couriers, shipments, blog, quiz, Yo Pay, task boards
+    demo_v4.ensure_v4(store)            # version 4: Yo Tickets (conductor, tickets, posts)
+    demo_v5.ensure_v5(store)            # version 5: the whole world (quiz languages, chat, product texts, ...)
+    demo_v6.ensure_v6(store)            # version 6: offices, workers, shifts and tasks
+    demo_v7.ensure_v7(store)            # version 7: pay, invoices, partners, help desk and numbers

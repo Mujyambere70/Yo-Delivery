@@ -1,0 +1,25 @@
+{% extends "admin/layout.html" %}
+{% block title %}Staff performance{% endblock %}
+{% block heading %}Staff performance{% endblock %}
+{% block content %}
+{% include "admin/_staff_tabs.html" %}
+<section class="panel">
+    <form method="get" class="v6-filters">
+        <label>Period <select name="days" onchange="this.form.submit()">{% for d in (7, 30, 90) %}<option value="{{ d }}" {{ 'selected' if days == d }}>{{ d }} <span>days</span></option>{% endfor %}</select></label>
+        <label>Office <select name="office" onchange="this.form.submit()"><option value="">All my offices</option>
+            {% for o in branch_offices %}<option value="{{ o.id }}" {{ 'selected' if office == o.id|string }}>{{ '— ' * o.depth }}{{ o.name }}</option>{% endfor %}</select></label>
+        <span class="small muted" translate="no">{{ p.first }} &ndash; {{ p.last }}</span>
+    </form>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Worker</th><th>Hours worked</th><th>Planned</th><th>Attendance</th><th>Late</th><th>Absent</th><th>Tasks done</th><th>On time</th><th>Open late</th><th>Work done</th></tr></thead>
+        <tbody>{% for x in p.rows %}<tr>
+            <td><b translate="no">{{ x.worker.name }}</b><br><small class="muted"><span translate="no">{{ x.worker.office }}</span> &middot; {{ x.worker.title }}</small></td>
+            <td translate="no">{{ x.worked_min // 60 }} h</td><td translate="no">{{ x.planned_min // 60 }} h</td>
+            <td>{{ (x.attendance_pct|string + ' %') if x.attendance_pct is not none else '-' }}</td><td>{{ x.late }}</td><td>{{ x.absent }}</td>
+            <td>{{ x.tasks_done }}</td><td>{{ x.tasks_on_time }}</td><td>{{ x.tasks_overdue }}</td>
+            <td><small>{% for k, v in x.work.items() %}<span>{{ {'delivered': 'Parcels delivered', 'hub_scans': 'Hub scans', 'tickets_checked': 'Tickets checked', 'chats_decided': 'Chat messages decided'}[k] }}</span>: {{ v }}<br>{% else %}-{% endfor %}</small></td>
+        </tr>{% else %}<tr><td colspan="10" class="muted">No active workers.</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <p class="small muted">Numbers to talk about together with the worker - not a ranking. Attendance = planned shifts the worker came to (on time or late).</p>
+</section>
+{% endblock %}

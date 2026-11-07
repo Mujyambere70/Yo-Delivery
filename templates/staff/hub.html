@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Hub scan{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <section class="panel">
+        <h1 style="margin-top:0">&#128230; <span>Scan parcels</span></h1>
+        <p class="muted"><span translate="no">{{ w.office if w else '' }}</span>. Type or scan the parcel number from the label, then choose what happened.</p>
+        <form method="post" class="form-grid hub-form" style="align-items:end">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div><label for="hn">Parcel number</label><input type="text" id="hn" name="number" required autofocus autocomplete="off" inputmode="latin" placeholder="YC12345678" translate="no"></div>
+            <div><label for="ha">What happened</label><select id="ha" name="action">{% for k, v in ACTIONS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+            <div><label for="hnote">Note (for problems)</label><input type="text" id="hnote" name="note" maxlength="120"></div>
+            <div><button class="btn btn-orange">Save the scan</button></div>
+        </form>
+        {% if result %}<p class="flash success" translate="no">{{ result.number }}: {{ result.status }}</p>{% endif %}
+    </section>
+    <section class="panel">
+        <h2>Parcels of this town ({{ parcels|length }})</h2>
+        <div class="tw"><table class="at">
+            <thead><tr><th>Number</th><th>From</th><th>To</th><th>Status</th><th>Here</th></tr></thead>
+            <tbody>{% for s in parcels %}<tr><td class="mono" translate="no">{{ s.number }}</td><td translate="no">{{ s.from_city }}</td><td translate="no">{{ s.to_city }}</td><td>{{ s.status }}</td><td>{{ 'Arriving' if s.direction == 'in' else 'Leaving' }}</td></tr>
+            {% else %}<tr><td colspan="5" class="muted">No open parcels for this town now.</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </section>
+</div>
+{% endblock %}

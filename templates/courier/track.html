@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Track a shipment · Yo Courier{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <h1>&#128269; Track a shipment</h1>
+    <form method="get" action="{{ url_for('courier_track') }}" class="panel toolbar">
+        <label for="tn" class="sr-only" hidden>Consignment number</label>
+        <input id="tn" type="search" name="number" value="{{ number }}" placeholder="Consignment number, e.g. YC2611061234567" translate="no" style="flex:1;min-width:220px;width:auto">
+        <button class="btn btn-orange">Track</button>
+    </form>
+    {% if s %}
+    <section class="panel">
+        <div class="ship-head">
+            <div><small class="muted">Consignment</small><div class="ship-num" translate="no">{{ s.number }}</div>
+                <h2 class="status s-{{ s.status|lower|replace(' ', '-') }}" style="margin-top:6px"><i></i>{{ s.status }}</h2>
+                <p class="small"><span>From</span> <b translate="no">{{ s.from_city }}</b> <span>to</span> <b translate="no">{{ s.to_city }}</b>{% if s.to_country != 'IN' %}, <span>{{ s.to_country_name }}</span>{% endif %} &middot; <span>{{ s.kind_name }}</span> &middot; <span>{{ s.service_name }}</span></p>
+                {% if s.active %}<p class="small">Expected by <b>{{ s.expected|nicedate('%a, %d %b, %H:%M') }}</b></p>{% endif %}
+            </div>
+            {% if s.courier and s.active %}<div class="courier-card"><span class="avatar">{{ s.courier.first_name[0] }}</span><div><b>{{ s.courier.first_name }}</b><br><small class="muted">{{ s.courier.vehicle_name }}{% if s.courier.rating %} &middot; &#9733; {{ s.courier.rating }}{% endif %}</small></div></div>{% endif %}
+        </div>
+        {% if s.status not in ('Cancelled', 'Returned to sender') %}{% include "courier/_steps.html" %}{% endif %}
+    </section>
+    {% if s.status != 'Cancelled' %}<section class="panel">{% set owner = False %}{% include "courier/_map.html" %}</section>{% endif %}
+    <section class="panel"><h2>History</h2>{% include "courier/_events.html" %}</section>
+    <p class="small muted">For privacy this page shows no addresses, phone numbers or the delivery code. The sender sees everything after signing in.</p>
+    {% elif not number %}
+    <section class="panel"><p>Enter the consignment number from the booking message (it starts with <b translate="no">YC</b>). Looking for a shop order? <a href="{{ url_for('track') }}">Track an order</a>.</p></section>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='yo-map.js') }}"></script>{% endblock %}

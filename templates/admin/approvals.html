@@ -1,0 +1,26 @@
+{% extends "admin/layout.html" %}
+{% block title %}Approvals{% endblock %}
+{% block heading %}Approvals (dual control){% endblock %}
+{% block content %}
+<section class="panel">
+    <p>Some actions need <b>two different people</b>: payroll runs always, and giving the ability to do everything when dual control is on. Nobody can approve his own request.</p>
+    {% if user.is_admin %}<form method="post" class="actions">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="dual">
+        <span>Dual control for the ability "all": <b>{{ 'on' if dual else 'off' }}</b></span>
+        <button class="btn btn-sm btn-outline" name="on" value="{{ '0' if dual else '1' }}">{{ 'Turn off' if dual else 'Turn on' }}</button>
+    </form>{% endif %}
+</section>
+<section class="panel">
+    <h2>Waiting ({{ waiting|length }})</h2>
+    <table class="at"><thead><tr><th>What</th><th>Asked by</th><th>When</th><th></th></tr></thead><tbody>
+    {% for a in waiting %}<tr><td>{{ a.summary }}{% if a.kind == 'payroll' %} &middot; <a href="{{ url_for('admin_payroll_run', run_id=a.target_id) }}">open</a>{% endif %}</td><td translate="no">{{ a.requested_name }}</td><td translate="no">{{ a.created_at[:16] }}</td>
+        <td><form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ a.id }}">
+            <input type="text" name="note" placeholder="Note" aria-label="Note" maxlength="200">
+            <button class="btn btn-sm btn-orange" name="action" value="approve">Approve</button><button class="btn btn-sm btn-outline" name="action" value="refuse">Refuse</button></form></td></tr>
+    {% else %}<tr><td colspan="4" class="muted">Nothing waits.</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel">
+    <h2>Decided</h2>
+    <table class="at small"><tbody>{% for a in done if a.status != 'Waiting' %}<tr><td>{{ a.summary }}</td><td>{{ a.status }}</td><td translate="no">{{ a.requested_name }} &rarr; {{ a.decided_name or '-' }}</td><td translate="no">{{ a.decided_at[:16] }}</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

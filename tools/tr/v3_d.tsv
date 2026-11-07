@@ -1,0 +1,79 @@
+Balance	Баланс	Solde	Saldo	الرصيد	余额	Asigaye
+↓ In this month:	↓ Поступило за месяц:	↓ Entrées ce mois :	↓ Entradas este mes:	↓ الوارد هذا الشهر:	↓ 本月收入：	↓ Ibyinjiye uku kwezi:
+↑ Out this month:	↑ Списано за месяц:	↑ Sorties ce mois :	↑ Salidas este mes:	↑ الصادر هذا الشهر:	↑ 本月支出：	↑ Ibyasohotse uku kwezi:
+Add money	Пополнить	Ajouter de l'argent	Añadir dinero	أضف مالًا	充值	Shyiramo amafaranga
+Send money	Перевести	Envoyer de l'argent	Enviar dinero	أرسل مالًا	转账	Ohereza amafaranga
+Statement	Выписка	Relevé	Extracto	كشف الحساب	账单	Raporo y'amafaranga
+⬇ CSV	⬇ CSV	⬇ CSV	⬇ CSV	⬇ CSV	⬇ CSV	⬇ CSV
+No payments yet.	Платежей пока нет.	Aucun paiement pour l'instant.	Aún no hay pagos.	لا توجد مدفوعات بعد.	暂无交易。	Nta bwishyu buraba.
+Opening balance	Начальный остаток	Solde d'ouverture	Saldo inicial	الرصيد الافتتاحي	期初余额	Amafaranga yari asanzwe
+Welcome bonus	Приветственный бонус	Bonus de bienvenue	Bono de bienvenida	مكافأة الترحيب	新人奖励	Impano yo kwakirwa
+Money added by card	Пополнение картой	Rechargement par carte	Recarga con tarjeta	إضافة مال بالبطاقة	银行卡充值	Amafaranga yashyizwemo n'ikarita
+Shop order	Заказ в магазине	Commande boutique	Pedido de la tienda	طلب من المتجر	商城订单	Itumiza ryo mu iduka
+Refund	Возврат	Remboursement	Reembolso	استرداد	退款	Gusubizwa amafaranga
+Money sent	Перевод отправлен	Argent envoyé	Dinero enviado	مال مُرسل	转出	Amafaranga yoherejwe
+Money received	Перевод получен	Argent reçu	Dinero recibido	مال مُستلم	转入	Amafaranga yakiriwe
+Courier booking	Курьерская доставка	Réservation coursier	Reserva de mensajería	حجز توصيل	快递订单	Gutumiza umugemuzi
+Courier earning	Заработок курьера	Gains de coursier	Ganancia de repartidor	أرباح المندوب	配送收入	Ibyo umugemuzi yinjije
+Changed by Yo Delivery	Изменено Yo Delivery	Modifié par Yo Delivery	Modificado por Yo Delivery	عدّلته Yo Delivery	Yo Delivery 调整	Byahinduwe na Yo Delivery
+Reward	Награда	Récompense	Recompensa	مكافأة	奖励	Igihembo
+Welcome bonus (demo money)	Приветственный бонус (демо-деньги)	Bonus de bienvenue (argent de démo)	Bono de bienvenida (dinero de demo)	مكافأة الترحيب (مال تجريبي)	新人奖励（演示资金）	Impano yo kwakirwa (amafaranga y'icyitegererezo)
+Balance before the statement started	Остаток до начала выписки	Solde avant le début du relevé	Saldo antes del inicio del extracto	الرصيد قبل بدء الكشف	账单开始前的余额	Amafaranga yari ahari mbere ya raporo
+Card ending {0} (test mode)	Карта, оканчивающаяся на {0} (тестовый режим)	Carte se terminant par {0} (mode test)	Tarjeta terminada en {0} (modo de prueba)	بطاقة تنتهي بـ {0} (وضع الاختبار)	尾号 {0} 的银行卡（测试模式）	Ikarita irangirwa na {0} (igerageza)
+Shop order {0}	Заказ {0}	Commande {0}	Pedido {0}	الطلب {0}	订单 {0}	Itumiza {0}
+Order cancelled {0}	Заказ отменён {0}	Commande annulée {0}	Pedido cancelado {0}	أُلغي الطلب {0}	订单已取消 {0}	Itumiza ryahagaritswe {0}
+Return refund {0}	Возврат по заказу {0}	Remboursement du retour {0}	Reembolso de devolución {0}	استرداد الإرجاع {0}	退货退款 {0}	Gusubizwa ku byagaruwe {0}
+Yo Courier {0}	Yo Courier {0}	Yo Courier {0}	Yo Courier {0}	Yo Courier {0}	Yo Courier {0}	Yo Courier {0}
+Yo Courier {0} cancelled	Yo Courier {0} отменено	Yo Courier {0} annulé	Yo Courier {0} cancelado	أُلغي Yo Courier {0}	Yo Courier {0} 已取消	Yo Courier {0} yahagaritswe
+{0} Yo Rewards points	{0} баллов Yo Rewards	{0} points Yo Rewards	{0} puntos de Yo Rewards	{0} نقطة Yo Rewards	{0} 个 Yo 奖励积分	Amanota {0} ya Yo Rewards
+To {0} - {1}	Кому: {0} — {1}	À {0} - {1}	Para {0}: {1}	إلى {0} - {1}	转给 {0} - {1}	Kuri {0} - {1}
+From {0} - {1}	От: {0} — {1}	De {0} - {1}	De {0}: {1}	من {0} - {1}	来自 {0} - {1}	Kuva kuri {0} - {1}
+Demo money	Демо-деньги	Argent de démo	Dinero de demo	مال تجريبي	演示资金	Amafaranga y'icyitegererezo
+Changed by the admin	Изменено администратором	Modifié par l'administrateur	Modificado por el administrador	عدّله المسؤول	管理员调整	Byahinduwe n'umuyobozi
+Yo Pay is a demo wallet: the money is not real. Limits: a balance of up to ₹2,00,000; send up to ₹25,000 at a time and ₹50,000 per day.	Yo Pay — демо-кошелёк: деньги ненастоящие. Лимиты: баланс до ₹2,00,000; перевод до ₹25,000 за раз и ₹50,000 в день.	Yo Pay est un portefeuille de démo : l'argent n'est pas réel. Limites : solde jusqu'à ₹2,00,000 ; envoi jusqu'à ₹25,000 par opération et ₹50,000 par jour.	Yo Pay es una billetera de demostración: el dinero no es real. Límites: saldo de hasta ₹2,00,000; envíos de hasta ₹25,000 por vez y ₹50,000 al día.	Yo Pay محفظة تجريبية: المال غير حقيقي. الحدود: رصيد حتى ₹2,00,000؛ إرسال حتى ₹25,000 في المرة و₹50,000 يوميًا.	Yo Pay 是演示钱包，资金并非真实。限额：余额最多 ₹2,00,000；单笔转账最多 ₹25,000，每天最多 ₹50,000。	Yo Pay ni ikotomoni y'icyitegererezo: amafaranga si nyayo. Imipaka: kugeza kuri ₹2,00,000; kohereza kugeza kuri ₹25,000 icyarimwe na ₹50,000 ku munsi.
+Add money · Yo Pay	Пополнение · Yo Pay	Ajouter de l'argent · Yo Pay	Añadir dinero · Yo Pay	إضافة مال · Yo Pay	充值 · Yo Pay	Shyiramo amafaranga · Yo Pay
+➕ Add money to Yo Pay	➕ Пополнить Yo Pay	➕ Ajouter de l'argent à Yo Pay	➕ Añadir dinero a Yo Pay	➕ أضف مالًا إلى Yo Pay	➕ 向 Yo Pay 充值	➕ Shyira amafaranga kuri Yo Pay
+TEST MODE - use a test card, no real money is taken.	ТЕСТОВЫЙ РЕЖИМ — используйте тестовую карту, реальные деньги не списываются.	MODE TEST - utilisez une carte de test, aucun argent réel n'est débité.	MODO DE PRUEBA: usa una tarjeta de prueba, no se cobra dinero real.	وضع الاختبار - استخدم بطاقة اختبار، لا يُخصم مال حقيقي.	测试模式 - 请使用测试卡，不会扣除真实资金。	IGERAGEZA - koresha ikarita y'igerageza, nta mafaranga nyayo akurwaho.
+Amount (₹)	Сумма (₹)	Montant (₹)	Importe (₹)	المبلغ (₹)	金额（₹）	Amafaranga (₹)
+Card number	Номер карты	Numéro de carte	Número de tarjeta	رقم البطاقة	卡号	Nimero y'ikarita
+Expiry (MM/YY)	Срок (ММ/ГГ)	Expiration (MM/AA)	Caducidad (MM/AA)	الانتهاء (شهر/سنة)	有效期（月/年）	Itariki irangiriraho (MM/YY)
+Name on the card	Имя на карте	Nom sur la carte	Nombre en la tarjeta	الاسم على البطاقة	持卡人姓名	Izina riri ku ikarita
+Test cards	Тестовые карты	Cartes de test	Tarjetas de prueba	بطاقات الاختبار	测试卡	Amakarita y'igerageza
+works	работает	fonctionne	funciona	تعمل	支付成功	irakora
+is declined	отклоняется	est refusée	es rechazada	مرفوضة	会被拒绝	irangwa
+has no money	без средств	n'a pas de fonds	no tiene fondos	بلا رصيد	余额不足	nta mafaranga ifite
+Any future date and any 3 digits.	Любая будущая дата и любые 3 цифры.	N'importe quelle date future et 3 chiffres.	Cualquier fecha futura y 3 dígitos cualesquiera.	أي تاريخ مستقبلي وأي 3 أرقام.	任意未来日期和任意 3 位数字。	Itariki iyo ari yo yose iri imbere n'imibare 3 iyo ari yo yose.
+Send money · Yo Pay	Перевод · Yo Pay	Envoyer de l'argent · Yo Pay	Enviar dinero · Yo Pay	إرسال مال · Yo Pay	转账 · Yo Pay	Ohereza amafaranga · Yo Pay
+📤 Send money	📤 Перевести	📤 Envoyer de l'argent	📤 Enviar dinero	📤 أرسل مالًا	📤 转账	📤 Ohereza amafaranga
+To another Yo account. Your balance:	На другой аккаунт Yo. Ваш баланс:	Vers un autre compte Yo. Votre solde :	A otra cuenta Yo. Tu saldo:	إلى حساب Yo آخر. رصيدك:	转到另一个 Yo 账户。您的余额：	Kuri konti indi ya Yo. Asigaye:
+Email or mobile number of the person	Email или номер телефона получателя	E-mail ou numéro de mobile de la personne	Correo o móvil de la persona	البريد أو رقم هاتف الشخص	对方的邮箱或手机号	Imeri cyangwa nimero ya telefoni y'umuntu
+Note (optional)	Комментарий (необязательно)	Note (facultatif)	Nota (opcional)	ملاحظة (اختياري)	备注（选填）	Icyitonderwa (si ngombwa)
+e.g. Lunch money	например, на обед	ex. pour le déjeuner	p. ej. para la comida	مثلًا مال الغداء	例如：午饭钱	urugero: amafaranga ya saa sita
+Your password (to confirm)	Ваш пароль (для подтверждения)	Votre mot de passe (pour confirmer)	Tu contraseña (para confirmar)	كلمة المرور (للتأكيد)	您的密码（用于确认）	Ijambo ry'ibanga (kwemeza)
+Safe sending	Безопасный перевод	Envoi sécurisé	Envío seguro	إرسال آمن	安全转账	Kohereza mu mutekano
+Check the name shown under the email or number.	Проверьте имя под email или номером.	Vérifiez le nom affiché sous l'e-mail ou le numéro.	Revisa el nombre que aparece bajo el correo o el número.	تحقق من الاسم الظاهر أسفل البريد أو الرقم.	请核对邮箱或号码下方显示的姓名。	Reba izina rigaragara munsi ya imeri cyangwa nimero.
+Up to {0} at a time, {1} per day.	До {0} за раз, {1} в день.	Jusqu'à {0} par envoi, {1} par jour.	Hasta {0} por vez, {1} al día.	حتى {0} في المرة، {1} يوميًا.	单笔最多 {0}，每天最多 {1}。	Kugeza kuri {0} icyarimwe, {1} ku munsi.
+Yo never asks for your password by phone.	Yo никогда не спрашивает пароль по телефону.	Yo ne demande jamais votre mot de passe par téléphone.	Yo nunca te pide la contraseña por teléfono.	لا تطلب Yo كلمة مرورك عبر الهاتف أبدًا.	Yo 绝不会通过电话索要您的密码。	Yo ntizigera igusaba ijambo ry'ibanga kuri telefoni.
+EMI calculator	Калькулятор рассрочки	Calculateur de mensualités	Calculadora de cuotas	حاسبة الأقساط	分期计算器	Ikibara cy'ubwishyu bw'ukwezi
+🧮 EMI calculator	🧮 Калькулятор рассрочки	🧮 Calculateur de mensualités	🧮 Calculadora de cuotas	🧮 حاسبة الأقساط	🧮 分期计算器	🧮 Ikibara cy'ubwishyu bw'ukwezi
+Calculate	Рассчитать	Calculer	Calcular	احسب	计算	Bara
+Months	Месяцы	Mois	Meses	الأشهر	期数（月）	Amezi
+Interest / year	Ставка / год	Intérêt / an	Interés / año	الفائدة / سنة	年利率	Inyungu / umwaka
+Every month	Каждый месяц	Chaque mois	Cada mes	كل شهر	每月	Buri kwezi
+Interest	Проценты	Intérêts	Intereses	الفائدة	利息	Inyungu
+No-cost EMI	Рассрочка без переплаты	Paiement en plusieurs fois sans frais	Cuotas sin interés	أقساط بلا فوائد	免息分期	Ubwishyu bw'ukwezi nta nyungu
+How it is calculated	Как это считается	Comment c'est calculé	Cómo se calcula	كيف يُحسب	计算方式	Uko bibarwa
+Monthly payment	Ежемесячный платёж	Mensualité	Cuota mensual	القسط الشهري	月供	Ubwishyu bwa buri kwezi
+, where P is the amount, r the interest per month (yearly rate ÷ 12 ÷ 100) and n the number of months.	, где P — сумма, r — процент в месяц (годовая ставка ÷ 12 ÷ 100), n — число месяцев.	, où P est le montant, r l'intérêt mensuel (taux annuel ÷ 12 ÷ 100) et n le nombre de mois.	, donde P es el importe, r el interés mensual (tasa anual ÷ 12 ÷ 100) y n el número de meses.	، حيث P المبلغ، وr الفائدة الشهرية (المعدل السنوي ÷ 12 ÷ 100)، وn عدد الأشهر.	，其中 P 为金额，r 为月利率（年利率 ÷ 12 ÷ 100），n 为月数。	, aho P ari amafaranga, r inyungu ya buri kwezi (igipimo cy'umwaka ÷ 12 ÷ 100) na n umubare w'amezi.
+(3 and 6 months, from {0}): the shop pays the interest, so you pay only the price.	(3 и 6 месяцев, от {0}): проценты платит магазин, вы платите только цену.	(3 et 6 mois, dès {0}) : la boutique paie les intérêts, vous ne payez que le prix.	(3 y 6 meses, desde {0}): la tienda paga los intereses, tú solo pagas el precio.	(3 و6 أشهر، من {0}): يدفع المتجر الفائدة، فتدفع السعر فقط.	（3 期和 6 期，{0} 起）：利息由商城承担，您只需支付商品价格。	(Amezi 3 na 6, guhera kuri {0}): iduka ryishyura inyungu, wowe wishyura igiciro gusa.
+Demo rates, not an offer of a real bank. You can choose EMI when you pay by card at checkout.	Демо-ставки, не предложение настоящего банка. Рассрочку можно выбрать при оплате картой.	Taux de démonstration, pas une offre d'une vraie banque. Vous pouvez choisir le paiement en plusieurs fois par carte à la caisse.	Tasas de demostración, no una oferta de un banco real. Puedes elegir cuotas al pagar con tarjeta.	معدلات تجريبية وليست عرضًا من بنك حقيقي. يمكنك اختيار الأقساط عند الدفع بالبطاقة.	演示利率，并非真实银行的报价。结账用银行卡支付时可选择分期。	Ibipimo by'icyitegererezo, si itangwa rya banki nyayo. Ushobora guhitamo ubwishyu bw'ukwezi wishyuye n'ikarita.
+EMI is possible from {0}.	Рассрочка доступна от {0}.	Paiement en plusieurs fois possible dès {0}.	Las cuotas son posibles desde {0}.	الأقساط متاحة من {0}.	{0} 起可分期。	Ubwishyu bw'ukwezi bushoboka guhera kuri {0}.
+Pay in full or in monthly instalments (EMI)	Оплатить сразу или в рассрочку (EMI)	Payer en une fois ou en mensualités (EMI)	Pagar todo o en cuotas mensuales (EMI)	ادفع كاملًا أو بأقساط شهرية (EMI)	全额支付或分期付款（EMI）	Ishyura byose cyangwa mu byiciro by'ukwezi (EMI)
+Pay in full · {0}	Оплатить сразу · {0}	Payer en une fois · {0}	Pagar todo · {0}	ادفع كاملًا · {0}	全额支付 · {0}	Ishyura byose · {0}
+{0} months × {1} · No-cost EMI	{0} мес. × {1} · без переплаты	{0} mois × {1} · sans frais	{0} meses × {1} · sin interés	{0} أشهر × {1} · بلا فوائد	{0} 期 × {1} · 免息	Amezi {0} × {1} · nta nyungu
+{0} months × {1} · {2}% a year (+{3})	{0} мес. × {1} · {2}% годовых (+{3})	{0} mois × {1} · {2} % par an (+{3})	{0} meses × {1} · {2} % anual (+{3})	{0} أشهر × {1} · {2}% سنويًا (+{3})	{0} 期 × {1} · 年利率 {2}%（+{3}）	Amezi {0} × {1} · {2}% ku mwaka (+{3})
+How EMI is calculated	Как считается рассрочка	Comment sont calculées les mensualités	Cómo se calculan las cuotas	كيف تُحسب الأقساط	分期如何计算	Uko ubwishyu bw'ukwezi bubarwa
+🧮 EMI from	🧮 Рассрочка от	🧮 Mensualités dès	🧮 Cuotas desde	🧮 أقساط من	🧮 分期低至	🧮 Ubwishyu bw'ukwezi guhera
+a month ·	в месяц ·	par mois ·	al mes ·	شهريًا ·	/月 ·	ku kwezi ·
+See plans	Смотреть планы	Voir les options	Ver planes	عرض الخطط	查看方案	Reba uburyo
+EMI: {0} × {1} a month	Рассрочка: {0} × {1} в месяц	Mensualités : {0} × {1} par mois	Cuotas: {0} × {1} al mes	الأقساط: {0} × {1} شهريًا	分期：{0} 期 × 每月 {1}	Ubwishyu: {0} × {1} ku kwezi

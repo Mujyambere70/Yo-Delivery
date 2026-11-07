@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Question {{ t.number }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <section class="panel">
+        <p><a href="{{ url_for('support_home') }}">&larr; My questions</a></p>
+        <h1 style="margin-top:0"><span translate="no">{{ t.number }}</span>: {{ t.subject }}</h1>
+        <p class="small muted">{{ topics.get(t.topic, t.topic) }}{% if t.about %} &middot; <span translate="no">{{ t.about }}</span>{% endif %} &middot; <span class="pill-status {{ 'ok' if t.status == 'Answered' else 'warn' if t.status == 'Open' else '' }}">{{ t.status }}</span>
+            {% if not t.first_answer_at and t.status != 'Closed' %} &middot; answer promised by <span translate="no">{{ t.due_at[:16] }}</span>{% endif %}</p>
+        <div class="msg-thread">{% for m in t.messages %}<div class="msg {{ 'staff' if m.from_staff }}"><small><b translate="no">{{ 'Yo support' if m.from_staff else m.name }}</b> &middot; <span translate="no">{{ m.at[:16] }}</span></small><div>{{ m.body }}</div></div>{% endfor %}</div>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="rb">Write more</label><textarea id="rb" name="body" rows="3" maxlength="3000"></textarea>
+            <div class="actions"><button class="btn btn-orange">Send</button>
+                {% if t.status != 'Closed' %}<button class="btn btn-outline" name="close" value="1">My problem is solved - close</button>{% endif %}</div>
+        </form>
+    </section>
+</div>
+{% endblock %}

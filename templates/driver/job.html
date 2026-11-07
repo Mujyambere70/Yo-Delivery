@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block manifest %}<link rel="manifest" href="{{ url_for('static', filename='courier.webmanifest') }}"><meta name="theme-color" content="#1e3a5f">{% endblock %}
+{% block title %}{{ j.number }} · Courier app{% endblock %}
+{% block content %}
+<div class="wrap narrow" {% if c.online %}data-ping="{{ url_for('driver_ping') }}" data-token="{{ csrf_token() }}" data-jobs="999"{% endif %}>
+    <p class="crumbs"><a href="{{ url_for('driver_home') }}">Courier app</a> &rsaquo; <span translate="no">{{ j.number }}</span></p>
+    <section class="panel">
+        <div class="ship-head">
+            <div><div class="ship-num" translate="no">{{ j.number }}</div>
+                <p style="margin:4px 0"><span class="pill-status blue">{{ j.status }}</span> &middot; <span>{{ j.kind_name }}</span>: <span translate="no">{{ j.contents }}</span> &middot; <span>{{ '%g'|format(j.charge_g / 1000) }} kg</span>{% if j.fragile %} &middot; <b class="err">Fragile</b>{% endif %}</p></div>
+            <div class="earn" style="font-size:22px;color:var(--green);font-weight:800">+{{ j.earning|rupees }}</div>
+        </div>
+    </section>
+    <div class="od-grid two">
+        <section class="panel">
+            <h3>&#127991; Pickup</h3>
+            <p>{% if mine %}<b>{{ j.from_name }}</b> &middot; <a href="tel:{{ j.from_mobile }}" translate="no">{{ j.from_mobile }}</a><br>{{ j.from_address }}, {% endif %}<span translate="no">{{ j.from_city }}</span></p>
+            {% if mine %}<a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat={{ j.from_lat }}&mlon={{ j.from_lng }}#map=16/{{ j.from_lat }}/{{ j.from_lng }}">Open in OpenStreetMap</a>{% endif %}
+        </section>
+        <section class="panel">
+            <h3>&#127968; Delivery</h3>
+            <p>{% if mine %}<b>{{ j.to_name }}</b> &middot; <a href="tel:{{ j.to_mobile }}" translate="no">{{ j.to_mobile }}</a><br>{{ j.to_address }}, {% endif %}<span translate="no">{{ j.to_city }}</span></p>
+            {% if mine and j.to_lat %}<a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat={{ j.to_lat }}&mlon={{ j.to_lng }}#map=16/{{ j.to_lat }}/{{ j.to_lng }}">Open in OpenStreetMap</a>{% endif %}
+        </section>
+    </div>
+
+    <section class="panel big-actions">
+        {% if not mine %}
+            <form method="post" action="{{ url_for('driver_action', number=j.number, action='take') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-orange btn-block">Take the job</button></form>
+        {% elif j.next == 'pickup' %}
+            <form method="post" action="{{ url_for('driver_action', number=j.number, action='pickup') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if j.payment == 'cash' and not j.paid %}<label class="check"><input type="checkbox" name="cash" value="1"> I received <b>{{ j.price|rupees }}</b> in cash from the sender</label>{% endif %}
+                <button class="btn btn-orange btn-block">&#128230; I picked it up</button>
+            </form>
+        {% elif j.next == 'handover' %}
+            <p>Bring the parcel to the Yo hub in {{ j.from_city }}. It travels to {{ j.to_city }} from there.</p>
+            <form method="post" action="{{ url_for('driver_action', number=j.number, action='handover') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-orange btn-block">&#127970; Handed over at the Yo hub</button></form>
+        {% elif j.next == 'deliver' %}
+            <form method="post" action="{{ url_for('driver_action', number=j.number, action='deliver') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <h3>Proof of delivery</h3>
+                <label for="code">Delivery code (ask the receiver)</label>
+                <input id="code" class="code-input" type="text" name="code" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
+                <label for="recv">Name of the person who took it</label>
+                <input id="recv" type="text" name="receiver" maxlength="80" value="{{ j.to_name.split()[0] }}" required>
+                <label for="pod">Photo of the parcel at the door (optional)</label>
+                <input id="pod" type="file" name="photo" accept="image/*" capture="environment">
+                <label for="sig">Signature of the receiver (optional)</label>
+                <div class="sig-box"><canvas id="sig" width="600" height="200" aria-label="Signature box: the receiver signs here with a finger"></canvas>
+                    <button type="button" class="linklike small" id="sig-clear">Clear</button></div>
+                <input type="hidden" name="signature" id="sig-data">
+                <button class="btn btn-orange btn-block btn-lg">&#9989; Delivered</button>
+            </form>
+            <details><summary class="small">Could not deliver?</summary>
+                <form method="post" action="{{ url_for('driver_action', number=j.number, action='fail') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <select name="reason">{% for r in REASONS %}<option>{{ r }}</option>{% endfor %}</select>
+                    <button class="btn btn-danger btn-block">Save and bring it to the Yo hub</button>
+                </form>
+            </details>
+        {% else %}
+            <p class="muted">Nothing to do for this job.</p>
+        {% endif %}
+    </section>
+    {% if c.online %}<p class="gps-note" id="gpsNote"></p>{% endif %}
+    <p class="flash info" id="offlineNote" hidden>No network: you see the copy saved on your phone. Your position is sent when the network is back.</p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+/* signature pad (version 7): the drawing is sent with the delivery form */
+(function () {
+    var c = document.getElementById('sig'); if (!c) return;
+    var x = c.getContext('2d'), down = false, drawn = false;
+    x.lineWidth = 3; x.lineCap = 'round'; x.strokeStyle = '#111';
+    function pos(e) { var r = c.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+        return [(t.clientX - r.left) * c.width / r.width, (t.clientY - r.top) * c.height / r.height]; }
+    function start(e) { down = true; var p = pos(e); x.beginPath(); x.moveTo(p[0], p[1]); e.preventDefault(); }
+    function move(e) { if (!down) return; var p = pos(e); x.lineTo(p[0], p[1]); x.stroke(); drawn = true; e.preventDefault(); }
+    function end() { down = false; }
+    ['mousedown', 'touchstart'].forEach(function (k) { c.addEventListener(k, start); });
+    ['mousemove', 'touchmove'].forEach(function (k) { c.addEventListener(k, move); });
+    ['mouseup', 'mouseleave', 'touchend'].forEach(function (k) { c.addEventListener(k, end); });
+    document.getElementById('sig-clear').onclick = function () { x.clearRect(0, 0, c.width, c.height); drawn = false; };
+    c.closest('form').addEventListener('submit', function () {
+        document.getElementById('sig-data').value = drawn ? c.toDataURL('image/png') : ''; });
+})();
+</script>
+<script src="{{ url_for('static', filename='courier.js') }}"></script>{% endblock %}

@@ -9,7 +9,7 @@
 </div>
 {%- endmacro %}
 
-{% macro card(p, wish_ids) -%}
+{% macro card(p, wish_ids, rec=None) -%}
 <article class="pcard">
     <form method="post" action="{{ url_for('wishlist_toggle') }}" class="wish-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -17,7 +17,7 @@
         <input type="hidden" name="next" value="{{ request.full_path }}">
         <button type="submit" class="wish {{ 'on' if p.id in wish_ids }}" title="{{ 'Remove from' if p.id in wish_ids else 'Add to' }} wishlist" aria-label="Wishlist">&#10084;</button>
     </form>
-    <a href="{{ url_for('product', slug=p.slug) }}" class="pcard-link">
+    <a href="{{ url_for('product', slug=p.slug, rec=rec) if rec else url_for('product', slug=p.slug) }}" class="pcard-link">
         <div class="pcard-img"><img src="{{ picture(p.image) }}" alt="{{ p.name }}" loading="lazy"></div>
         <div class="pcard-body">
             <span class="brand-name">{{ p.brand }}</span>
@@ -31,11 +31,11 @@
 </article>
 {%- endmacro %}
 
-{% macro row(title, items, wish_ids, link=None) -%}
+{% macro row(title, items, wish_ids, link=None, rec=None) -%}
 {% if items %}
 <section class="shelf">
     <div class="shelf-head"><h2>{{ title }}</h2>{% if link %}<a href="{{ link }}" class="see-all">See all &rsaquo;</a>{% endif %}</div>
-    <div class="scroller">{% for p in items %}{{ card(p, wish_ids) }}{% endfor %}</div>
+    <div class="scroller">{% for p in items %}{{ card(p, wish_ids, rec) }}{% endfor %}</div>
 </section>
 {% endif %}
 {%- endmacro %}

@@ -1,0 +1,66 @@
+Offline	Офлайн	Hors ligne	Desconectado	غير متصل	离线	Ntari ku murongo
+Online	Онлайн	En ligne	Conectado	متصل	在线	Ari ku murongo
+Go online	Выйти онлайн	Se connecter	Conectarse	اتصل	上线	Jya ku murongo
+Go offline	Уйти офлайн	Se déconnecter	Desconectarse	اقطع الاتصال	下线	Va ku murongo
+Yo Pay balance	Баланс Yo Pay	Solde Yo Pay	Saldo de Yo Pay	رصيد Yo Pay	Yo Pay 余额	Amafaranga ari kuri Yo Pay
+Open Yo Pay	Открыть Yo Pay	Ouvrir Yo Pay	Abrir Yo Pay	افتح Yo Pay	打开 Yo Pay	Fungura Yo Pay
+Earned with Yo	Заработано с Yo	Gagné avec Yo	Ganado con Yo	الأرباح مع Yo	在 Yo 的收入	Ibyo winjije na Yo
+Cash to give to Yo	Наличные для сдачи в Yo	Espèces à remettre à Yo	Efectivo a entregar a Yo	النقد المستحق لـ Yo	需上交 Yo 的现金	Amafaranga yo guha Yo
+Task board	Доска задач	Tableau des tâches	Tablero de tareas	لوحة المهام	任务看板	Ikibaho cy'imirimo
+Open the board	Открыть доску	Ouvrir le tableau	Abrir el tablero	افتح اللوحة	打开看板	Fungura ikibaho
+My jobs ({0})	Мои заказы ({0})	Mes courses ({0})	Mis trabajos ({0})	مهامي ({0})	我的订单（{0}）	Akazi kanjye ({0})
+Go online to get jobs.	Выйдите онлайн, чтобы получать заказы.	Connectez-vous pour recevoir des courses.	Conéctate para recibir trabajos.	اتصل لتحصل على مهام.	上线即可接单。	Jya ku murongo ubone akazi.
+No jobs right now. New jobs near you come automatically.	Сейчас заказов нет. Новые заказы рядом придут автоматически.	Pas de course pour l'instant. Les nouvelles courses près de vous arrivent automatiquement.	No hay trabajos ahora. Los nuevos cerca de ti llegan automáticamente.	لا مهام الآن. ستصلك المهام القريبة تلقائيًا.	暂无订单，附近的新订单会自动派给您。	Nta kazi ubu. Akazi gashya kari hafi kazaza ubwako.
+Open jobs in	Свободные заказы в	Courses disponibles à	Trabajos disponibles en	المهام المتاحة في	可接订单：	Akazi kaboneka muri
+No open jobs in your city.	В вашем городе нет свободных заказов.	Aucune course disponible dans votre ville.	No hay trabajos disponibles en tu ciudad.	لا توجد مهام متاحة في مدينتك.	您所在城市暂无可接订单。	Nta kazi kaboneka mu mujyi wawe.
+Take the job	Взять заказ	Prendre la course	Aceptar el trabajo	خذ المهمة	接单	Fata akazi
+Finished	Завершённые	Terminées	Terminados	المنتهية	已完成	Byarangiye
+Pick up at	Забрать по адресу	Enlever à	Recoger en	استلم من	取件地址	Fata kuri
+Bring to	Доставить в	Apporter à	Llevar a	سلّم إلى	送至	Zana kuri
+Deliver to	Доставить получателю	Livrer à	Entregar a	وصّل إلى	派送至	Geza kuri
+Collect {0} cash	Получить {0} наличными	Encaisser {0} en espèces	Cobrar {0} en efectivo	احصل على {0} نقدًا	收取现金 {0}	Akira {0} mu ntoki
+From the Yo hub to	Из хаба Yo в	Du centre Yo vers	Del centro Yo a	من مركز Yo إلى	从 Yo 中转中心至	Kuva ku kigo cya Yo kugera
+Your position is sent while this page is open (only during jobs it is shown to the sender).	Ваше местоположение отправляется, пока страница открыта (отправителю оно видно только во время заказа).	Votre position est envoyée tant que cette page est ouverte (l'expéditeur la voit seulement pendant une course).	Tu ubicación se envía mientras esta página está abierta (el remitente solo la ve durante un trabajo).	يُرسل موقعك طالما هذه الصفحة مفتوحة (يراه المرسل فقط أثناء المهمة).	本页面打开时会发送您的位置（仅在配送期间对寄件人可见）。	Aho uri hoherezwa iyi paji ifunguye (uwohereje ahabona gusa mu gihe cy'akazi).
+Your application is being checked	Ваша заявка на проверке	Votre candidature est en cours de vérification	Tu solicitud está en revisión	طلبك قيد المراجعة	您的申请正在审核	Ubusabe bwawe buri gusuzumwa
+We will send you a message when you can start. It usually takes one working day.	Мы напишем вам, когда можно будет начать. Обычно это занимает один рабочий день.	Nous vous enverrons un message quand vous pourrez commencer. Cela prend en général un jour ouvré.	Te avisaremos cuando puedas empezar. Suele tardar un día laborable.	سنرسل لك رسالة عندما يمكنك البدء. يستغرق ذلك عادة يوم عمل واحد.	可以开始时我们会通知您，通常需要一个工作日。	Tuzakoherereza ubutumwa igihe ushobora gutangira. Bisanzwe bifata umunsi umwe w'akazi.
+Questions? Write to support@yodelivery.example.	Вопросы? Пишите на support@yodelivery.example.	Des questions ? Écrivez à support@yodelivery.example.	¿Preguntas? Escribe a support@yodelivery.example.	أسئلة؟ اكتب إلى support@yodelivery.example.	有疑问？请写信至 support@yodelivery.example。	Ufite ibibazo? Andikira support@yodelivery.example.
+Pickup	Забор	Enlèvement	Recogida	الاستلام	取件	Gufata
+Open in OpenStreetMap	Открыть в OpenStreetMap	Ouvrir dans OpenStreetMap	Abrir en OpenStreetMap	افتح في OpenStreetMap	在 OpenStreetMap 中打开	Fungura muri OpenStreetMap
+I received {0} in cash from the sender	Я получил(а) {0} наличными от отправителя	J'ai reçu {0} en espèces de l'expéditeur	Recibí {0} en efectivo del remitente	استلمت {0} نقدًا من المرسل	我已从寄件人处收到现金 {0}	Nakiriye {0} mu ntoki ku wohereje
+📦 I picked it up	📦 Я забрал(а)	📦 Je l'ai enlevé	📦 Lo recogí	📦 استلمته	📦 我已取件	📦 Nabifashe
+🏢 Handed over at the Yo hub	🏢 Сдал(а) в хаб Yo	🏢 Déposé au centre Yo	🏢 Entregado en el centro Yo	🏢 سلّمته في مركز Yo	🏢 已交到 Yo 中转中心	🏢 Nabishyize ku kigo cya Yo
+Proof of delivery	Подтверждение доставки	Preuve de livraison	Prueba de entrega	إثبات التسليم	签收凭证	Icyemezo cyo kugeza
+Delivery code (ask the receiver)	Код доставки (спросите у получателя)	Code de livraison (demandez au destinataire)	Código de entrega (pídelo al destinatario)	رمز التسليم (اطلبه من المستلم)	取件码（向收件人索取）	Kode (yibaze uwakira)
+Name of the person who took it	Имя того, кто получил	Nom de la personne qui l'a reçu	Nombre de quien lo recibió	اسم من استلمه	签收人姓名	Izina ry'uwakiriye
+Photo of the parcel at the door (optional)	Фото посылки у двери (необязательно)	Photo du colis à la porte (facultatif)	Foto del paquete en la puerta (opcional)	صورة الطرد عند الباب (اختياري)	门口包裹照片（选填）	Ifoto y'ipaki ku muryango (si ngombwa)
+✅ Delivered	✅ Доставлено	✅ Livré	✅ Entregado	✅ تم التسليم	✅ 已送达	✅ Byagejejwe
+Could not deliver?	Не удалось доставить?	Livraison impossible ?	¿No se pudo entregar?	تعذّر التسليم؟	无法派送？	Byanze kugezwa?
+Save and bring it to the Yo hub	Сохранить и отвезти в хаб Yo	Enregistrer et le ramener au centre Yo	Guardar y llevarlo al centro Yo	احفظ وأعده إلى مركز Yo	保存并送回 Yo 中转中心	Bika ubijyane ku kigo cya Yo
+Nothing to do for this job.	По этому заказу действий нет.	Rien à faire pour cette course.	Nada que hacer en este trabajo.	لا شيء مطلوب في هذه المهمة.	此订单无需操作。	Nta cyo gukora kuri aka kazi.
+Choose your own hours, take jobs near you and get your earning in Yo Pay right after every delivery.	Выбирайте часы сами, берите заказы рядом и получайте заработок в Yo Pay сразу после каждой доставки.	Choisissez vos horaires, prenez des courses près de chez vous et recevez vos gains sur Yo Pay après chaque livraison.	Elige tus horas, acepta trabajos cerca y recibe lo que ganas en Yo Pay después de cada entrega.	اختر ساعاتك، وخذ مهام قريبة منك، واحصل على أرباحك في Yo Pay بعد كل توصيل.	自由安排时间，接附近的订单，每次送达后收入立即进入 Yo Pay。	Hitamo amasaha yawe, fata akazi kari hafi, uhabwe amafaranga kuri Yo Pay nyuma ya buri kugeza.
+Your application	Ваша заявка	Votre candidature	Tu solicitud	طلبك	您的申请	Ubusabe bwawe
+Vehicle	Транспорт	Véhicule	Vehículo	المركبة	交通工具	Ikinyabiziga
+Bicycle	Велосипед	Vélo	Bicicleta	دراجة هوائية	自行车	Igare
+Motorbike	Мотоцикл	Moto	Moto	دراجة نارية	摩托车	Moto
+Car	Автомобиль	Voiture	Coche	سيارة	汽车	Imodoka
+Van	Фургон	Camionnette	Furgoneta	شاحنة صغيرة	厢式货车	Imodoka itwara imizigo
+🚲 Bicycle	🚲 Велосипед	🚲 Vélo	🚲 Bicicleta	🚲 دراجة هوائية	🚲 自行车	🚲 Igare
+🛵 Motorbike	🛵 Мотоцикл	🛵 Moto	🛵 Moto	🛵 دراجة نارية	🛵 摩托车	🛵 Moto
+🚗 Car	🚗 Автомобиль	🚗 Voiture	🚗 Coche	🚗 سيارة	🚗 汽车	🚗 Imodoka
+🚚 Van	🚚 Фургон	🚚 Camionnette	🚚 Furgoneta	🚚 شاحنة صغيرة	🚚 厢式货车	🚚 Imodoka itwara imizigo
+up to {0} kg	до {0} кг	jusqu'à {0} kg	hasta {0} kg	حتى {0} كغ	最多 {0} 公斤	kugeza kuri {0} kg
+Registration number	Госномер	Immatriculation	Matrícula	رقم اللوحة	车牌号	Pulaki
+Not needed for a bicycle.	Для велосипеда не нужен.	Pas nécessaire pour un vélo.	No hace falta para una bicicleta.	غير مطلوب للدراجة الهوائية.	自行车无需填写。	Ntibikenewe ku igare.
+City where you will work	Город, где вы будете работать	Ville où vous travaillerez	Ciudad donde trabajarás	المدينة التي ستعمل فيها	工作城市	Umujyi uzakoreramo
+Your photo (optional, for the admin's check)	Ваше фото (необязательно, для проверки администратором)	Votre photo (facultatif, pour la vérification)	Tu foto (opcional, para la revisión del administrador)	صورتك (اختياري، لمراجعة المسؤول)	您的照片（选填，供管理员审核）	Ifoto yawe (si ngombwa, kugira ngo umuyobozi agenzure)
+Only the Yo team sees it. An automatic photo check looks at the size, sharpness and light, and whether the same photo was already used by another account.	Её видит только команда Yo. Автоматическая проверка оценивает размер, резкость и освещение, а также не использовалось ли это фото другим аккаунтом.	Seule l'équipe Yo la voit. Un contrôle automatique vérifie la taille, la netteté, la lumière et si la même photo est déjà utilisée par un autre compte.	Solo la ve el equipo de Yo. Una revisión automática mira el tamaño, la nitidez, la luz y si otra cuenta ya usó la misma foto.	يراها فريق Yo فقط. يتحقق فحص تلقائي من الحجم والوضوح والإضاءة، وما إذا كانت الصورة نفسها مستخدمة في حساب آخر.	仅 Yo 团队可见。系统会自动检查照片的尺寸、清晰度和光线，以及是否已被其他账户使用。	Ibonwa n'itsinda rya Yo gusa. Isuzuma ryikora rireba ingano, ubucyo n'urumuri, ndetse niba iyo foto itarakoreshejwe na konti indi.
+I will keep parcels safe, hand them over only with the delivery code, and follow the traffic rules.	Я буду беречь посылки, отдавать их только по коду доставки и соблюдать правила дорожного движения.	Je garderai les colis en sécurité, je ne les remettrai qu'avec le code de livraison et je respecterai le code de la route.	Cuidaré los paquetes, solo los entregaré con el código de entrega y respetaré las normas de tráfico.	سأحافظ على الطرود، ولن أسلمها إلا برمز التسليم، وسألتزم بقواعد المرور.	我会妥善保管包裹，只凭取件码交付，并遵守交通规则。	Nzarinda amapaki, nyatange gusa iyo mpawe kode, kandi nubahirize amategeko y'umuhanda.
+Send my application	Отправить заявку	Envoyer ma candidature	Enviar mi solicitud	أرسل طلبي	提交申请	Ohereza ubusabe bwanjye
+How you earn	Как вы зарабатываете	Comment vous gagnez	Cómo ganas	كيف تربح	收入方式	Uko winjiza
+Same-city job: 70% of the price (before tax).	Заказ в том же городе: 70% цены (без налога).	Course dans la même ville : 70 % du prix (hors taxe).	Trabajo en la misma ciudad: 70 % del precio (sin impuestos).	مهمة داخل المدينة: 70% من السعر (قبل الضريبة).	同城订单：价格的 70%（税前）。	Akazi mu mujyi umwe: 70% by'igiciro (mbere y'umusoro).
+Pickup for another city: 25%, delivery from the Yo hub: 25%.	Забор для другого города: 25%, доставка из хаба Yo: 25%.	Enlèvement pour une autre ville : 25 %, livraison depuis le centre Yo : 25 %.	Recogida para otra ciudad: 25 %, entrega desde el centro Yo: 25 %.	استلام لمدينة أخرى: 25%، والتسليم من مركز Yo: 25%.	异地取件：25%，从 Yo 中转中心派送：25%。	Gufata bijya mu wundi mujyi: 25%, kugeza uvuye ku kigo cya Yo: 25%.
+The earning goes to your Yo Pay wallet at once.	Заработок сразу поступает в кошелёк Yo Pay.	Les gains arrivent aussitôt sur votre portefeuille Yo Pay.	Lo ganado llega al instante a tu billetera Yo Pay.	تصل الأرباح فورًا إلى محفظة Yo Pay.	收入立即进入您的 Yo Pay 钱包。	Amafaranga uhita uyabona kuri Yo Pay.
+Cash from senders: give it to the Yo hub; your task board reminds you.	Наличные от отправителей сдавайте в хаб Yo; доска задач напомнит.	Espèces des expéditeurs : remettez-les au centre Yo ; votre tableau des tâches vous le rappelle.	Efectivo de los remitentes: entrégalo en el centro Yo; tu tablero te lo recuerda.	نقود المرسلين: سلّمها إلى مركز Yo؛ ستذكرك لوحة المهام.	寄件人付的现金：请交到 Yo 中转中心，任务看板会提醒您。	Amafaranga y'abohereza: yashyire ku kigo cya Yo; ikibaho cy'imirimo kizakwibutsa.
+Demo project: no real deliveries and no real money.	Демо-проект: никаких реальных доставок и реальных денег.	Projet de démonstration : pas de vraies livraisons ni de vrai argent.	Proyecto de demostración: sin entregas ni dinero reales.	مشروع تجريبي: لا توصيلات حقيقية ولا أموال حقيقية.	演示项目：没有真实配送，也没有真实资金。	Umushinga w'icyitegererezo: nta kugeza nyako, nta mafaranga nyayo.
+Deliveries: {0}	Доставок: {0}	Livraisons : {0}	Entregas: {0}	التوصيلات: {0}	已配送：{0}	Ibyagejejwe: {0}
+Bring the parcel to the Yo hub in {0}. It travels to {1} from there.	Отвезите посылку в хаб Yo в {0}. Оттуда она поедет в {1}.	Apportez le colis au centre Yo de {0}. Il part ensuite vers {1}.	Lleva el paquete al centro Yo de {0}. Desde allí viaja a {1}.	أحضر الطرد إلى مركز Yo في {0}. ومن هناك ينتقل إلى {1}.	请将包裹送到 {0} 的 Yo 中转中心，再从那里发往 {1}。	Zana ipaki ku kigo cya Yo cya {0}. Iva aho ijya {1}.

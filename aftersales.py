@@ -93,7 +93,7 @@ class ReturnsMixin:
                 for it in conn.execute("SELECT product_id, qty FROM order_items WHERE order_id = ?", (o["id"],)).fetchall():
                     conn.execute("UPDATE products SET stock = stock + ? WHERE id = ?", (it[1], it[0]))
                 if r["refund_to"] != "Card":
-                    conn.execute("UPDATE users SET wallet = wallet + ? WHERE id = ?", (r["amount"], r["user_id"]))
+                    self.wallet_move(conn, r["user_id"], r["amount"], "refund", number, "Return refund " + number)
                     conn.execute("UPDATE orders SET refunded = refunded + ? WHERE id = ?", (r["amount"], o["id"]))
                 shown = world.format_money(world.convert(r["amount"], o["currency"], {o["currency"]: o["fx_rate"],
                                                                                      "INR": 1.0})

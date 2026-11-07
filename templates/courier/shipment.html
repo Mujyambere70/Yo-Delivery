@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ s.number }} · Yo Courier{% endblock %}
+{% block content %}
+<div class="wrap">
+    <p class="crumbs"><a href="{{ url_for('courier_shipments') }}">My shipments</a> &rsaquo; <span translate="no">{{ s.number }}</span></p>
+    <section class="panel">
+        <div class="ship-head">
+            <div>
+                <small class="muted">Consignment number</small>
+                <div class="ship-num" translate="no">{{ s.number }}</div>
+                <h2 class="status s-{{ s.status|lower|replace(' ', '-') }}" style="margin-top:6px"><i></i>{{ s.status }}</h2>
+                {% if s.active %}<p class="small">Expected by <b>{{ s.expected|nicedate('%a, %d %b, %H:%M') }}</b></p>{% endif %}
+            </div>
+            <div class="btn-row">
+                <a class="btn btn-outline btn-sm" href="{{ url_for('courier_label', number=s.number) }}" target="_blank">&#128424; Label</a>
+                <button type="button" class="btn btn-outline btn-sm" data-copy="{{ track_url }}">&#128279; Copy tracking link</button>
+                <a class="btn btn-outline btn-sm" href="https://wa.me/?text={{ ('Track your parcel: ' ~ track_url)|urlencode }}" target="_blank" rel="noopener">WhatsApp</a>
+                {% if s.can_cancel %}<form method="post" action="{{ url_for('courier_cancel', number=s.number) }}" class="inline-form" onsubmit="return confirm(this.dataset.q)" data-q="Cancel this shipment?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-danger btn-sm">Cancel</button></form>{% endif %}
+            </div>
+        </div>
+        {% if s.status not in ('Cancelled', 'Returned to sender') %}{% include "courier/_steps.html" %}{% endif %}
+    </section>
+
+    <div class="two-col">
+        <div>
+            {% if s.status not in ('Cancelled',) %}<section class="panel">{% include "courier/_map.html" %}</section>{% endif %}
+            {% if customs %}<section class="panel">
+                <h2>Customs</h2>
+                <p>{{ customs.reason_name }} &middot; {{ customs['items']|length }} <span>lines</span> &middot; <span>value</span> {{ customs.total_value|rupees }} &middot; <span>estimated duties for the receiver</span> {{ customs.duty_estimate|rupees }}</p>
+                <a class="btn btn-outline btn-sm" href="{{ url_for('courier_customs', number=s.number) }}">&#128424; Customs declaration</a>
+                <a class="btn btn-outline btn-sm" href="{{ url_for('customs_json', number=s.number) }}">&#8681; Electronic customs data (JSON)</a>
+            </section>{% endif %}
+            <section class="panel">
+                <h2>History</h2>
+                {% include "courier/_events.html" %}
+            </section>
+            {% if s.status == 'Delivered' %}
+            <section class="panel">
+                {% if s.rating %}<p>You rated this delivery <b>{{ '★' * s.rating }}{{ '☆' * (5 - s.rating) }}</b>{% if s.feedback %} — “{{ s.feedback }}”{% endif %}</p>
+                {% elif s.courier or s.pickup_courier_id %}
+                <h2>How was the courier?</h2>
+                <form method="post" action="{{ url_for('courier_rate', number=s.number) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="stars-pick">{% for i in range(5, 0, -1) %}<input type="radio" name="stars" id="st{{ i }}" value="{{ i }}"><label for="st{{ i }}" title="{{ i }}">&#9733;</label>{% endfor %}</div>
+                    <input type="text" name="feedback" maxlength="300" placeholder="A few words (optional)">
+                    <button class="btn btn-orange btn-sm" style="margin-top:8px">Send</button>
+                </form>
+                {% else %}<p class="muted small">Delivered by our partner courier.</p>{% endif %}
+            </section>
+            {% endif %}
+        </div>
+        <aside>
+            {% if s.active %}
+            <div class="code-box"><small>Delivery code - give it to the receiver</small><b translate="no">{{ s.delivery_code }}</b><small>The courier hands over the parcel only with this code.</small></div>
+            <br>
+            {% endif %}
+            {% if s.courier %}
+            <section class="panel courier-card">
+                <span class="avatar">{{ s.courier.first_name[0] }}</span>
+                <div><b translate="no">{{ s.courier.first_name }}</b> &middot; <span>{{ s.courier.vehicle_name }}</span><br>
+                    <small class="muted">{% if s.courier.rating %}<span>&#9733; {{ s.courier.rating }}</span> &middot; {% endif %}<span>Deliveries: {{ s.courier.jobs_done }}</span> &middot; <span translate="no">{{ s.courier.mobile_masked }}</span></small></div>
+            </section>
+            {% endif %}
+            <section class="panel">
+                <h3>From</h3>
+                <p class="small">{{ s.from_name }} &middot; <span translate="no">{{ s.from_mobile }}</span><br>{{ s.from_address }}, <span translate="no">{{ s.from_city }}</span></p>
+                <h3>To</h3>
+                <p class="small">{{ s.to_name }} &middot; <span translate="no">{{ s.to_mobile }}</span><br>{{ s.to_address }}, <span translate="no">{{ s.to_city }}</span>{% if s.to_postcode %} {{ s.to_postcode }}{% endif %}{% if s.to_country != 'IN' %}, {{ s.to_country_name }}{% endif %}</p>
+                <dl class="kv">
+                    <dt>What</dt><dd><span>{{ s.kind_name }}</span>: <span translate="no">{{ s.contents }}</span></dd>
+                    <dt>Weight</dt><dd><span>{{ '%g'|format(s.weight_g / 1000) }} kg</span>{% if s.charge_g != s.weight_g %} <span>(charged {{ '%g'|format(s.charge_g / 1000) }} kg)</span>{% endif %}{% if s.fragile %} &middot; <span>Fragile</span>{% endif %}</dd>
+                    <dt>Service</dt><dd><span>{{ s.service_name }}</span> &middot; <span>{{ s.zone_name }}</span>{% if s.distance_km %} &middot; <span>{{ '%g'|format(s.distance_km) }} km</span>{% endif %}</dd>
+                    <dt>Booked</dt><dd>{{ s.created_at|nicedate('%d %b %Y, %H:%M') }}</dd>
+                    {% if s.time_window %}<dt>Delivery time</dt><dd translate="no">{{ DELIVERY_WINDOWS.get(s.time_window, s.time_window) }}</dd>{% endif %}
+                    {% if s.pod_name %}<dt>Received by</dt><dd>{{ s.pod_name }}</dd>{% endif %}
+                    {% if s.pod_signature and owner %}<dt>Signature</dt><dd><img class="sig-img" src="{{ url_for('parcel_signature', number=s.number) }}" alt="Signature of the receiver"></dd>{% endif %}
+                </dl>
+            </section>
+            <section class="panel">
+                <h3>Price</h3>
+                {% for label, v in s.lines %}<div class="s-row small"><span>{{ label }}</span><span>{{ v|rupees }}</span></div>{% endfor %}
+                {% if s.tax %}<div class="s-row small"><span translate="no">{{ s.tax_label or 'GST 18%' }}</span><span>{{ s.tax|rupees }}</span></div>{% endif %}
+                <div class="s-row"><b>Total</b><b>{{ s.price|rupees }}</b></div>
+                <p class="small muted">{{ 'Paid with Yo Pay' if s.payment == 'wallet' else ('Paid in cash at pickup' if s.paid else 'Pay in cash at pickup') }}{% if s.status == 'Cancelled' and s.payment == 'wallet' %} &middot; refunded{% endif %}</p>
+            </section>
+            {% if owner %}<section class="panel">
+                <h3>Help</h3>
+                <p class="small"><a href="{{ url_for('support_home', topic='parcel', about=s.number) }}">&#128172; Ask our support team</a> &middot;
+                    <a href="{{ url_for('parcel_claim', number=s.number) }}">&#128176; Lost or damaged? Claim</a></p>
+            </section>{% endif %}
+        </aside>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='yo-map.js') }}"></script><script src="{{ url_for('static', filename='courier.js') }}"></script>{% endblock %}

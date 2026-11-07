@@ -1,0 +1,27 @@
+{% extends "admin/layout.html" %}
+{% block title %}Privacy register{% endblock %}
+{% block heading %}Privacy register{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="small muted">What personal data we keep, why, for how long and who may see it (a record of processing activities, GDPR art. 30; also asked by India's DPDP Act 2023 and Russia's law 152-FZ).</p>
+    <div class="tw"><table class="at small"><thead><tr><th>Data</th><th>Tables</th><th>Why</th><th>Legal basis</th><th>Kept</th><th>Who may see it</th></tr></thead><tbody>
+    {% for r in register %}<tr><td>{{ r.data }}</td><td translate="no"><small>{{ r.tables }}</small></td><td>{{ r.purpose }}</td><td>{{ r.basis }}</td><td>{{ r.keep }}</td><td><small>{{ r.who }}</small></td></tr>{% endfor %}</tbody></table></div>
+</section>
+<div class="v7-grid">
+<section class="panel">
+    <h2>Keeping times (daily job)</h2>
+    <table class="at small"><tbody>{% for t, col, days, what in retention %}<tr><td translate="no">{{ t }}</td><td>{{ days }} days</td><td>{{ what }}</td></tr>{% endfor %}</tbody></table>
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline">Apply now</button></form>
+</section>
+<section class="panel">
+    <h2>Where the data must live</h2>
+    <ul class="small">{% for c, text in residency %}<li><b>{{ c }}</b>: {{ text }}</li>{% endfor %}</ul>
+    <p class="small muted">The demo keeps everything in one database. A real launch in Russia needs a database in Russia for Russian accounts.</p>
+</section>
+</div>
+<section class="panel">
+    <h2>Data requests (download / delete my data)</h2>
+    <table class="at small"><tbody>{% for r in requests %}<tr><td>{{ r.kind }}</td><td>user {{ r.user_id }}</td><td translate="no">{{ r.at[:16] }}</td></tr>
+    {% else %}<tr><td class="muted">No requests yet.</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

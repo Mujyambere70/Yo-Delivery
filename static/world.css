@@ -1,0 +1,64 @@
+/* ================= Yo Delivery 5: places of the world, currencies, real map, chat, privacy ================= */
+
+/* ---------- place search (autocomplete) ---------- */
+.pl-wrap { position: relative; }
+.pl-wrap input { width: 100%; }
+.pl-list { position: absolute; z-index: 60; inset-inline: 0; top: calc(100% + 2px); margin: 0; padding: 4px; list-style: none; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15); max-height: 320px; overflow-y: auto; }
+.pl-list li { padding: 7px 10px; border-radius: 6px; cursor: pointer; line-height: 1.25; }
+.pl-list li b { display: block; font-size: 14px; color: var(--text); }
+.pl-list li small { display: block; color: var(--muted); font-size: 12px; }
+.pl-list li:hover, .pl-list li.on { background: #fff7ed; }
+.pl-note { display: block; color: var(--muted); font-size: 12px; min-height: 16px; margin-top: 2px; }
+
+/* ---------- currency menu ---------- */
+.cur-all { border-top: 1px solid var(--line); margin-top: 6px; padding: 8px 6px 4px; }
+.cur-all label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.cur-all select { width: 100%; }
+
+/* ---------- real map (Leaflet + OpenStreetMap) ---------- */
+.map-box.leaflet { height: 420px; padding: 0; overflow: hidden; }
+.map-box.leaflet .leaflet-container { height: 100%; width: 100%; border-radius: inherit; font: inherit; }
+.leaflet-container { isolation: isolate; }   /* the map's layers (z-index 400-1000) stay under the sticky header */
+.map-box .map-legend, .map-box .map-live { z-index: 500; }
+.yo-pin { width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); display: flex; align-items: center; justify-content: center; }
+.yo-pin span { transform: rotate(45deg); color: #fff; font-weight: 800; font-size: 13px; }
+.yo-veh { width: 34px; height: 34px; border-radius: 50%; background: #2563eb; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.yo-hub { width: 16px; height: 16px; background: #1d2b53; border: 2px solid #fff; border-radius: 3px; }
+.pin-map { height: 260px; border-radius: 10px; border: 1px solid var(--line); margin-top: 8px; }
+.pin-help { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+
+/* ---------- chat ---------- */
+.chat { display: flex; flex-direction: column; gap: 8px; max-height: 460px; overflow-y: auto; padding: 8px; background: #f8fafc; border-radius: 10px; border: 1px solid var(--line); }
+.chat .msg { max-width: 78%; padding: 8px 12px; border-radius: 12px; background: #fff; box-shadow: var(--shadow); font-size: 14px; overflow-wrap: anywhere; }
+.chat .msg.me { align-self: flex-end; background: #fff7ed; }
+.chat .msg small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+.chat .msg.hidden-msg { opacity: 0.6; font-style: italic; }
+.chat-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 8px; }
+.chat-form textarea { min-height: 44px; resize: vertical; }
+.thread { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--text); }
+.thread:hover { text-decoration: none; background: #fafafa; }
+.thread .dot { width: 9px; height: 9px; background: var(--orange); border-radius: 50%; display: inline-block; }
+
+/* ---------- product texts in several languages ---------- */
+.lang-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.lang-tabs details { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; background: #fff; }
+.lang-tabs summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+
+/* ---------- privacy and data ---------- */
+.danger-zone { border: 1px solid #fecaca; background: #fff5f5; border-radius: 10px; padding: 12px 14px; }
+.face-box { position: absolute; border: 2px solid #22c55e; border-radius: 4px; }
+.face-wrap { position: relative; display: inline-block; }
+.linklike { background: none; border: 0; padding: 0; color: var(--blue, #2563eb); cursor: pointer; font: inherit; text-decoration: underline; }
+
+/* ---------- Yo Tickets 5: connections, waiting list, round trips ---------- */
+.pill-status.warn { background: #fef3c7; color: #92400e; }
+.tk-conn { border-inline-start: 4px solid #6366f1; }
+.tk-conn h3 { font-size: 15px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.ask-seller summary { color: var(--blue, #2563eb); }
+input[type=date], input[type=time] { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font: inherit; font-size: 15px; background: #fff; }
+
+/* the search form of /places: name, country and button on one line (one under the other on phones) */
+.places-form { grid-template-columns: 2fr 1fr auto; }
+.places-form > div { margin-bottom: 10px; }
+@media (max-width: 700px) { .places-form { grid-template-columns: 1fr; } }

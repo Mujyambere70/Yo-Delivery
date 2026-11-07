@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Courier partner API{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <section class="panel">
+        <h1>&#129309; <span>Courier partner API</span></h1>
+        <p>Courier companies that deliver Yo parcels where we have no couriers send their tracking events to us. Ask Yo Delivery for a key: you get a key id and a secret (shown once).</p>
+        <h2>Signing a request</h2>
+        <p class="small muted">The technical part of this page is in English (the language of the API).</p>
+        <ol translate="no"><li>Take the time now as a Unix number, for example <code>1762500000</code>.</li>
+            <li>Make the HMAC-SHA256 of <code>&lt;time&gt;.&lt;body&gt;</code> with your secret (hex).</li>
+            <li>Send the headers <code>X-Yo-Key: pk_...</code> and <code>X-Yo-Signature: t=&lt;time&gt;,v1=&lt;hmac&gt;</code>. Signatures older than 5 minutes are refused.</li></ol>
+        <h2>Events</h2>
+        <p translate="no"><code>POST /api/partner/v1/events</code> with <code>{"events": [{"event_id": "e-1", "number": "YO12345678", "type": "picked_up", "at": "2026-11-07T10:15:00Z", "place": "Nairobi"}]}</code>. Every <code>event_id</code> is used once, so you can send it again safely.</p>
+        <table class="at small"><thead><tr><th>type</th><th>Yo status</th></tr></thead><tbody>
+        {% for k, v in events.items() %}<tr><td><code>{{ k }}</code></td><td>{{ v or 'a line in the tracking (attempt)' }}</td></tr>{% endfor %}</tbody></table>
+        <h2>Your parcels</h2>
+        <p translate="no"><code>GET /api/partner/v1/shipments</code> and <code>GET /api/partner/v1/shipments/&lt;number&gt;</code> (signed with an empty body). Addresses and phone numbers are shown only while you have the parcel.</p>
+        <p><a class="btn btn-outline" href="{{ url_for('partner_openapi') }}">&#8681; OpenAPI 3.0 description (JSON)</a></p>
+    </section>
+</div>
+{% endblock %}

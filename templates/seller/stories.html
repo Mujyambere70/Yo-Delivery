@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Stories · Seller Centre{% endblock %}
+{% block content %}
+<div class="wrap">
+    {% include "seller/_nav.html" %}
+    <div class="row-head"><h1 style="margin:0">&#128240; Stories about my shop</h1><a href="{{ url_for('seller_story_edit') }}" class="btn btn-orange">Write a story</a></div>
+    <p class="muted">Tell customers who you are, how you make your products and what is new. Yo checks every story before it appears on the <a href="{{ url_for('blog_home', category='stories') }}">Yo Blog</a>.</p>
+    <section class="panel">
+        {% for p in posts %}
+        <div class="note-row">
+            <div><b>{{ p.title }}</b><br><small class="muted"><span>{{ p.updated_at|nicedate }}</span> &middot; <span>{{ p.views }} views</span>{% if p.note %} &middot; <span>Note from Yo:</span> {{ p.note }}{% endif %}</small></div>
+            <div class="actions">
+                <span class="pill-status {{ 'ok' if p.status == 'Published' else 'blue' if p.status == 'Review' else 'grey' }}">{{ {'Review': 'Waiting for check'}.get(p.status, p.status) }}</span>
+                {% if p.status == 'Published' %}<a class="btn btn-outline btn-sm" href="{{ url_for('blog_post', slug=p.slug) }}" target="_blank">View</a>{% endif %}
+                <a class="btn btn-outline btn-sm" href="{{ url_for('seller_story_edit', post_id=p.id) }}">Edit</a>
+                <form method="post" action="{{ url_for('seller_story_delete', post_id=p.id) }}" onsubmit="return confirm(this.dataset.q)" data-q="Delete this story?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-danger btn-sm">Delete</button></form>
+            </div>
+        </div>
+        {% else %}<p class="muted">No stories yet.</p>{% endfor %}
+    </section>
+</div>
+{% endblock %}

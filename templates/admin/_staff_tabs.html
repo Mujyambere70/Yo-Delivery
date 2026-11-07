@@ -1,0 +1,9 @@
+<nav class="v6-tabs" aria-label="Staff pages">
+    <a href="{{ url_for('admin_staff') }}" class="{{ 'on' if request.endpoint == 'admin_staff' }}">Workers</a>
+    <a href="{{ url_for('admin_offices') }}" class="{{ 'on' if request.endpoint == 'admin_offices' }}">Offices</a>
+    <a href="{{ url_for('admin_rota') }}" class="{{ 'on' if request.endpoint == 'admin_rota' }}">Shift plan</a>
+    <a href="{{ url_for('admin_attendance') }}" class="{{ 'on' if request.endpoint == 'admin_attendance' }}">Attendance</a>
+    <a href="{{ url_for('admin_tasks') }}" class="{{ 'on' if request.endpoint == 'admin_tasks' }}">Tasks</a>
+    <a href="{{ url_for('admin_performance') }}" class="{{ 'on' if request.endpoint == 'admin_performance' }}">Performance</a>
+    <a href="{{ url_for('admin_staff_log') }}" class="{{ 'on' if request.endpoint == 'admin_staff_log' }}">Activity log</a>
+</nav>

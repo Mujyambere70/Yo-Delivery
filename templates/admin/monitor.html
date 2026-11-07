@@ -1,0 +1,56 @@
+{% extends "admin/layout.html" %}
+{% block title %}Monitoring{% endblock %}
+{% block heading %}Monitoring{% endblock %}
+{% block content %}
+<div class="kpis">
+    <div class="kpi"><small>Health</small><b style="color:{{ '#16a34a' if health.ok else '#dc2626' }}">{{ 'OK' if health.ok else 'Problem' }}</b><span class="small muted">database {{ health.get('db_ms', '-') }} ms</span></div>
+    <div class="kpi"><small>Requests (last hour)</small><b>{{ '{:,}'.format(nums.requests) }}</b><span class="small muted">most in one minute: {{ nums.peak }}</span></div>
+    <div class="kpi"><small>Server errors (last hour)</small><b style="color:{{ '#dc2626' if nums.errors else 'inherit' }}">{{ nums.errors }}</b></div>
+    <div class="kpi"><small>Average / slowest</small><b>{{ nums.avg_ms }} ms</b><span class="small muted">slowest {{ nums.max_ms }} ms</span></div>
+    <div class="kpi"><small>Jobs waiting / failed</small><b>{{ jobs.totals.get('waiting', 0) }} / <span style="color:{{ '#dc2626' if jobs.totals.get('failed') else 'inherit' }}">{{ jobs.totals.get('failed', 0) }}</span></b></div>
+</div>
+<section class="panel">
+    <div class="ph"><h2>Requests per minute (last hour)</h2></div>
+    {% set peak = [nums.peak, 1]|max %}
+    <svg class="mon-chart" viewBox="0 0 600 120" role="img" aria-label="Requests per minute in the last hour">
+        <line x1="0" y1="110" x2="600" y2="110" stroke="#cbd5e1"/>
+        {% for r in nums.rows %}{% set hgt = (r.requests / peak * 100)|round(1) %}
+        <rect x="{{ loop.index0 * 10 }}" y="{{ 110 - hgt }}" width="8" height="{{ hgt }}" fill="{{ '#dc2626' if r.errors else '#f97316' }}"><title>{{ r.minute[11:] }}: {{ r.requests }} requests, {{ r.errors }} errors, slowest {{ r.max_ms }} ms</title></rect>
+        {% endfor %}
+    </svg>
+    <p class="small muted">Each bar is one minute (red: with server errors). The numbers come from every server process through the database.</p>
+</section>
+<section class="panel">
+    <h2>&#9889; <span>Shared cache</span></h2>
+    <p class="small muted">Slow answers (model neighbours, the chat model test) are kept for a short time: first in the memory of each server process, then in the database for all processes.</p>
+    <div class="kpis"><div class="kpi"><small>Entries</small><b>{{ cache.entries }}</b></div><div class="kpi"><small>Hits in memory</small><b>{{ cache.hits }}</b></div><div class="kpi"><small>Hits in the database</small><b>{{ cache.shared_hits }}</b></div><div class="kpi"><small>Computed</small><b>{{ cache.misses }}</b></div><div class="kpi"><small>Hit rate</small><b>{{ (cache.hit_rate|string + ' %') if cache.hit_rate is not none else '-' }}</b></div></div>
+</section>
+<section class="panel">
+    <div class="ph"><h2>Alerts</h2>
+        <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm" name="action" value="alerts">Check now</button></form></div>
+    <table class="at"><thead><tr><th>Status</th><th>What</th><th>Opened</th><th>Closed</th></tr></thead><tbody>
+    {% for a in alerts %}<tr><td><span class="pill-status {{ 'warn' if a.status == 'Open' else 'ok' }}">{{ a.status }}</span></td><td>{{ a.message }}</td><td>{{ a.opened_at[:16] }}</td><td>{{ a.closed_at[:16] }}</td></tr>
+    {% else %}<tr><td colspan="4" class="muted">No alerts. The administrators get a message when an alert opens.</td></tr>{% endfor %}
+    </tbody></table>
+</section>
+<section class="panel">
+    <div class="ph"><h2>Job queue</h2>
+        <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm" name="action" value="run">Run due jobs now</button></form></div>
+    <p class="small muted">Daily seller payouts, the recommendation model and other background work. Any server process can take a job, and only one gets it. A failing job is tried again after 1, 4, 9, 16 minutes.</p>
+    <table class="at small"><thead><tr><th>Kind</th><th>Status</th><th>Jobs</th></tr></thead><tbody>
+    {% for r in jobs.by %}<tr><td>{{ r.kind }}</td><td>{{ r.status }}</td><td>{{ r.n }}</td></tr>{% else %}<tr><td colspan="3" class="muted">No jobs yet.</td></tr>{% endfor %}
+    </tbody></table>
+    {% if jobs.failed %}
+    <h3>Failed jobs</h3>
+    <table class="at small"><thead><tr><th>#</th><th>Kind</th><th>Tries</th><th>Error</th><th></th></tr></thead><tbody>
+    {% for j in jobs.failed %}<tr><td>{{ j.id }}</td><td>{{ j.kind }}</td><td>{{ j.attempts }}</td><td><code style="white-space:pre-wrap">{{ j.last_error[:300] }}</code></td>
+        <td><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="job_id" value="{{ j.id }}"><button class="btn btn-outline btn-sm" name="action" value="retry">Try again</button></form></td></tr>{% endfor %}
+    </tbody></table>
+    {% endif %}
+    <h3>Last jobs</h3>
+    <table class="at small"><thead><tr><th>#</th><th>Kind</th><th>Status</th><th>Tries</th><th>Run at</th><th>Done</th><th>Server process</th></tr></thead><tbody>
+    {% for j in jobs.recent %}<tr><td>{{ j.id }}</td><td>{{ j.kind }}</td><td>{{ j.status }}</td><td>{{ j.attempts }}</td><td>{{ j.run_at[:16] }}</td><td>{{ j.done_at[:16] }}</td><td><small>{{ j.locked_by }}</small></td></tr>{% endfor %}
+    </tbody></table>
+</section>
+<p class="small muted">Health check for Fly.io and uptime services: <a href="{{ url_for('health') }}">/healthz</a></p>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}E-ticket {{ b.pnr }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block body_class %}tk-print{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <p class="small no-print"><a href="{{ url_for('tickets_my') }}">&larr; My trips</a></p>
+    {% if ret_url %}<div class="tk-note no-print" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">&#128260; <span>Round trip: now choose the way back (no convenience fee).</span> <a class="btn btn-orange btn-sm" href="{{ ret_url }}">Choose the way back</a></div>{% endif %}
+    {% if b.status == WAITLISTED %}<div class="tk-note">&#9203; <span>You are number</span> <b>{{ b.wl }}</b> <span>on the waiting list. We confirm the ticket by ourselves when seats come back (you get a message). Not confirmed</span> {{ CHART }} <span>hours before departure = all the money back.</span></div>{% endif %}
+    {% if b.linked %}<div class="tk-note">&#9992;&#65039; <span>Connection: the second flight is</span> <a href="{{ url_for('tickets_booking', pnr=b.linked.pnr) }}" translate="no">{{ b.linked.number }} &middot; {{ b.linked.pnr }}</a> ({{ b.linked.depart_local|localtime }} <span>{{ b.linked.from_tz }}</span>). <span>Cancelling one cancels both.</span></div>{% endif %}
+    {% if b.return_of %}<div class="tk-note">&#128260; <span>Way back of</span> <a href="{{ url_for('tickets_booking', pnr=b.return_of) }}" translate="no">{{ b.return_of }}</a>.</div>{% endif %}
+    <article class="tk-ticket">
+        <div class="tk-ticket-top">
+            <div>
+                <small>{{ ICONS[b.mode] }} <span>{{ MODES[b.mode] }} e-ticket</span> &middot; <span translate="no">{{ b.operator }}</span></small>
+                <h1><span translate="no">{{ b.number }}</span> &middot; <span>{{ b.class_name }}</span></h1>
+                <small>{{ b.service_name }}</small>
+            </div>
+            <div style="text-align:end">
+                <small>PNR</small><div class="tk-pnr" translate="no">{{ b.pnr }}</div>
+                <span class="pill-status {{ 'ok' if b.status in ('Confirmed', 'Completed') else 'bad' if b.status == 'Cancelled' else 'warn' if b.status == WAITLISTED else 'grey' }}">{{ b.status }}</span>
+            </div>
+        </div>
+        <div class="tk-ticket-body">
+            <div>
+                <div class="tk-times">
+                    <div><b>{{ b.depart_local[11:16] }}</b><small translate="no">{{ b.from_city }}{% if b.from_code %} ({{ b.from_code }}){% endif %}</small><small>{{ b.depart_local[:10]|nicedate }} &middot; {{ b.from_tz }}</small></div>
+                    <div class="tk-line">{{ b.duration_text }}</div>
+                    <div class="end"><b>{{ b.arrive_local[11:16] }}{% if b.plus_days %}<span class="tk-plus">+{{ b.plus_days }}</span>{% endif %}</b><small translate="no">{{ b.to_city }}{% if b.to_code %} ({{ b.to_code }}){% endif %}</small><small>{{ b.arrive_local[:10]|nicedate }} &middot; {{ b.to_tz }}</small></div>
+                </div>
+                {% if b.delay and b.trip_status == 'Scheduled' %}<div class="tk-note" style="margin-top:12px">&#9888;&#65039; <span>Late by</span> {{ b.delay }} <span>minutes</span>.{% if b.trip_note %} {{ b.trip_note }}{% endif %}</div>{% endif %}
+                {% if b.trip_status == 'Cancelled' %}<div class="flash error" style="margin-top:12px">The operator cancelled this trip{% if b.trip_note %}: {{ b.trip_note }}{% endif %}. All your money was given back.</div>{% endif %}
+                <table class="tk-table" style="margin-top:14px">
+                    <thead><tr><th>Passenger</th><th>Age</th><th>Seat</th><th></th></tr></thead>
+                    <tbody>{% for p in b.passengers %}<tr>
+                        <td translate="no">{{ p.name }}</td><td>{{ p.age }}{% if p.gender %} {{ p.gender }}{% endif %}</td>
+                        <td><b translate="no">{{ p.label }}</b> <small class="muted">{{ p.kind }}</small></td>
+                        <td>{% if p.boarded_at %}<span class="boarded">&#10003; Boarded</span>{% endif %}</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="tk-qr">
+                {% if b.status in ('Confirmed', 'Completed') %}
+                <div id="ticketQr" data-qr="{{ qr_url }}" aria-label="QR code of the e-ticket"></div>
+                <small>Show this QR code to the conductor</small>
+                {% else %}
+                <p class="muted">No QR code: this ticket is {{ b.status|lower }}.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="tk-ticket-foot">
+            <span><span>Paid</span>: <b>{{ b.total|rupees }}</b> &middot; {% if b.payment == 'wallet' %}Yo Pay{% elif b.payment == 'card' %}<span>Card</span> &bull;&bull;&bull;&bull; <span translate="no">{{ b.card_last4 }}</span>{% if b.emi_months %} &middot; EMI {{ b.emi_months }} × {{ b.emi_monthly|rupees }}{% endif %}{% endif %}</span>
+            <span class="no-print"><button type="button" class="btn btn-outline btn-sm" onclick="window.print()">&#128424; Print</button></span>
+        </div>
+    </article>
+
+    <div class="od-grid two no-print">
+        <section class="panel">
+            <h2>Trip status</h2>
+            {% if b.status in ('Confirmed', 'Completed') and b.trip_status == 'Scheduled' %}
+            <ol class="track-n" data-steps style="grid-template-columns:repeat(4,1fr)">
+                {% for st in ['Booked', 'Boarding', 'On the way', 'Arrived'] %}<li class="{{ 'done' if loop.index0 < step or (step == 3 and loop.index0 == 3) }} {{ 'now' if loop.index0 == step and step < 3 }}"><span class="dot"></span><b>{{ st }}</b></li>{% endfor %}
+            </ol>
+            <div class="map-box" data-live="{{ url_for('tickets_live', pnr=b.pnr) }}" aria-label="Map of the trip {{ b.pnr }}">
+                <span hidden data-k="pickup">Departure</span><span hidden data-k="drop">Arrival</span>
+                {% if step == 2 %}<span class="map-live"><i></i>Live</span>{% endif %}
+                <div class="map-legend"><span><i style="background:#16a34a"></i>Departure</span><span><i style="background:#ff6b35"></i>Arrival</span><span><i style="background:#2563eb"></i>{{ MODES[b.mode] }}</span><span>Position from the timetable (demo)</span></div>
+            </div>
+            {% else %}
+            <p class="muted">{{ phase }}</p>
+            {% endif %}
+        </section>
+        <section class="panel">
+            <h2>Price</h2>
+            <ul class="quote-lines" style="font-size:14px;color:var(--text)">
+                {% for l in b.lines %}<li><span><span>{{ l[0] }}</span>{% if l|length > 2 %} ({{ l[2] }} × {{ (l[1] // l[2])|rupees }}){% endif %}</span><b>{{ l[1]|rupees }}</b></li>{% endfor %}
+                <li style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span><b>Total</b></span><b>{{ b.total|rupees }}</b></li>
+            </ul>
+            {% if b.status == 'Cancelled' %}
+            <div class="tk-refund" style="margin-top:12px">
+                <b>Cancelled</b> &middot; <span>{{ b.cancel_reason or 'Cancelled' }}</span><br>
+                {% if b.paid_at %}<span>Refund</span>: <b class="money-plus">{{ b.refund|rupees }}</b>{% if b.charge %} &middot; <span>Cancellation charge</span>: {{ b.charge|rupees }}{% endif %}<br>
+                <small class="muted">{{ 'Back in your Yo Pay wallet.' if b.payment == 'wallet' else 'Back to your card (test mode).' }}</small>{% endif %}
+            </div>
+            {% elif refund.can %}
+            <div class="tk-refund" style="margin-top:12px">
+                <h3 style="margin:0 0 4px">Cancel the ticket</h3>
+                <dl class="kv small" style="margin:0 0 8px"><dt>Cancellation charge</dt><dd>{{ refund.pct }}% &middot; {{ refund.charge|rupees }}</dd><dt>Refund</dt><dd><b>{{ refund.refund|rupees }}</b> &middot; <span>{{ 'to Yo Pay' if b.payment == 'wallet' else 'to your card' }}</span></dd></dl>
+                <p class="hint" style="margin:0 0 8px">The convenience fee is not refunded.</p>
+                <form method="post" action="{{ url_for('tickets_cancel', pnr=b.pnr) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label class="small" style="display:block;margin-bottom:8px"><input type="checkbox" required> I want to cancel all the seats of this ticket</label>
+                    <button class="btn btn-outline btn-sm">Cancel the ticket</button>
+                </form>
+            </div>
+            {% elif b.status == 'Completed' %}
+            <p class="hint">Trip completed. Your Yo Rewards points were added. <a href="{{ url_for('rewards_home') }}">See your points</a></p>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/qrcode.js') }}"></script>
+<script src="{{ url_for('static', filename='yo-map.js') }}"></script>
+<script src="{{ url_for('static', filename='tickets.js') }}"></script>
+{% endblock %}

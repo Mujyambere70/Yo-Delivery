@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Add money · Yo Pay{% endblock %}
+{% block content %}
+<div class="wrap narrow two-col">
+    <form method="post" class="panel" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <h1>&#10133; Add money to Yo Pay</h1>
+        <div class="test-banner">TEST MODE - use a test card, no real money is taken.</div>
+        <label for="amount">Amount (₹)</label>
+        <input id="amount" type="number" name="amount" value="{{ f.get('amount', '500') }}" min="{{ low // 100 }}" max="{{ high // 100 }}" step="1" required>
+        <div class="seg" style="margin-top:8px">{% for a in [500, 1000, 2000, 5000] %}<label><input type="radio" name="_pick" value="{{ a }}" onclick="this.form.amount.value=this.value"><span>₹{{ '{:,}'.format(a) }}</span></label>{% endfor %}</div>
+        <label for="card">Card number</label><input id="card" type="text" name="card" inputmode="numeric" placeholder="4242 4242 4242 4242" maxlength="23" required translate="no">
+        <div class="form-grid">
+            <div><label for="exp">Expiry (MM/YY)</label><input id="exp" type="text" name="expiry" placeholder="12/30" maxlength="7" required></div>
+            <div><label for="cvc">CVC</label><input id="cvc" type="text" name="cvc" inputmode="numeric" placeholder="123" maxlength="4" required></div>
+        </div>
+        <label for="nm">Name on the card</label><input id="nm" type="text" name="name" maxlength="60" required>
+        <button class="btn btn-orange btn-block btn-lg">Add money</button>
+    </form>
+    <aside class="panel small">
+        <h3>Test cards</h3>
+        <p><code translate="no">4242 4242 4242 4242</code> works<br><code translate="no">4000 0000 0000 0002</code> is declined<br><code translate="no">4000 0000 0000 9995</code> has no money</p>
+        <p class="muted">Any future date and any 3 digits.</p>
+        <h3>Mobile money</h3>
+        <p><a class="btn btn-outline btn-sm" href="{{ url_for('pay_mobile') }}">&#128241; M-Pesa, MTN MoMo, SBP or UPI</a></p>
+    </aside>
+</div>
+{% endblock %}

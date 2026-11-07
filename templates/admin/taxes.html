@@ -1,0 +1,28 @@
+{% extends "admin/layout.html" %}
+{% block title %}Tax rules{% endblock %}
+{% block heading %}Tax rules of the countries{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="flash info">The rates that came with the demo are <b>examples</b> from public sources (2026), not tax advice. Check every rule with a tax adviser of the country before real use; rows you save yourself lose the "example" mark.</p>
+    <p class="small muted">India keeps GST 18 % on courier services. A parcel sent inside another country pays the VAT of that country on the courier service; parcels to another country pay no VAT here (the receiver may pay import taxes - see Customs rules).</p>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Country</th><th>Tax</th><th>Services</th><th>Goods</th><th>Note</th><th>Changed</th><th></th></tr></thead>
+        <tbody>{% for r in rules %}<tr><td translate="no">{{ r.country }}</td><td translate="no">{{ r.name }}</td><td>{{ '%g'|format(r.services_pct) }} %</td><td>{{ '%g'|format(r.goods_pct) }} %</td>
+            <td><small>{{ r.note }}</small> {% if r.example %}<span class="pill-status warn">example</span>{% endif %}</td>
+            <td><small translate="no">{{ r.updated_by or '-' }} {{ r.updated_at[:10] }}</small></td>
+            <td>{% if r.country != 'IN' %}<form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="country" value="{{ r.country }}"><button class="linklike" name="delete" value="1">Delete</button></form>{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+<section class="panel">
+    <h2>Add or change a rule</h2>
+    <form method="post" class="form-grid v6-plan">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Country <select name="country">{% for code, name in countries %}<option value="{{ code }}">{{ name }}</option>{% endfor %}</select></label>
+        <label>Name of the tax <input type="text" name="name" value="VAT" maxlength="20"></label>
+        <label>Services % <input type="number" name="services_pct" min="0" max="40" step="0.1" value="18"></label>
+        <label>Goods % <input type="number" name="goods_pct" min="0" max="40" step="0.1" value="18"></label>
+        <label class="wide">Note (source, date) <input type="text" name="note" maxlength="200"></label>
+        <div><button class="btn btn-orange">Save the rule</button></div>
+    </form>
+</section>
+{% endblock %}

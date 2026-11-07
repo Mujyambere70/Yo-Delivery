@@ -1,0 +1,28 @@
+# Fly.io settings for Yo Delivery.
+# Secrets (never in this file or on GitHub):  fly secrets set DATABASE_URL="postgresql://...neon.tech/...?sslmode=require"
+app = "yo-delivery"
+primary_region = "ams"
+
+[build]
+
+[env]
+  YO_FAST_TRACKING = "1"          # demo speed: orders and demo couriers move in minutes (set "0" for real time)
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"     # the machine sleeps when nobody visits
+  auto_start_machines = true      # and wakes up on the next visit
+  min_machines_running = 0        # saves your free machine limit
+
+  [[http_service.checks]]
+    grace_period = "120s"         # the first start fills an empty database
+    interval = "30s"
+    method = "GET"
+    path = "/about"
+    timeout = "10s"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

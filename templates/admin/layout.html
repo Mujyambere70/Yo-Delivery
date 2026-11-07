@@ -6,37 +6,79 @@
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='superapp.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='tickets.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='world.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='v6.css') }}">
 </head>
 <body class="adm">
+<a class="skip-link" href="#main">Skip to the content</a>
 <aside class="adm-side">
     <a href="{{ url_for('admin_dashboard') }}" class="logo"><img src="{{ url_for('static', filename='images/logo.png') }}" alt=""><span>yo<b>delivery</b><small>admin</small></span></a>
     <nav>
         {% set ep = request.endpoint or '' %}
         {% set badge = counts if counts is defined else {} %}
-        {% for target, icon, label, match, badge in [
-            ('admin_dashboard', '&#128202;', 'Dashboard', ['admin_dashboard'], 0),
-            ('admin_orders', '&#128230;', 'Orders', ['admin_orders', 'admin_order'], 0),
-            ('admin_returns', '&#8634;', 'Returns', ['admin_returns'], badge.get('returns', 0)),
-            ('admin_products', '&#127991;', 'Products', ['admin_products', 'admin_product_new', 'admin_product_edit'], badge.get('products', 0)),
-            ('admin_categories', '&#128193;', 'Categories', ['admin_categories'], 0),
-            ('admin_sellers', '&#127978;', 'Sellers', ['admin_sellers'], badge.get('sellers', 0)),
-            ('admin_customers', '&#128101;', 'Customers', ['admin_customers', 'admin_customer'], 0),
-            ('admin_reviews', '&#11088;', 'Reviews', ['admin_reviews'], 0),
-            ('admin_coupons', '&#127873;', 'Coupons', ['admin_coupons'], 0),
-            ('admin_activity', '&#128221;', 'Activity Log', ['admin_activity'], 0),
-            ('admin_database', '&#128451;', 'Database', ['admin_database'], 0),
-            ('admin_backups', '&#128190;', 'Backups', ['admin_backups'], 0),
-            ('admin_settings', '&#9881;', 'Shop Settings', ['admin_settings'], 0),
-            ('admin_account', '&#128100;', 'My Account', ['admin_account'], 0)] %}
-            <a href="{{ url_for(target) }}" class="{{ 'on' if ep in match }}"><span>{{ icon|safe }}</span>{{ label }}{% if badge %}<em class="count">{{ badge }}</em>{% endif %}</a>
+        {% for target, icon, label, match, badge, need in [
+            ('admin_dashboard', '&#128202;', 'Dashboard', ['admin_dashboard'], 0, 'dashboard.view'),
+            ('admin_orders', '&#128230;', 'Orders', ['admin_orders', 'admin_order'], 0, 'orders.view'),
+            ('admin_returns', '&#8634;', 'Returns', ['admin_returns'], badge.get('returns', 0), 'orders.view'),
+            ('admin_products', '&#127991;', 'Products', ['admin_products', 'admin_product_new', 'admin_product_edit'], badge.get('products', 0), 'products.manage'),
+            ('admin_categories', '&#128193;', 'Categories', ['admin_categories'], 0, 'products.manage'),
+            ('admin_sellers', '&#127978;', 'Sellers', ['admin_sellers'], badge.get('sellers', 0), 'sellers.manage'),
+            ('admin_shipments', '&#128666;', 'Shipments', ['admin_shipments', 'admin_shipment'], badge.get('shipments', 0), 'shipments.view'),
+            ('admin_couriers', '&#128757;', 'Couriers', ['admin_couriers'], badge.get('couriers', 0), 'couriers.manage'),
+            ('admin_customs', '&#128203;', 'Customs rules', ['admin_customs'], 0, 'customs.manage'),
+            ('admin_partners', '&#129309;', 'Courier partners', ['admin_partners'], 0, 'partners.manage'),
+            ('admin_tickets', '&#127915;', 'Tickets', ['admin_tickets', 'admin_ticket', 'admin_ticket_trips', 'admin_ticket_services', 'admin_ticket_staff'], badge.get('tickets', 0), 'tickets.view'),
+            ('admin_gtfs', '&#128467;', 'Timetables (GTFS)', ['admin_gtfs'], 0, 'transport.manage'),
+            ('admin_customers', '&#128101;', 'Customers', ['admin_customers', 'admin_customer'], 0, 'customers.view'),
+            ('admin_support', '&#127911;', 'Support desk', ['admin_support', 'admin_support_ticket'], badge.get('support', 0), 'support.manage'),
+            ('admin_claims', '&#128176;', 'Parcel claims', ['admin_claims'], badge.get('claims', 0), 'support.manage'),
+            ('admin_risk', '&#128737;', 'Safety checks', ['admin_risk'], badge.get('risk', 0), 'orders.view'),
+            ('admin_reviews', '&#11088;', 'Reviews', ['admin_reviews'], 0, 'reviews.manage'),
+            ('admin_coupons', '&#127873;', 'Coupons', ['admin_coupons'], 0, 'coupons.manage'),
+            ('admin_yopay', '&#128179;', 'Yo Pay', ['admin_yopay'], 0, 'yopay.view'),
+            ('admin_taxes', '&#129534;', 'Tax rules', ['admin_taxes'], 0, 'yopay.view'),
+            ('admin_bank', '&#127974;', 'Bank transfers', ['admin_bank'], 0, 'yopay.view'),
+            ('admin_tax_categories', '&#127991;', 'Tax by kind of goods', ['admin_tax_categories'], 0, 'yopay.view'),
+            ('admin_invoices', '&#129534;', 'Invoices', ['admin_invoices'], 0, 'invoices.view'),
+            ('admin_reconcile', '&#9878;', 'Reconcile payments', ['admin_reconcile'], 0, 'yopay.view'),
+            ('admin_payroll', '&#128176;', 'Payroll', ['admin_payroll', 'admin_payroll_run'], 0, 'payroll.manage'),
+            ('admin_approvals', '&#9997;', 'Approvals', ['admin_approvals'], badge.get('approvals', 0), 'payroll.manage'),
+            ('admin_rewards', '&#127873;', 'Rewards & Quiz', ['admin_rewards'], 0, 'rewards.manage'),
+            ('admin_blog', '&#128240;', 'Blog & News', ['admin_blog', 'admin_post_edit'], badge.get('posts', 0), 'blog.manage'),
+            ('admin_photos', '&#128247;', 'Photo checks', ['admin_photos'], 0, 'photos.review'),
+            ('admin_id_checks', '&#129706;', 'ID checks', ['admin_id_checks'], badge.get('id_checks', 0), 'photos.review'),
+            ('admin_chat', '&#128172;', 'Chat moderation', ['admin_chat'], badge.get('chat', 0), 'chat.moderate'),
+            ('admin_model', '&#129504;', 'Recommendations', ['admin_model'], 0, 'model.manage'),
+            ('admin_experiments', '&#128300;', 'A/B tests', ['admin_experiments'], 0, 'model.manage'),
+            ('admin_analytics', '&#128202;', 'Analytics', ['admin_analytics'], 0, 'analytics.view'),
+            ('admin_forecast', '&#128200;', 'Hub forecast', ['admin_forecast'], 0, 'analytics.view'),
+            ('admin_staff', '&#128188;', 'Staff', ['admin_staff', 'admin_staff_edit', 'admin_staff_log'], badge.get('leave', 0), 'staff.view'),
+            ('admin_offices', '&#127970;', 'Offices', ['admin_offices'], 0, 'staff.view'),
+            ('admin_rota', '&#128197;', 'Shifts & attendance', ['admin_rota', 'admin_attendance'], 0, 'staff.view'),
+            ('admin_tasks', '&#9989;', 'Staff tasks', ['admin_tasks', 'admin_performance'], badge.get('staff_tasks', 0), 'staff.view'),
+            ('admin_training', '&#127891;', 'Training & contracts', ['admin_training', 'admin_staff_people'], 0, 'staff.view'),
+            ('board_page', '&#128203;', 'Task board', ['board_page'], badge.get('board', 0), 'board.use'),
+            ('admin_monitor', '&#128200;', 'Monitoring', ['admin_monitor'], badge.get('alerts', 0), 'monitor.view'),
+            ('admin_activity', '&#128221;', 'Activity Log', ['admin_activity'], 0, 'activity.view'),
+            ('admin_database', '&#128451;', 'Database', ['admin_database'], 0, 'database.view'),
+            ('admin_backups', '&#128190;', 'Backups', ['admin_backups'], 0, 'database.view'),
+            ('admin_privacy', '&#128274;', 'Privacy register', ['admin_privacy'], 0, 'privacy.manage'),
+            ('admin_settings', '&#9881;', 'Shop Settings', ['admin_settings'], 0, 'settings.manage'),
+            ('admin_account', '&#128100;', 'My Account', ['admin_account'], 0, 'self')] %}
+            {% if user.is_admin or can(need) %}
+            <a href="{{ url_for(target, scope='admin') if target == 'board_page' else url_for(target) }}" class="{{ 'on' if ep in match }}"><span>{{ icon|safe }}</span>{{ label }}{% if badge %}<em class="count">{{ badge }}</em>{% endif %}</a>
+            {% endif %}
         {% endfor %}
     </nav>
     <div class="adm-side-foot">
+        {% if my_work %}<a href="{{ url_for('staff_home') }}">&#128188; My work</a>{% endif %}
         <a href="{{ url_for('index') }}" target="_blank">&#8599; View store</a>
         <a href="{{ url_for('logout') }}">&#10162; Sign out</a>
     </div>
 </aside>
-<div class="adm-main">
+<div class="adm-main" id="main" tabindex="-1">
     <header class="adm-top">
         <h1>{% block heading %}Dashboard{% endblock %}</h1>
         <a href="{{ url_for('admin_account') }}" class="adm-user" title="My account"><span class="avatar">{{ user.name[0] }}</span><div><b>{{ user.name }}</b><small>{{ user.email }}</small></div></a>

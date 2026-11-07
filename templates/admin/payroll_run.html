@@ -1,0 +1,24 @@
+{% extends "admin/layout.html" %}
+{% block title %}Payroll {{ r.country }} {{ r.month }}{% endblock %}
+{% block heading %}Payroll {{ r.country }} {{ r.month }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('admin_payroll') }}">&larr; Payroll</a></p>
+<div class="kpis">
+    <div class="kpi"><small>Status</small><b>{{ r.status }}</b></div>
+    <div class="kpi"><small>Workers</small><b>{{ r.workers }}</b></div>
+    <div class="kpi"><small>Gross</small><b translate="no">{{ minor_money(r.total_gross, r.currency) }}</b></div>
+    <div class="kpi"><small>Net</small><b translate="no">{{ minor_money(r.total_net, r.currency) }}</b></div>
+</div>
+<section class="panel">
+    <form method="post" class="actions">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if r.status == 'Draft' %}<button class="btn btn-orange" name="action" value="approve">Approve (second person)</button>{% endif %}
+        {% if r.status == 'Approved' %}<button class="btn btn-orange" name="action" value="pay">Pay (test mode)</button>{% endif %}
+        {% if r.status in ('Draft', 'Approved') %}<button class="btn btn-outline" name="action" value="cancel">Cancel</button>{% endif %}
+    </form>
+    <p class="small muted">Rule: {{ rule.name if rule else 'no income tax rule for this country' }}{% if rule %} - {{ rule.note }}{% endif %}</p>
+    <table class="at"><thead><tr><th>Worker</th><th>Office</th><th>Worked</th><th>Overtime</th><th>Unpaid days</th><th>Gross</th><th>Tax</th><th>Contributions</th><th>Net</th></tr></thead><tbody>
+    {% for s in r.slips %}<tr><td translate="no">{{ s.name }}</td><td translate="no">{{ s.office }}</td><td>{{ s.worked_min // 60 }} h</td><td>{{ s.overtime_min // 60 }} h {{ s.overtime_min % 60 }} min</td><td>{{ s.unpaid_days }}</td>
+        <td translate="no">{{ minor_money(s.gross, s.currency) }}</td><td translate="no">{{ minor_money(s.tax, s.currency) }}</td><td translate="no">{{ minor_money(s.social, s.currency) }}</td><td translate="no"><b>{{ minor_money(s.net, s.currency) }}</b></td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

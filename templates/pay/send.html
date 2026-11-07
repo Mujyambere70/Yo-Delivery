@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Send money · Yo Pay{% endblock %}
+{% block content %}
+<div class="wrap narrow two-col">
+    <form method="post" class="panel" autocomplete="off" id="sendForm" data-payee="{{ url_for('pay_payee') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <h1>&#128228; Send money</h1>
+        <p class="muted small">To another Yo account. Your balance: <b>{{ wallet|rupees }}</b></p>
+        <label for="to">Email or mobile number of the person</label>
+        <input id="to" type="text" name="to" value="{{ f.get('to', '') }}" maxlength="120" required>
+        <div class="payee" id="payee" aria-live="polite"></div>
+        <label for="amt">Amount (₹)</label><input id="amt" type="number" name="amount" value="{{ f.get('amount', '') }}" min="1" max="{{ high // 100 }}" step="0.01" required>
+        <label for="note">Note (optional)</label><input id="note" type="text" name="note" value="{{ f.get('note', '') }}" maxlength="80" placeholder="e.g. Lunch money">
+        <label for="pw">Your password (to confirm)</label><input id="pw" type="password" name="password" required autocomplete="current-password">
+        <button class="btn btn-orange btn-block btn-lg">Send</button>
+    </form>
+    <aside class="panel small">
+        <h3>Safe sending</h3>
+        <ul class="steps-list"><li>Check the name shown under the email or number.</li><li>Up to {{ high|rupees }} at a time, {{ day|rupees }} per day.</li><li>Yo never asks for your password by phone.</li></ul>
+    </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var f = document.getElementById("sendForm"), out = document.getElementById("payee"), t = null;
+  f.elements.to.addEventListener("input", function () {
+    clearTimeout(t);
+    t = setTimeout(function () {
+      var v = f.elements.to.value.trim();
+      if (v.length < 5) { out.textContent = ""; return; }
+      fetch(f.getAttribute("data-payee") + "?to=" + encodeURIComponent(v), { credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { out.textContent = d.ok ? "✓ " + d.name : "✗"; out.className = "payee " + (d.ok ? "ok" : "err"); });
+    }, 350);
+  });
+})();
+</script>
+{% endblock %}

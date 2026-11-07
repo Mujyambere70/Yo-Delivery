@@ -1,0 +1,221 @@
+Skip to the content	Перейти к содержанию	Aller au contenu	Ir al contenido	انتقل إلى المحتوى	跳到正文	Jya ku birimo
+Help	Помощь	Aide	Ayuda	مساعدة	帮助	Ubufasha
+Ask support	Спросить поддержку	Demander au support	Preguntar al soporte	اسأل الدعم	咨询客服	Baza abafasha
+🎧 Help	🎧 Помощь	🎧 Aide	🎧 Ayuda	🎧 مساعدة	🎧 帮助	🎧 Ubufasha
+💬 Ask our support team	💬 Спросить нашу поддержку	💬 Demander à notre équipe d'assistance	💬 Preguntar a nuestro equipo de soporte	💬 اسأل فريق الدعم	💬 咨询我们的客服团队	💬 Baza itsinda ryacu ry'abafasha
+💰 Lost or damaged? Claim	💰 Потеряна или повреждена? Заявить	💰 Perdu ou abîmé ? Réclamer	💰 ¿Perdido o dañado? Reclamar	💰 مفقود أو تالف؟ قدّم مطالبة	💰 丢失或损坏？申请赔偿	💰 Yatakaye cyangwa yangiritse? Saba indishyi
+⇩ Electronic customs data (JSON)	⇩ Электронные таможенные данные (JSON)	⇩ Données douanières électroniques (JSON)	⇩ Datos aduaneros electrónicos (JSON)	⇩ البيانات الجمركية الإلكترونية (JSON)	⇩ 电子海关数据（JSON）	⇩ Amakuru ya gasutamo y'ikoranabuhanga (JSON)
+🧾 Tax invoices	🧾 Налоговые счета	🧾 Factures fiscales	🧾 Facturas fiscales	🧾 الفواتير الضريبية	🧾 税务发票	🧾 Inyemezabuguzi z'umusoro
+Tax & invoices	Налоги и счета	Taxes et factures	Impuestos y facturas	الضرائب والفواتير	税务与发票	Imisoro n'inyemezabuguzi
+Courier partner API	API для курьерских партнёров	API des partenaires de livraison	API para socios de mensajería	واجهة برمجة لشركاء التوصيل	快递合作伙伴 API	API y'abafatanyabikorwa batwara amapaki
+HS code (optional)	Код ТН ВЭД / HS (необязательно)	Code SH (facultatif)	Código SA (opcional)	رمز النظام المنسق (اختياري)	HS 编码（可选）	Kode ya HS (si ngombwa)
+HS code of item 1	Код HS предмета 1	Code SH de l'article 1	Código SA del artículo 1	رمز النظام المنسق للعنصر 1	物品 1 的 HS 编码	Kode ya HS y'ikintu 1
+HS code of item 2	Код HS предмета 2	Code SH de l'article 2	Código SA del artículo 2	رمز النظام المنسق للعنصر 2	物品 2 的 HS 编码	Kode ya HS y'ikintu 2
+HS code of item 3	Код HS предмета 3	Code SH de l'article 3	Código SA del artículo 3	رمز النظام المنسق للعنصر 3	物品 3 的 HS 编码	Kode ya HS y'ikintu 3
+When is the receiver at home? (his time)	Когда получатель дома? (по его времени)	Quand le destinataire est-il chez lui ? (son heure)	¿Cuándo está el destinatario en casa? (su hora)	متى يكون المستلم في المنزل؟ (بتوقيته)	收件人什么时候在家？（当地时间）	Uwakira aba ari mu rugo ryari? (isaha y'iwe)
+Any time	В любое время	N'importe quand	A cualquier hora	في أي وقت	任何时间	Igihe icyo ari cyo cyose
+Delivery time: {0}	Время доставки: {0}	Heure de livraison : {0}	Hora de entrega: {0}	وقت التسليم: {0}	送达时间：{0}	Igihe cyo kugeza: {0}
+📄 My contract, holidays and payslips	📄 Мой договор, отпуск и расчётные листки	📄 Mon contrat, mes congés et mes bulletins de paie	📄 Mi contrato, vacaciones y nóminas	📄 عقدي وإجازاتي وكشوف راتبي	📄 我的合同、假期和工资单	📄 Amasezerano yanjye, ikiruhuko n'impapuro z'umushahara
+My contract, holidays and payslips	Мой договор, отпуск и расчётные листки	Mon contrat, mes congés et mes bulletins de paie	Mi contrato, vacaciones y nóminas	عقدي وإجازاتي وكشوف راتبي	我的合同、假期和工资单	Amasezerano yanjye, ikiruhuko n'impapuro z'umushahara
+← My work	← Моя работа	← Mon travail	← Mi trabajo	← عملي	← 我的工作	← Akazi kanjye
+My contract	Мой договор	Mon contrat	Mi contrato	عقدي	我的合同	Amasezerano yanjye
+Permanent	Бессрочный	CDI	Indefinido	دائم	长期	Ihoraho
+Fixed term	Срочный	CDD	Temporal	محدد المدة	固定期限	Ay'igihe kizwi
+Part time	Неполный день	Temps partiel	Media jornada	دوام جزئي	兼职	Igihe gito
+Internship	Стажировка	Stage	Prácticas	تدريب	实习	Imenyerezamwuga
+Until	До	Jusqu'au	Hasta	حتى	截至	Kugeza
+Hours a week	Часов в неделю	Heures par semaine	Horas por semana	ساعات في الأسبوع	每周工时	Amasaha mu cyumweru
+Holiday days a year	Дней отпуска в год	Jours de congé par an	Días de vacaciones al año	أيام الإجازة في السنة	每年假期天数	Iminsi y'ikiruhuko ku mwaka
+Holiday balance {0}	Остаток отпуска {0}	Solde de congés {0}	Saldo de vacaciones {0}	رصيد الإجازة {0}	{0} 年假期余额	Iminsi y'ikiruhuko isigaye {0}
+Earned so far	Накоплено	Acquis à ce jour	Ganado hasta ahora	المكتسب حتى الآن	目前已累积	Iyo umaze kubona
+Used or asked	Использовано или запрошено	Pris ou demandés	Usados o pedidos	المستخدم أو المطلوب	已用或已申请	Iyakoreshejwe cyangwa yasabwe
+Left	Осталось	Restant	Quedan	المتبقي	剩余	Isigaye
+Days are earned month by month ({0} a year). Holidays count working days (Monday to Friday). Sick days and unpaid days do not use the balance.	Дни накапливаются помесячно ({0} в год). В отпуск считаются рабочие дни (с понедельника по пятницу). Больничные и дни без оплаты не уменьшают остаток.	Les jours s'acquièrent mois après mois ({0} par an). Les congés comptent les jours ouvrés (du lundi au vendredi). Les jours de maladie et sans solde n'utilisent pas le solde.	Los días se ganan mes a mes ({0} al año). Las vacaciones cuentan días laborables (de lunes a viernes). Los días de enfermedad y sin sueldo no usan el saldo.	تُكتسب الأيام شهرًا بشهر ({0} في السنة). تُحسب الإجازة بأيام العمل (من الاثنين إلى الجمعة). أيام المرض والأيام غير المدفوعة لا تُخصم من الرصيد.	假期按月累积（每年 {0} 天）。假期按工作日计算（周一至周五）。病假和无薪假不占用余额。	Iminsi iboneka buri kwezi ({0} ku mwaka). Ikiruhuko kibarwa mu minsi y'akazi (kuwa mbere kugeza kuwa gatanu). Iminsi y'uburwayi n'iyo udahemberwa ntigabanya iminsi isigaye.
+My training	Моё обучение	Mes formations	Mi formación	تدريبي	我的培训	Amahugurwa yanjye
+Safety at the hub and the warehouse	Техника безопасности на сортировочном центре и складе	Sécurité au centre de tri et à l'entrepôt	Seguridad en el centro y el almacén	السلامة في المركز والمستودع	分拣中心和仓库安全	Umutekano ku ihuriro no mu bubiko
+Dangerous goods in parcels	Опасные грузы в посылках	Marchandises dangereuses dans les colis	Mercancías peligrosas en paquetes	البضائع الخطرة في الطرود	包裹中的危险品	Ibintu biteje akaga mu mapaki
+Data protection and privacy	Защита данных и конфиденциальность	Protection des données et vie privée	Protección de datos y privacidad	حماية البيانات والخصوصية	数据保护与隐私	Kurinda amakuru n'ibanga
+Money handling and fraud	Работа с деньгами и мошенничество	Gestion de l'argent et fraude	Manejo de dinero y fraude	التعامل مع المال والاحتيال	资金处理与防欺诈	Gucunga amafaranga n'uburiganya
+Road safety for couriers	Безопасность на дороге для курьеров	Sécurité routière des coursiers	Seguridad vial para mensajeros	السلامة على الطريق لعمال التوصيل	快递员道路安全	Umutekano wo mu muhanda ku batwara amapaki
+First aid	Первая помощь	Premiers secours	Primeros auxilios	الإسعافات الأولية	急救	Ubutabazi bw'ibanze
+valid until {0}	действует до {0}	valable jusqu'au {0}	válido hasta {0}	صالح حتى {0}	有效期至 {0}	bifite agaciro kugeza {0}
+expired	истёк	expiré	caducado	منتهي	已过期	byarangiye
+My payslips	Мои расчётные листки	Mes bulletins de paie	Mis nóminas	كشوف راتبي	我的工资单	Impapuro z'umushahara wanjye
+Gross	Начислено	Brut	Bruto	الإجمالي	税前	Mbere y'imisoro
+Net	К выплате	Net	Neto	الصافي	实发	Nyuma y'imisoro
+No payslips yet.	Расчётных листков пока нет.	Pas encore de bulletin de paie.	Todavía no hay nóminas.	لا توجد كشوف راتب بعد.	还没有工资单。	Nta rupapuro rw'umushahara ruraboneka.
+You still need: {0}. Ask your manager for the course.	Вам ещё нужно: {0}. Попросите руководителя записать вас на курс.	Il vous manque encore : {0}. Demandez la formation à votre responsable.	Todavía necesita: {0}. Pida el curso a su responsable.	ما زلت بحاجة إلى: {0}. اطلب الدورة من مديرك.	你还需要：{0}。请向你的经理申请该课程。	Uracyakeneye: {0}. Saba umuyobozi wawe amahugurwa.
+No courses yet.	Курсов пока нет.	Pas encore de formation.	Todavía no hay cursos.	لا توجد دورات بعد.	还没有课程。	Nta mahugurwa arabaho.
+← My payslips	← Мои расчётные листки	← Mes bulletins de paie	← Mis nóminas	← كشوف راتبي	← 我的工资单	← Impapuro z'umushahara wanjye
+Payslip	Расчётный листок	Bulletin de paie	Nómina	كشف الراتب	工资单	Urupapuro rw'umushahara
+Test mode: the tax and the contributions use the example rules of the country. No money was sent.	Тестовый режим: налог и взносы считаются по примерным правилам страны. Деньги не отправлялись.	Mode test : l'impôt et les cotisations suivent les règles d'exemple du pays. Aucun argent n'a été envoyé.	Modo de prueba: el impuesto y las cotizaciones usan las reglas de ejemplo del país. No se envió dinero.	وضع الاختبار: تستخدم الضريبة والاشتراكات قواعد مثال للبلد. لم تُرسل أي أموال.	测试模式：税款和缴费按该国的示例规则计算。没有发送任何资金。	Uburyo bw'igerageza: umusoro n'imisanzu bikoresha amategeko y'urugero y'igihugu. Nta mafaranga yoherejwe.
+Line	Строка	Ligne	Línea	البند	项目	Umurongo
+Details	Подробности	Détails	Detalles	التفاصيل	详情	Ibisobanuro
+Salary	Оклад	Salaire	Salario	الراتب	工资	Umushahara
+Overtime x1.5	Сверхурочные ×1,5	Heures supplémentaires ×1,5	Horas extra ×1,5	العمل الإضافي ×1.5	加班 ×1.5	Amasaha y'inyongera ×1,5
+Unpaid time off	Отпуск без оплаты	Congé sans solde	Permiso sin sueldo	إجازة غير مدفوعة	无薪假	Ikiruhuko kidahemberwa
+Hours worked	Отработано часов	Heures travaillées	Horas trabajadas	ساعات العمل	工作时长	Amasaha yakozwe
+Income tax (TDS)	Подоходный налог (TDS)	Impôt sur le revenu (TDS)	Impuesto sobre la renta (TDS)	ضريبة الدخل (TDS)	所得税（TDS）	Umusoro ku nyungu (TDS)
+example rule	примерное правило	règle d'exemple	regla de ejemplo	قاعدة مثال	示例规则	itegeko ry'urugero
+Social contributions	Социальные взносы	Cotisations sociales	Cotizaciones sociales	الاشتراكات الاجتماعية	社会保险缴费	Imisanzu y'ubwiteganyirize
+Gross pay	Начислено всего	Salaire brut	Salario bruto	إجمالي الأجر	应发工资	Umushahara mbumbe
+Net pay	К выплате	Salaire net	Salario neto	صافي الأجر	实发工资	Umushahara uhembwa
+{0}/{1} days	{0}/{1} дн.	{0}/{1} jours	{0}/{1} días	{0}/{1} يوم	{0}/{1} 天	iminsi {0}/{1}
+Worked {0} h {1} min · planned {2} h · overtime {3} h {4} min · unpaid days {5} · paid {6}	Отработано {0} ч {1} мин · по плану {2} ч · сверхурочно {3} ч {4} мин · дней без оплаты {5} · выплачено {6}	Travaillé {0} h {1} min · prévu {2} h · heures sup. {3} h {4} min · jours sans solde {5} · payé le {6}	Trabajado {0} h {1} min · previsto {2} h · horas extra {3} h {4} min · días sin sueldo {5} · pagado {6}	عمل {0} س {1} د · المخطط {2} س · إضافي {3} س {4} د · أيام غير مدفوعة {5} · دُفع {6}	已工作 {0} 小时 {1} 分 · 计划 {2} 小时 · 加班 {3} 小时 {4} 分 · 无薪天数 {5} · 发放日 {6}	Yakoze amasaha {0} n'iminota {1} · byari biteganyijwe amasaha {2} · inyongera amasaha {3} n'iminota {4} · iminsi idahemberwa {5} · yishyuwe {6}
+Annual	Ежегодный отпуск	Congé annuel	Vacaciones anuales	إجازة سنوية	年假	Ikiruhuko cy'umwaka
+Holiday (paid)	Отпуск (оплачиваемый)	Congé (payé)	Vacaciones (pagadas)	إجازة (مدفوعة)	假期（带薪）	Ikiruhuko (gihemberwa)
+Sick	Больничный	Maladie	Enfermedad	مرضية	病假	Uburwayi
+Unpaid	Без оплаты	Sans solde	Sin sueldo	غير مدفوعة	无薪	Kidahemberwa
+Kind	Вид	Type	Tipo	النوع	类型	Ubwoko
+Leaving	Отправляется	Au départ	Sale	مغادر	发出	Birasohoka
+Arriving	Прибывает	À l'arrivée	Llega	قادم	到达	Biraje
+Parcels of this town ({0})	Посылки этого города ({0})	Colis de cette ville ({0})	Paquetes de esta ciudad ({0})	طرود هذه المدينة ({0})	本城镇的包裹（{0}）	Amapaki y'uyu mujyi ({0})
+All my abilities ({0})	Все мои права ({0})	Tous mes droits ({0})	Todos mis permisos ({0})	كل صلاحياتي ({0})	我的全部权限（{0}）	Uburenganzira bwanjye bwose ({0})
+See analytics and hub forecasts of my branch	Видеть аналитику и прогнозы центров своего филиала	Voir les analyses et prévisions des centres de ma branche	Ver análisis y previsiones de los centros de mi rama	عرض التحليلات وتوقعات المراكز لفرعي	查看本分支的分析和分拣中心预测	Kureba isesengura n'iteganyagihe by'amahuriro y'ishami ryanjye
+Your contract was saved	Ваш договор сохранён	Votre contrat est enregistré	Su contrato se ha guardado	تم حفظ عقدك	你的合同已保存	Amasezerano yawe yabitswe
+Open 'My work' to see it.	Откройте «Моя работа», чтобы его увидеть.	Ouvrez « Mon travail » pour le voir.	Abra «Mi trabajo» para verlo.	افتح «عملي» لرؤيته.	打开“我的工作”查看。	Fungura 'Akazi kanjye' urebe.
+Your payslip is ready	Ваш расчётный листок готов	Votre bulletin de paie est prêt	Su nómina está lista	كشف راتبك جاهز	你的工资单已生成	Urupapuro rw'umushahara wawe rwabonetse
+You help in another office	Вы помогаете в другом офисе	Vous aidez dans un autre bureau	Ayuda en otra oficina	أنت تساعد في مكتب آخر	你将在另一个办公室帮忙	Urafasha mu kindi biro
+We could not read your position, so your manager sees this clock-in as 'no location'.	Мы не смогли определить ваше местоположение, поэтому руководитель увидит эту отметку как «без места».	Nous n'avons pas pu lire votre position : votre responsable verra ce pointage comme « sans position ».	No pudimos leer su posición, así que su responsable verá este fichaje como «sin ubicación».	لم نتمكن من قراءة موقعك، لذا سيرى مديرك هذا التسجيل كـ«بلا موقع».	我们无法读取你的位置，因此你的经理会看到此次打卡为“无位置”。	Ntitwashoboye kumenya aho uri, bityo umuyobozi wawe azabona iki kwiyandikisha nka 'nta hantu'.
+You clocked in away from your office (remote work is allowed in your office).	Вы отметились не в офисе (в вашем офисе разрешена удалённая работа).	Vous avez pointé hors de votre bureau (le télétravail est autorisé dans votre bureau).	Ha fichado fuera de su oficina (en su oficina se permite el teletrabajo).	سجّلت الحضور بعيدًا عن مكتبك (العمل عن بُعد مسموح في مكتبك).	你在办公室以外打卡（你的办公室允许远程工作）。	Wiyandikishije uri kure y'ibiro byawe (gukorera kure biremewe mu biro byawe).
+You are {0} from your office. Please clock in at the office.	Вы в {0} от офиса. Пожалуйста, отметьтесь в офисе.	Vous êtes à {0} de votre bureau. Merci de pointer au bureau.	Está a {0} de su oficina. Fiche en la oficina, por favor.	أنت على بُعد {0} من مكتبك. يرجى تسجيل الحضور في المكتب.	你距离办公室 {0}。请在办公室打卡。	Uri kure y'ibiro byawe ho {0}. Iyandikishe uri ku biro.
+Please choose the kind of time off.	Пожалуйста, выберите вид отпуска.	Veuillez choisir le type d'absence.	Elija el tipo de ausencia.	يرجى اختيار نوع الإجازة.	请选择休假类型。	Hitamo ubwoko bw'ikiruhuko.
+You have {0} holiday days left this year; this asks for {1}.	В этом году у вас осталось {0} дн. отпуска, а запрошено {1}.	Il vous reste {0} jours de congé cette année ; cette demande en compte {1}.	Le quedan {0} días de vacaciones este año; esta solicitud pide {1}.	تبقّى لك {0} يوم إجازة هذا العام؛ وهذا الطلب يحتاج {1}.	你今年还剩 {0} 天假期；本次申请需要 {1} 天。	Usigaranye iminsi {0} y'ikiruhuko uyu mwaka; iki gisabwa ni iminsi {1}.
+Live check (recommended): three photos one after the other	Проверка «живого» человека (рекомендуется): три фото подряд	Vérification en direct (recommandée) : trois photos l'une après l'autre	Comprobación en vivo (recomendada): tres fotos una tras otra	التحقق المباشر (موصى به): ثلاث صور متتالية	活体检测（推荐）：连续拍三张照片	Igenzura ry'ako kanya (ni byiza): amafoto atatu akurikirana
+It shows a person that you are really in front of the camera, not a printed photo.	Так проверяющий видит, что перед камерой действительно вы, а не распечатанное фото.	Cela montre à la personne qui vérifie que vous êtes vraiment devant la caméra, et non une photo imprimée.	Muestra a quien revisa que usted está realmente frente a la cámara, no una foto impresa.	يُظهر ذلك للمراجع أنك فعلًا أمام الكاميرا وليست صورة مطبوعة.	这能让审核人员看到真的是你在镜头前，而不是打印的照片。	Bigaragaza ko uri imbere ya kamera koko, atari ifoto yacapwe.
+1. Look at the camera	1. Посмотрите в камеру	1. Regardez la caméra	1. Mire a la cámara	1. انظر إلى الكاميرا	1. 看向镜头	1. Reba kuri kamera
+{0}. Move your face closer to the camera	{0}. Приблизьте лицо к камере	{0}. Approchez votre visage de la caméra	{0}. Acerque la cara a la cámara	{0}. قرّب وجهك من الكاميرا	{0}. 把脸靠近镜头	{0}. Egereza isura yawe kamera
+{0}. Turn or move your head to your left	{0}. Поверните или сдвиньте голову влево	{0}. Tournez ou déplacez la tête vers votre gauche	{0}. Gire o mueva la cabeza hacia su izquierda	{0}. أدر رأسك أو حرّكه إلى يسارك	{0}. 把头转向或移向你的左边	{0}. Hindukiza cyangwa wimurire umutwe ibumoso bwawe
+{0}. Turn or move your head to your right	{0}. Поверните или сдвиньте голову вправо	{0}. Tournez ou déplacez la tête vers votre droite	{0}. Gire o mueva la cabeza hacia su derecha	{0}. أدر رأسك أو حرّكه إلى يمينك	{0}. 把头转向或移向你的右边	{0}. Hindukiza cyangwa wimurire umutwe iburyo bwawe
+The live photos could not be read. Please try again.	Не удалось прочитать фото проверки. Попробуйте ещё раз.	Les photos en direct n'ont pas pu être lues. Veuillez réessayer.	No se pudieron leer las fotos en vivo. Inténtelo de nuevo.	تعذّرت قراءة الصور المباشرة. يرجى المحاولة مرة أخرى.	无法读取实时照片，请重试。	Amafoto y'ako kanya ntiyasomwe. Ongera ugerageze.
+Ask our support team	Спросите нашу поддержку	Demandez à notre équipe d'assistance	Pregunte a nuestro equipo de soporte	اسأل فريق الدعم	咨询我们的客服团队	Baza itsinda ryacu ry'abafasha
+New question	Новый вопрос	Nouvelle question	Nueva pregunta	سؤال جديد	新问题	Ikibazo gishya
+We answer within 24 hours (4 hours when it is urgent). You get a message when we answer.	Мы отвечаем в течение 24 часов (4 часов, если срочно). Вы получите сообщение, когда мы ответим.	Nous répondons sous 24 heures (4 heures si c'est urgent). Vous recevez un message quand nous répondons.	Respondemos en 24 horas (4 horas si es urgente). Recibirá un mensaje cuando respondamos.	نجيب خلال 24 ساعة (4 ساعات إذا كان الأمر عاجلًا). ستصلك رسالة عند الرد.	我们会在 24 小时内回复（紧急情况 4 小时内）。回复时你会收到消息。	Dusubiza mu masaha 24 (amasaha 4 iyo byihutirwa). Uzabona ubutumwa igihe dusubije.
+About	Тема	Sujet	Tema	الموضوع	关于	Ibyerekeye
+An order	Заказ	Une commande	Un pedido	طلب شراء	订单	Itumiza
+A parcel	Посылка	Un colis	Un paquete	طرد	包裹	Ipaki
+A travel ticket	Билет	Un billet de voyage	Un billete	تذكرة سفر	车票或机票	Itike y'urugendo
+Money and Yo Pay	Деньги и Yo Pay	Argent et Yo Pay	Dinero y Yo Pay	المال وYo Pay	资金与 Yo Pay	Amafaranga na Yo Pay
+My account	Мой аккаунт	Mon compte	Mi cuenta	حسابي	我的账户	Konti yanjye
+Something else	Другое	Autre chose	Otra cosa	شيء آخر	其他	Ikindi
+Number (order, parcel or ticket)	Номер (заказа, посылки или билета)	Numéro (commande, colis ou billet)	Número (pedido, paquete o billete)	الرقم (طلب أو طرد أو تذكرة)	编号（订单、包裹或车票）	Nomero (y'itumiza, ipaki cyangwa itike)
+Short title	Короткий заголовок	Titre court	Título corto	عنوان قصير	简短标题	Umutwe mugufi
+Your question	Ваш вопрос	Votre question	Su pregunta	سؤالك	你的问题	Ikibazo cyawe
+It is urgent (a parcel is at the door, money is missing)	Срочно (посылка у двери, пропали деньги)	C'est urgent (un colis est à la porte, de l'argent manque)	Es urgente (un paquete está en la puerta, falta dinero)	الأمر عاجل (طرد عند الباب أو أموال مفقودة)	紧急（包裹已在门口、资金缺失）	Birihutirwa (ipaki iri ku muryango, amafaranga yabuze)
+Send	Отправить	Envoyer	Enviar	إرسال	发送	Ohereza
+My questions	Мои вопросы	Mes questions	Mis preguntas	أسئلتي	我的问题	Ibibazo byanjye
+No questions yet.	Вопросов пока нет.	Pas encore de question.	Todavía no hay preguntas.	لا توجد أسئلة بعد.	还没有问题。	Nta kibazo kirabaho.
+Open	Открыт	Ouverte	Abierta	مفتوح	未处理	Gifunguye
+Answered	Есть ответ	Répondue	Respondida	تمت الإجابة	已回复	Cyasubijwe
+Closed	Закрыт	Fermée	Cerrada	مغلق	已关闭	Cyafunzwe
+Waiting	Ожидает	En attente	En espera	قيد الانتظار	等待中	Birategereje
+Paid	Выплачено	Payé	Pagado	مدفوع	已支付	Byishyuwe
+Refused	Отказано	Refusé	Rechazado	مرفوض	已拒绝	Byanzwe
+Help Centre (answers to common questions)	Справочный центр (ответы на частые вопросы)	Centre d'aide (réponses aux questions fréquentes)	Centro de ayuda (respuestas a preguntas frecuentes)	مركز المساعدة (إجابات الأسئلة الشائعة)	帮助中心（常见问题解答）	Ikigo cy'ubufasha (ibisubizo by'ibibazo bikunze kubazwa)
+← My questions	← Мои вопросы	← Mes questions	← Mis preguntas	← أسئلتي	← 我的问题	← Ibibazo byanjye
+Write more	Написать ещё	Écrire encore	Escribir más	اكتب المزيد	继续留言	Andika ibindi
+My problem is solved - close	Моя проблема решена — закрыть	Mon problème est résolu - fermer	Mi problema está resuelto - cerrar	تم حل مشكلتي - إغلاق	我的问题已解决 - 关闭	Ikibazo cyanjye cyakemutse - funga
+· answer promised by	· ответ обещан до	· réponse promise avant	· respuesta prometida antes de	· الرد الموعود قبل	· 承诺回复时间	· igisubizo cyasezeranyijwe mbere ya
+Thank you! We got your question.	Спасибо! Мы получили ваш вопрос.	Merci ! Nous avons reçu votre question.	¡Gracias! Hemos recibido su pregunta.	شكرًا! وصلنا سؤالك.	谢谢！我们已收到你的问题。	Murakoze! Twakiriye ikibazo cyanyu.
+Sent.	Отправлено.	Envoyé.	Enviado.	تم الإرسال.	已发送。	Byoherejwe.
+Please choose what your question is about.	Пожалуйста, выберите тему вопроса.	Veuillez choisir le sujet de votre question.	Elija de qué trata su pregunta.	يرجى اختيار موضوع سؤالك.	请选择你的问题类型。	Hitamo icyo ikibazo cyawe kireba.
+Please write a short title and your question.	Напишите короткий заголовок и ваш вопрос.	Écrivez un titre court et votre question.	Escriba un título corto y su pregunta.	يرجى كتابة عنوان قصير وسؤالك.	请填写简短标题和你的问题。	Andika umutwe mugufi n'ikibazo cyawe.
+You have 5 open questions. Please wait for our answers first.	У вас 5 открытых вопросов. Пожалуйста, сначала дождитесь наших ответов.	Vous avez 5 questions ouvertes. Veuillez d'abord attendre nos réponses.	Tiene 5 preguntas abiertas. Espere primero nuestras respuestas.	لديك 5 أسئلة مفتوحة. يرجى انتظار إجاباتنا أولًا.	你有 5 个未处理的问题。请先等待我们的回复。	Ufite ibibazo 5 bitarasubizwa. Banza utegereze ibisubizo byacu.
+We got your question: {0}	Мы получили ваш вопрос: {0}	Nous avons reçu votre question : {0}	Hemos recibido su pregunta: {0}	وصلنا سؤالك: {0}	我们已收到你的问题：{0}	Twakiriye ikibazo cyawe: {0}
+Question not found.	Вопрос не найден.	Question introuvable.	Pregunta no encontrada.	لم يتم العثور على السؤال.	未找到该问题。	Ikibazo ntikibonetse.
+Please write your answer.	Пожалуйста, напишите ответ.	Veuillez écrire votre réponse.	Escriba su respuesta.	يرجى كتابة ردك.	请填写你的回复。	Andika igisubizo cyawe.
+Answer to your question {0}	Ответ на ваш вопрос {0}	Réponse à votre question {0}	Respuesta a su pregunta {0}	رد على سؤالك {0}	你的问题 {0} 已有回复	Igisubizo cy'ikibazo cyawe {0}
+A cancelled order has no invoice.	У отменённого заказа нет счёта.	Une commande annulée n'a pas de facture.	Un pedido cancelado no tiene factura.	الطلب الملغى ليس له فاتورة.	已取消的订单没有发票。	Itumiza ryahagaritswe nta nyemezabuguzi rigira.
+🖨 Print / PDF	🖨 Печать / PDF	🖨 Imprimer / PDF	🖨 Imprimir / PDF	🖨 طباعة / PDF	🖨 打印 / PDF	🖨 Capa / PDF
+⇩ E-invoice (UBL 2.1 XML)	⇩ Электронный счёт (UBL 2.1 XML)	⇩ Facture électronique (UBL 2.1 XML)	⇩ Factura electrónica (UBL 2.1 XML)	⇩ فاتورة إلكترونية (UBL 2.1 XML)	⇩ 电子发票（UBL 2.1 XML）	⇩ Inyemezabuguzi y'ikoranabuhanga (UBL 2.1 XML)
+Tax invoice	Налоговый счёт-фактура	Facture fiscale	Factura fiscal	فاتورة ضريبية	税务发票	Inyemezabuguzi y'umusoro
+Bill of supply	Счёт без налога (bill of supply)	Facture sans taxe (bill of supply)	Factura sin impuesto (bill of supply)	فاتورة توريد بدون ضريبة	供货单（不含税）	Inyemezabuguzi idafite umusoro
+Credit note	Корректировочный счёт (возврат)	Avoir	Nota de crédito	إشعار دائن	贷项通知单	Inyandiko yo gusubiza amafaranga
+Date:	Дата:	Date :	Fecha:	التاريخ:	日期：	Itariki:
+· Order	· Заказ	· Commande	· Pedido	· الطلب	· 订单	· Itumiza
+Bill to	Покупатель	Facturé à	Facturar a	الفاتورة باسم	开票给	Uwishyuzwa
+Item	Товар	Article	Artículo	الصنف	商品	Igicuruzwa
+Rate	Ставка	Taux	Tipo	النسبة	税率	Igipimo
+Tax {0} % on {1}	Налог {0} % с {1}	Taxe {0} % sur {1}	Impuesto {0} % sobre {1}	ضريبة {0} % على {1}	按 {0}% 计税，计税金额 {1}	Umusoro wa {0} % kuri {1}
+Prices include the tax. Rates are the example rates of the demo (India, GST after 22 September 2025). Demo company, demo tax number.	Цены включают налог. Ставки — примерные ставки демо-версии (Индия, GST после 22 сентября 2025 г.). Демо-компания, демо-номер налогоплательщика.	Les prix incluent la taxe. Les taux sont les taux d'exemple de la démo (Inde, GST après le 22 septembre 2025). Société et numéro fiscal de démonstration.	Los precios incluyen el impuesto. Los tipos son los de ejemplo de la demo (India, GST desde el 22 de septiembre de 2025). Empresa y número fiscal de demostración.	الأسعار تشمل الضريبة. النسب هي نسب مثال للعرض التجريبي (الهند، ضريبة السلع والخدمات بعد 22 سبتمبر 2025). شركة ورقم ضريبي تجريبيان.	价格含税。税率为演示用的示例税率（印度，2025 年 9 月 22 日之后的 GST）。演示公司，演示税号。	Ibiciro birimo umusoro. Ibipimo ni iby'urugero bya demo (Ubuhinde, GST nyuma ya 22 Nzeri 2025). Ikigo n'inomero y'umusoro by'igerageza.
+Invoice not found.	Счёт не найден.	Facture introuvable.	Factura no encontrada.	لم يتم العثور على الفاتورة.	未找到发票。	Inyemezabuguzi ntiyabonetse.
+Invoices of order {0}	Счета заказа {0}	Factures de la commande {0}	Facturas del pedido {0}	فواتير الطلب {0}	订单 {0} 的发票	Inyemezabuguzi z'itumiza {0}
+← Parcel	← Посылка	← Colis	← Paquete	← الطرد	← 包裹	← Ipaki
+Lost or damaged parcel	Потерянная или повреждённая посылка	Colis perdu ou abîmé	Paquete perdido o dañado	طرد مفقود أو تالف	包裹丢失或损坏	Ipaki yatakaye cyangwa yangiritse
+This parcel is not insured: we pay up to	Посылка не застрахована: мы выплатим до	Ce colis n'est pas assuré : nous payons jusqu'à	Este paquete no está asegurado: pagamos hasta	هذا الطرد غير مؤمَّن: ندفع حتى	此包裹未投保：我们最多赔付	Iyi paki ntiyishingiwe: twishyura kugeza kuri
+(at most {0} without insurance).	(не более {0} без страховки).	(au plus {0} sans assurance).	(como máximo {0} sin seguro).	(بحد أقصى {0} بدون تأمين).	（未投保最多 {0}）。	(ntibirenga {0} nta bwishingizi).
+This parcel is	Эта посылка	Ce colis est	Este paquete está	هذا الطرد	此包裹已	Iyi paki
+insured	застрахована	assuré	asegurado	مؤمَّن	投保	irishingiwe
+: we pay up to its declared value,	: мы выплатим до объявленной ценности,	 : nous payons jusqu'à sa valeur déclarée,	: pagamos hasta su valor declarado,	: ندفع حتى قيمته المعلنة،	：我们最多按申报价值赔付，	: twishyura kugeza ku gaciro kayo kamenyekanishijwe,
+Damaged: tell us within 7 days of the delivery, with what is broken.	Повреждение: сообщите в течение 7 дней после доставки, что сломано.	Abîmé : prévenez-nous dans les 7 jours suivant la livraison, en disant ce qui est cassé.	Dañado: avísenos en los 7 días siguientes a la entrega, indicando qué está roto.	تالف: أخبرنا خلال 7 أيام من التسليم بما هو مكسور.	损坏：请在送达后 7 天内告诉我们哪里损坏。	Yangiritse: tubwire mu minsi 7 nyuma yo kuyakira, uvuge icyangiritse.
+Lost: you can claim 3 days after the expected day.	Потеря: заявить можно через 3 дня после ожидаемой даты.	Perdu : vous pouvez réclamer 3 jours après la date prévue.	Perdido: puede reclamar 3 días después de la fecha prevista.	مفقود: يمكنك المطالبة بعد 3 أيام من اليوم المتوقع.	丢失：可在预计送达日 3 天后申请。	Yatakaye: ushobora gusaba indishyi nyuma y'iminsi 3 uhereye ku munsi wari uteganyijwe.
+A person of our support team decides; the money goes to your Yo Pay wallet.	Решение принимает сотрудник поддержки; деньги поступят в ваш кошелёк Yo Pay.	Une personne de notre équipe d'assistance décide ; l'argent va sur votre portefeuille Yo Pay.	Una persona de nuestro equipo de soporte decide; el dinero va a su monedero Yo Pay.	يقرر أحد أفراد فريق الدعم؛ وتذهب الأموال إلى محفظة Yo Pay الخاصة بك.	由我们的客服人员决定；款项会进入你的 Yo Pay 钱包。	Umuntu wo mu itsinda ry'abafasha ni we ufata icyemezo; amafaranga ajya mu gikapu cyawe cya Yo Pay.
+Lost parcel	Посылка потеряна	Colis perdu	Paquete perdido	طرد مفقود	包裹丢失	Ipaki yatakaye
+Damaged parcel	Посылка повреждена	Colis abîmé	Paquete dañado	طرد تالف	包裹损坏	Ipaki yangiritse
+Amount you claim (₹)	Сумма требования (₹)	Montant réclamé (₹)	Importe que reclama (₹)	المبلغ المطالب به (₹)	申请金额（₹）	Amafaranga usaba (₹)
+Tell us what happened	Расскажите, что случилось	Dites-nous ce qui s'est passé	Cuéntenos qué pasó	أخبرنا بما حدث	告诉我们发生了什么	Tubwire ibyabaye
+Send the claim	Отправить заявление	Envoyer la réclamation	Enviar la reclamación	إرسال المطالبة	提交申请	Ohereza ubusabe
+My claims for this parcel	Мои заявления по этой посылке	Mes réclamations pour ce colis	Mis reclamaciones de este paquete	مطالباتي لهذا الطرد	我对此包裹的申请	Ubusabe bwanjye kuri iyi paki
+Please choose: lost or damaged.	Пожалуйста, выберите: потеряна или повреждена.	Veuillez choisir : perdu ou abîmé.	Elija: perdido o dañado.	يرجى الاختيار: مفقود أو تالف.	请选择：丢失或损坏。	Hitamo: yatakaye cyangwa yangiritse.
+Please tell us what happened (at least a sentence).	Пожалуйста, расскажите, что случилось (хотя бы одно предложение).	Dites-nous ce qui s'est passé (au moins une phrase).	Cuéntenos qué pasó (al menos una frase).	يرجى إخبارنا بما حدث (جملة على الأقل).	请告诉我们发生了什么（至少一句话）。	Tubwire ibyabaye (nibura interuro imwe).
+Please write the amount you claim as a number.	Укажите сумму требования числом.	Écrivez le montant réclamé en chiffres.	Escriba el importe que reclama como número.	يرجى كتابة المبلغ المطالب به كرقم.	请用数字填写申请金额。	Andika amafaranga usaba mu mibare.
+Only the sender can claim for a parcel.	Заявить о посылке может только отправитель.	Seul l'expéditeur peut réclamer pour un colis.	Solo el remitente puede reclamar por un paquete.	يمكن للمرسل فقط المطالبة بشأن الطرد.	只有寄件人可以为包裹申请赔偿。	Uwohereje ipaki wenyine ni we ushobora gusaba indishyi.
+A damaged parcel can be claimed after it is delivered.	О повреждении можно заявить после доставки.	Un colis abîmé peut être réclamé après sa livraison.	Un paquete dañado se puede reclamar después de la entrega.	يمكن المطالبة بالطرد التالف بعد تسليمه.	损坏的包裹需在送达后申请。	Ipaki yangiritse isabirwa indishyi imaze kugezwa.
+Damage must be reported within {0} days of the delivery.	О повреждении нужно сообщить в течение {0} дн. после доставки.	Les dommages doivent être signalés dans les {0} jours suivant la livraison.	Los daños deben comunicarse en los {0} días siguientes a la entrega.	يجب الإبلاغ عن التلف خلال {0} أيام من التسليم.	损坏须在送达后 {0} 天内报告。	Iyangirika rigomba kumenyeshwa mu minsi {0} nyuma yo kugezwa.
+This parcel is not lost.	Эта посылка не потеряна.	Ce colis n'est pas perdu.	Este paquete no está perdido.	هذا الطرد ليس مفقودًا.	此包裹未丢失。	Iyi paki ntiyatakaye.
+A parcel counts as lost {0} days after the expected day.	Посылка считается потерянной через {0} дн. после ожидаемой даты.	Un colis est considéré comme perdu {0} jours après la date prévue.	Un paquete se considera perdido {0} días después de la fecha prevista.	يُعتبر الطرد مفقودًا بعد {0} أيام من اليوم المتوقع.	包裹在预计送达日 {0} 天后才算丢失。	Ipaki ifatwa nk'iyatakaye nyuma y'iminsi {0} uhereye ku munsi wari uteganyijwe.
+You can claim at most {0} for this parcel.	По этой посылке можно заявить не более {0}.	Vous pouvez réclamer au plus {0} pour ce colis.	Puede reclamar como máximo {0} por este paquete.	يمكنك المطالبة بحد أقصى {0} لهذا الطرد.	此包裹最多可申请 {0}。	Kuri iyi paki ushobora gusaba ntibirenze {0}.
+There is a claim for this parcel already.	По этой посылке уже есть заявление.	Il y a déjà une réclamation pour ce colis.	Ya hay una reclamación para este paquete.	توجد مطالبة لهذا الطرد بالفعل.	此包裹已有一项申请。	Iyi paki isanzwe ifite ubusabe.
+Claim refused: {0}	Заявление отклонено: {0}	Réclamation refusée : {0}	Reclamación rechazada: {0}	رُفضت المطالبة: {0}	申请被拒绝：{0}	Ubusabe bwanzwe: {0}
+Claim paid: {0}	Заявление выплачено: {0}	Réclamation payée : {0}	Reclamación pagada: {0}	تم دفع المطالبة: {0}	赔偿已支付：{0}	Ubusabe bwishyuwe: {0}
+Your claim was sent. A person of our support team decides within 5 working days.	Ваше заявление отправлено. Сотрудник поддержки примет решение в течение 5 рабочих дней.	Votre réclamation est envoyée. Une personne de notre équipe décide sous 5 jours ouvrés.	Su reclamación se envió. Una persona de nuestro equipo decide en 5 días laborables.	تم إرسال مطالبتك. سيقرر أحد أفراد فريق الدعم خلال 5 أيام عمل.	你的申请已提交。客服人员会在 5 个工作日内作出决定。	Ubusabe bwawe bwoherejwe. Umuntu wo mu itsinda ry'abafasha azafata icyemezo mu minsi 5 y'akazi.
+Safety check	Проверка безопасности	Contrôle de sécurité	Control de seguridad	فحص الأمان	安全审核	Igenzura ry'umutekano
+Returned: {0}	Возвращено: {0}	Retourné : {0}	Devuelto: {0}	تمت الإعادة: {0}	已退回：{0}	Byasubijwe: {0}
+Tax and invoices	Налоги и счета	Taxes et factures	Impuestos y facturas	الضرائب والفواتير	税务与发票	Imisoro n'inyemezabuguzi
+A seller who is registered for GST gives	Продавец, зарегистрированный по GST, выдаёт	Un vendeur inscrit à la GST émet des	Un vendedor registrado en el GST emite	البائع المسجل في ضريبة السلع والخدمات يصدر	已登记 GST 的卖家开具	Umucuruzi wiyandikishije muri GST atanga
+tax invoices	налоговые счета-фактуры	factures fiscales	facturas fiscales	فواتير ضريبية	税务发票	inyemezabuguzi z'umusoro
+; a seller who is not registered gives	; продавец без регистрации выдаёт	 ; un vendeur non inscrit émet des	; un vendedor no registrado emite	؛ والبائع غير المسجل يصدر	；未登记的卖家开具	; umucuruzi utiyandikishije atanga
+bills of supply	счета без налога	factures sans taxe	facturas sin impuesto	فواتير توريد	供货单	inyemezabuguzi zidafite umusoro
+without tax. We check the number with its check character.	без налога. Мы проверяем номер по его контрольному символу.	sans taxe. Nous vérifions le numéro grâce à son caractère de contrôle.	sin impuesto. Comprobamos el número con su carácter de control.	بدون ضريبة. نتحقق من الرقم بواسطة حرف التحقق.	（不含税）。我们会用校验字符检查税号。	nta musoro. Tugenzura inomero dukoresheje inyuguti yayo y'igenzura.
+GSTIN (leave empty if you are not registered)	GSTIN (оставьте пустым, если вы не зарегистрированы)	GSTIN (laissez vide si vous n'êtes pas inscrit)	GSTIN (déjelo vacío si no está registrado)	رقم GSTIN (اتركه فارغًا إذا لم تكن مسجلًا)	GSTIN（未登记请留空）	GSTIN (siga ubusa niba utiyandikishije)
+Now:	Сейчас:	Actuellement :	Ahora:	الآن:	当前：	Ubu:
+registered	зарегистрирован	inscrit	registrado	مسجل	已登记	yiyandikishije
+not registered	не зарегистрирован	non inscrit	no registrado	غير مسجل	未登记	ntiyiyandikishije
+My invoices	Мои счета	Mes factures	Mis facturas	فواتيري	我的发票	Inyemezabuguzi zanjye
+Only the owner of the shop can change this.	Изменить это может только владелец магазина.	Seul le propriétaire de la boutique peut modifier cela.	Solo el propietario de la tienda puede cambiar esto.	يمكن لمالك المتجر فقط تغيير هذا.	只有店主可以更改此项。	Nyir'iduka wenyine ni we ushobora kubihindura.
+This tax number is not correct. Please check it (the last character is a check digit).	Этот налоговый номер неверен. Проверьте его (последний символ — контрольный).	Ce numéro fiscal n'est pas correct. Vérifiez-le (le dernier caractère est un caractère de contrôle).	Este número fiscal no es correcto. Revíselo (el último carácter es de control).	هذا الرقم الضريبي غير صحيح. يرجى التحقق منه (الحرف الأخير حرف تحقق).	该税号不正确。请检查（最后一个字符是校验位）。	Iyi nomero y'umusoro si yo. Yigenzure (inyuguti ya nyuma ni iyo kugenzura).
+Saved: your invoices are tax invoices now.	Сохранено: теперь ваши счета — налоговые счета-фактуры.	Enregistré : vos factures sont désormais des factures fiscales.	Guardado: sus facturas ahora son facturas fiscales.	تم الحفظ: فواتيرك الآن فواتير ضريبية.	已保存：你的发票现在是税务发票。	Byabitswe: inyemezabuguzi zawe ubu ni iz'umusoro.
+Please ask the receiver to sign.	Попросите получателя расписаться.	Demandez au destinataire de signer.	Pida al destinatario que firme.	يرجى أن تطلب من المستلم التوقيع.	请让收件人签名。	Saba uwakira gusinya.
+The signature could not be read. Please try again.	Не удалось прочитать подпись. Попробуйте ещё раз.	La signature n'a pas pu être lue. Veuillez réessayer.	No se pudo leer la firma. Inténtelo de nuevo.	تعذّرت قراءة التوقيع. يرجى المحاولة مرة أخرى.	无法读取签名，请重试。	Umukono ntiwasomwe. Ongera ugerageze.
+Please ask the receiver to sign (the box is empty).	Попросите получателя расписаться (поле пустое).	Demandez au destinataire de signer (le cadre est vide).	Pida al destinatario que firme (el recuadro está vacío).	يرجى أن تطلب من المستلم التوقيع (المربع فارغ).	请让收件人签名（签名框为空）。	Saba uwakira gusinya (agasanduku karimo ubusa).
+You can add the signature only to a parcel you delivered.	Подпись можно добавить только к посылке, которую доставили вы.	Vous ne pouvez ajouter la signature qu'à un colis que vous avez livré.	Solo puede añadir la firma a un paquete que usted entregó.	يمكنك إضافة التوقيع فقط لطرد قمت بتسليمه.	只能为你送达的包裹添加签名。	Ushobora kongeraho umukono ku ipaki wagejeje gusa.
+This parcel has a signature already.	У этой посылки уже есть подпись.	Ce colis a déjà une signature.	Este paquete ya tiene una firma.	هذا الطرد لديه توقيع بالفعل.	此包裹已有签名。	Iyi paki isanzwe ifite umukono.
+Signature saved.	Подпись сохранена.	Signature enregistrée.	Firma guardada.	تم حفظ التوقيع.	签名已保存。	Umukono wabitswe.
+Signature of the receiver	Подпись получателя	Signature du destinataire	Firma del destinatario	توقيع المستلم	收件人签名	Umukono w'uwakira
+Sign here with a finger	Распишитесь здесь пальцем	Signez ici avec le doigt	Firme aquí con el dedo	وقّع هنا بإصبعك	请用手指在此签名	Sinya hano ukoresheje urutoki
+Clear	Очистить	Effacer	Borrar	مسح	清除	Siba
+An HS code has 6 digits (for example 610910 for cotton T-shirts).	Код HS состоит из 6 цифр (например, 610910 — хлопковые футболки).	Un code SH a 6 chiffres (par exemple 610910 pour les t-shirts en coton).	Un código SA tiene 6 dígitos (por ejemplo 610910 para camisetas de algodón).	يتكون رمز النظام المنسق من 6 أرقام (مثل 610910 للقمصان القطنية).	HS 编码有 6 位数字（例如棉质 T 恤为 610910）。	Kode ya HS igira imibare 6 (urugero 610910 ku mipira y'ipamba).
+Courier companies that deliver Yo parcels where we have no couriers send their tracking events to us. Ask Yo Delivery for a key: you get a key id and a secret (shown once).	Курьерские компании, которые доставляют посылки Yo там, где у нас нет курьеров, присылают нам события отслеживания. Попросите у Yo Delivery ключ: вы получите идентификатор ключа и секрет (показывается один раз).	Les sociétés de livraison qui livrent les colis Yo là où nous n'avons pas de coursiers nous envoient leurs événements de suivi. Demandez une clé à Yo Delivery : vous recevez un identifiant de clé et un secret (affiché une seule fois).	Las empresas de mensajería que entregan paquetes de Yo donde no tenemos mensajeros nos envían sus eventos de seguimiento. Pida una clave a Yo Delivery: recibirá un id de clave y un secreto (se muestra una vez).	شركات التوصيل التي توصل طرود Yo حيث لا يوجد لدينا عمال توصيل ترسل لنا أحداث التتبع. اطلب مفتاحًا من Yo Delivery: ستحصل على معرّف مفتاح وسرّ (يُعرض مرة واحدة).	在我们没有快递员的地方派送 Yo 包裹的快递公司，会把物流事件发送给我们。请向 Yo Delivery 申请密钥：你会得到密钥 ID 和密钥（只显示一次）。	Ibigo bitwara amapaki ya Yo aho tudafite abatwara amapaki bitwoherereza amakuru y'aho amapaki ageze. Saba Yo Delivery urufunguzo: uzahabwa id y'urufunguzo n'ibanga (ryerekanwa rimwe gusa).
+Signing a request	Подпись запроса	Signer une requête	Firmar una solicitud	توقيع الطلب	请求签名	Gusinya ubusabe
+Events	События	Événements	Eventos	الأحداث	事件	Ibyabaye
+Yo status	Статус Yo	Statut Yo	Estado Yo	حالة Yo	Yo 状态	Uko bihagaze kuri Yo
+Your parcels	Ваши посылки	Vos colis	Sus paquetes	طرودك	你的包裹	Amapaki yawe
+⇩ OpenAPI 3.0 description (JSON)	⇩ Описание OpenAPI 3.0 (JSON)	⇩ Description OpenAPI 3.0 (JSON)	⇩ Descripción OpenAPI 3.0 (JSON)	⇩ وصف OpenAPI 3.0 (JSON)	⇩ OpenAPI 3.0 描述（JSON）	⇩ Ibisobanuro bya OpenAPI 3.0 (JSON)
+a line in the tracking (attempt)	строка в отслеживании (попытка)	une ligne dans le suivi (tentative)	una línea en el seguimiento (intento)	سطر في التتبع (محاولة)	跟踪记录中的一行（尝试）	umurongo mu ikurikirana (igerageza)
+Signature of the receiver (optional)	Подпись получателя (необязательно)	Signature du destinataire (facultatif)	Firma del destinatario (opcional)	توقيع المستلم (اختياري)	收件人签名（可选）	Umukono w'uwakira (si ngombwa)
+Turn by turn	Пошаговый маршрут	Itinéraire pas à pas	Paso a paso	خطوة بخطوة	逐向导航	Intambwe ku yindi
+Receiver at home	Получатель дома	Destinataire chez lui	Destinatario en casa	المستلم في المنزل	收件人在家时间	Uwakira ari mu rugo
+arrive about	прибытие около	arrivée vers	llegada hacia	الوصول حوالي	预计到达	azagerayo nka
+Road directions from the routing server. Without network you see the last list you loaded.	Маршрут по дорогам от сервера маршрутов. Без сети вы видите последний загруженный список.	Indications routières du serveur d'itinéraires. Sans réseau, vous voyez la dernière liste chargée.	Indicaciones por carretera del servidor de rutas. Sin red verá la última lista cargada.	اتجاهات الطريق من خادم المسارات. بدون شبكة سترى آخر قائمة حمّلتها.	道路导航来自路线服务器。没有网络时你会看到最后加载的列表。	Inzira zo mu muhanda zivuye kuri seriveri y'inzira. Nta murandasi, ubona urutonde rwa nyuma wafunguye.
+Every seller of the order gives his own invoice; Yo Delivery gives one for the delivery charge.	Каждый продавец заказа выдаёт свой счёт; Yo Delivery выдаёт счёт за доставку.	Chaque vendeur de la commande émet sa propre facture ; Yo Delivery en émet une pour les frais de livraison.	Cada vendedor del pedido emite su propia factura; Yo Delivery emite una por el coste de envío.	كل بائع في الطلب يصدر فاتورته؛ وتصدر Yo Delivery فاتورة لرسوم التوصيل.	订单中的每个卖家各自开具发票；Yo Delivery 为运费开具一张发票。	Buri mucuruzi wo mu itumiza atanga inyemezabuguzi ye; Yo Delivery itanga iy'ikiguzi cyo kugeza.
+Invoices of order	Счета заказа	Factures de la commande	Facturas del pedido	فواتير الطلب	订单发票	Inyemezabuguzi z'itumiza
+← The order	← Заказ	← La commande	← El pedido	← الطلب	← 订单	← Itumiza
+What happened	Что случилось	Ce qui s'est passé	Qué pasó	ما الذي حدث	发生了什么	Ibyabaye
+Title	Заголовок	Titre	Título	العنوان	标题	Umutwe
+The technical part of this page is in English (the language of the API).	Техническая часть страницы на английском (это язык API).	La partie technique de cette page est en anglais (la langue de l'API).	La parte técnica de esta página está en inglés (el idioma de la API).	الجزء التقني من هذه الصفحة باللغة الإنجليزية (لغة واجهة البرمجة).	本页技术部分为英文（API 使用的语言）。	Igice cya tekiniki cy'uru rupapuro kiri mu Cyongereza (ururimi rwa API).
+🎧 Support	🎧 Поддержка	🎧 Assistance	🎧 Soporte	🎧 الدعم	🎧 客服	🎧 Ubufasha
+Please write the question (at least 10 characters).	Пожалуйста, напишите вопрос (не короче 10 символов).	Veuillez écrire la question (au moins 10 caractères).	Escriba la pregunta (al menos 10 caracteres).	يرجى كتابة السؤال (10 أحرف على الأقل).	请填写问题（至少 10 个字符）。	Andika ikibazo (nibura inyuguti 10).
+a month	в месяц	par mois	al mes	شهريًا	每月	ku kwezi
+an hour	в час	de l'heure	por hora	في الساعة	每小时	ku isaha
+Month	Месяц	Mois	Mes	الشهر	月份	Ukwezi
+Tax and contributions	Налог и взносы	Impôt et cotisations	Impuesto y cotizaciones	الضريبة والاشتراكات	税款和缴费	Umusoro n'imisanzu

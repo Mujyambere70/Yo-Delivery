@@ -1,0 +1,12 @@
+{# live map; owner=True shows the exact addresses and the courier's real path #}
+<div class="map-box" data-live="{{ url_for('courier_live', number=s.number) }}" aria-label="Map of the shipment {{ s.number }}">
+    <span hidden data-k="pickup">Pickup</span><span hidden data-k="drop">Delivery</span>
+    {% if s.active %}<span class="map-live"><i></i>Live</span>{% endif %}
+    <div class="map-legend">
+        <span><i style="background:#16a34a"></i>Pickup</span><span><i style="background:#ff6b35"></i>Delivery</span>
+        {% if s.zone != 'local' %}<span><i style="background:#1d2b53;border-radius:2px"></i>Yo hub</span>{% endif %}
+        <span><i style="background:#2563eb"></i>Courier</span>
+        <span>{{ 'Exact addresses (only you see them)' if owner else 'City centres only (privacy)' }}</span>
+    </div>
+</div>
+<p class="small muted" style="margin:6px 0 0">Map data &copy; OpenStreetMap contributors &middot; <button type="button" class="linklike" data-map-switch>Street map / simple map</button></p>

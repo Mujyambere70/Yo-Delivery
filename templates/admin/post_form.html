@@ -1,0 +1,28 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ 'Edit post' if post else 'New post' }}{% endblock %}
+{% block heading %}{{ 'Edit post' if post else 'New post' }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="adm-grid pform">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <section class="panel">
+        <label for="title">Title</label><input id="title" type="text" name="title" value="{{ f.get('title', '') }}" maxlength="120" required>
+        <label for="summary">Summary (meta description, 1-2 sentences)</label><input id="summary" type="text" name="summary" value="{{ f.get('summary', '') }}" maxlength="300">
+        <label for="body">Text (Markdown)</label><textarea id="body" name="body" rows="20">{{ f.get('body', '') }}</textarea>
+        <p class="small muted">## heading &middot; ### small heading &middot; **bold** &middot; *italic* &middot; - list &middot; 1. list &middot; > quote &middot; [text](https://...) &middot; [[product:slug]] product card</p>
+    </section>
+    <section class="panel">
+        {% if post and post.seller_id %}<p class="small">Seller story by <b>{{ post.author_name }}</b>.</p>{% endif %}
+        <label for="category">Category</label><select id="category" name="category">{% for k, n in CATS.items() %}<option value="{{ k }}" {{ 'selected' if f.get('category') == k }}>{{ n }}</option>{% endfor %}</select>
+        <label for="lang">Language</label><select id="lang" name="lang">{% for code, name in LANGUAGES.items() %}<option value="{{ code }}" {{ 'selected' if f.get('lang', 'en') == code }}>{{ name }}</option>{% endfor %}</select>
+        {% if not post %}<label for="slug">Address /blog/… (optional)</label><input id="slug" type="text" name="slug" value="{{ f.get('slug', '') }}" maxlength="70" class="mono">{% endif %}
+        <label for="tags">Tags (with commas)</label><input id="tags" type="text" name="tags" value="{{ f.get('tags', '') }}" maxlength="200">
+        <label for="cover">Cover: built-in picture</label>
+        <select id="cover" name="cover"><option value="">(keep / none)</option>{% for c in ['images/photos/courier.jpg', 'images/photos/fashion-wide.jpg', 'images/photos/shoes-wide.jpg', 'images/photos/watches-wide.jpg'] %}<option value="{{ c }}" {{ 'selected' if f.get('cover') == c }}>{{ c.split('/')[-1] }}</option>{% endfor %}</select>
+        <label for="cf">… or upload one (1200 × 630)</label><input id="cf" type="file" name="cover_file" accept="image/jpeg,image/png,image/webp">
+        {% if post and post.cover %}<img src="{{ picture(post.cover) }}" alt="" style="margin-top:8px;border-radius:8px;max-width:100%">{% endif %}
+        <label for="status">Status</label><select id="status" name="status">{% for st in STATUSES %}<option {{ 'selected' if f.get('status', 'Draft') == st }}>{{ st }}</option>{% endfor %}</select>
+        <button class="btn btn-orange btn-block">Save</button>
+        {% if post and post.status == 'Published' %}<a href="{{ url_for('blog_post', slug=post.slug) }}" target="_blank" class="btn btn-outline btn-block">View on the site</a>{% endif %}
+    </section>
+</form>
+{% endblock %}

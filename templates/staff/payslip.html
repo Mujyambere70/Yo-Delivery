@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Payslip {{ s.month }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap">
+    <section class="panel payslip">
+        <p class="no-print"><a href="{{ url_for('staff_me') }}#payslips">&larr; My payslips</a> &middot; <a href="#" onclick="window.print();return false;">&#128424; Print</a></p>
+        <h1>Payslip <span translate="no">{{ s.month }}</span></h1>
+        <p><b translate="no">{{ w.name }}</b> &middot; {{ w.title }} &middot; <span translate="no">{{ w.office }}</span></p>
+        <p class="flash info">Test mode: the tax and the contributions use the example rules of the country. No money was sent.</p>
+        <table class="at"><thead><tr><th>Line</th><th>Details</th><th>Amount</th></tr></thead><tbody>
+        {% for name, details, amount in s.line_list %}<tr><td>{{ name }}</td><td>{{ details }}</td><td translate="no">{{ minor_money(amount, s.currency) }}</td></tr>{% endfor %}
+        <tr><td colspan="2"><b>Gross pay</b></td><td translate="no"><b>{{ minor_money(s.gross, s.currency) }}</b></td></tr>
+        <tr><td colspan="2"><b>Net pay</b></td><td translate="no"><b>{{ minor_money(s.net, s.currency) }}</b></td></tr>
+        </tbody></table>
+        <p class="small muted">Worked {{ s.worked_min // 60 }} h {{ s.worked_min % 60 }} min &middot; planned {{ s.planned_min // 60 }} h &middot; overtime {{ s.overtime_min // 60 }} h {{ s.overtime_min % 60 }} min &middot; unpaid days {{ s.unpaid_days }} &middot; paid {{ s.paid_at[:10] }}</p>
+    </section>
+</div>
+{% endblock %}

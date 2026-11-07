@@ -1,0 +1,51 @@
+{% extends "admin/layout.html" %}
+{% block title %}Shift plan{% endblock %}
+{% block heading %}Shift plan{% endblock %}
+{% block content %}
+{% include "admin/_staff_tabs.html" %}
+{% set can_plan = ALL in my_abilities or 'shifts.manage' in my_abilities %}
+<section class="panel">
+    <form method="get" class="v6-filters">
+        <a class="btn btn-sm btn-outline" href="{{ url_for('admin_rota', start=r.prev, office=office) }}">&larr; <span>Week before</span></a>
+        <b translate="no">{{ r.days[0] }} &ndash; {{ r.days[-1] }}</b>
+        <a class="btn btn-sm btn-outline" href="{{ url_for('admin_rota', start=r.next, office=office) }}"><span>Next week</span> &rarr;</a>
+        <label>Office <select name="office" onchange="this.form.submit()"><option value="">All my offices</option>
+            {% for o in branch_offices %}<option value="{{ o.id }}" {{ 'selected' if office == o.id|string }}>{{ '— ' * o.depth }}{{ o.name }}</option>{% endfor %}</select></label>
+        <input type="hidden" name="start" value="{{ r.first }}">
+    </form>
+    <div class="tw"><table class="at v6-rota">
+        <thead><tr><th>Worker</th>{% for d in r.days %}<th translate="no">{{ d[5:] }}</th>{% endfor %}<th>Planned</th></tr></thead>
+        <tbody>{% for row in r.rows %}<tr>
+            <td><b translate="no">{{ row.worker.name }}</b><br><small class="muted"><span translate="no">{{ row.worker.office }}</span> &middot; {{ row.worker.title }}</small></td>
+            {% for c in row.cells %}<td class="rota-cell st-{{ c.state|lower|replace(' ', '-') }}">
+                {% if c.plan %}<span translate="no">{{ c.plan.start_hm }}&ndash;{{ c.plan.end_hm }}</span>
+                    {% if can_plan %}<form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="week" value="{{ r.first }}"><input type="hidden" name="office" value="{{ office }}"><button class="linklike" name="remove" value="{{ c.plan.id }}" title="Remove" aria-label="Remove this shift">&times;</button></form>{% endif %}{% endif %}
+                {% if c.state %}<br><small>{{ c.state }}</small>{% endif %}
+                {% if c.worked %}<br><small class="muted" translate="no">{{ c.worked // 60 }}h{{ '%02d'|format(c.worked % 60) }}</small>{% endif %}
+            </td>{% endfor %}
+            <td translate="no">{{ row.planned_min // 60 }} h</td>
+        </tr>{% else %}<tr><td colspan="9" class="muted">No active workers in this office.</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <p class="small muted">Times are in the time of each worker's office. Late = clocked in more than 10 minutes after the start.</p>
+</section>
+{% if can_plan %}
+<section class="panel">
+    <h2>Plan a shift</h2>
+    <form method="post" class="form-grid v6-plan">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="week" value="{{ r.first }}"><input type="hidden" name="office" value="{{ office }}">
+        <label>Worker <select name="staff_id" required>{% for row in r.rows %}<option value="{{ row.worker.id }}{{ (':' ~ row.worker.help_office_id) if row.worker.helper }}">{{ row.worker.name }} ({{ row.worker.office }})</option>{% endfor %}</select></label>
+        <label>Day <input type="date" name="day" value="{{ r.days[0] }}" required></label>
+        <label>Start <input type="time" name="start" value="09:00" required></label>
+        <label>End <input type="time" name="end" value="17:00" required></label>
+        <label>Days in a row <input type="number" name="repeat" value="1" min="1" max="31"></label>
+        <label>Note <input type="text" name="note" maxlength="120" placeholder="Front desk, hub gate 2..."></label>
+        <div><button class="btn btn-orange">Plan</button></div>
+    </form>
+</section>
+{% endif %}
+<section class="panel">
+    <h2>Hours by office (this week)</h2>
+    <div class="tw"><table class="at"><thead><tr><th>Office</th><th>Workers</th><th>Planned</th><th>Worked</th><th>Late</th><th>Absent</th></tr></thead>
+    <tbody>{% for o in hours %}<tr><td translate="no">{{ o.office }}</td><td>{{ o.workers }}</td><td translate="no">{{ o.planned_min // 60 }} h</td><td translate="no">{{ o.worked_min // 60 }} h {{ '%02d'|format(o.worked_min % 60) }}</td><td>{{ o.late }}</td><td>{{ o.absent }}</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endblock %}

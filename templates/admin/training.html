@@ -1,0 +1,23 @@
+{% extends "admin/layout.html" %}
+{% block title %}Training and contracts{% endblock %}
+{% block heading %}Training and contracts of my branch{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="small">{% if required %}<span class="pill-status ok">on</span> Abilities that need a course work only with a valid certificate.{% else %}<span class="pill-status warn">off</span> The rule "ability needs a course" is off (Shop Settings). This page still shows what is missing.{% endif %}</p>
+    <h2>Courses</h2>
+    <table class="at small"><thead><tr><th>Course</th><th>Needed for</th><th>Valid</th></tr></thead><tbody>
+    {% for k, c in courses.items() %}<tr><td>{{ c[0] }}</td><td>{{ c[1]|join(', ') or '-' }}</td><td>{{ c[2] }} months</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel">
+    <h2>Missing or expiring certificates ({{ report|length }})</h2>
+    <table class="at"><thead><tr><th>Worker</th><th>Office</th><th>Missing</th><th>Expiring in 60 days</th><th></th></tr></thead><tbody>
+    {% for r in report %}<tr><td translate="no">{{ r.worker.name }}</td><td translate="no">{{ r.worker.office }}</td><td>{{ r.missing|join(', ') or '-' }}</td><td>{% for t in r.expiring %}{{ t.name }} ({{ t.expires_on }}){% if not loop.last %}, {% endif %}{% else %}-{% endfor %}</td>
+        <td><a href="{{ url_for('admin_staff_people', staff_id=r.worker.id) }}">Open</a></td></tr>
+    {% else %}<tr><td colspan="5" class="muted">Every worker has the courses of his abilities.</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel">
+    <h2>Contracts that end in 45 days</h2>
+    <table class="at small"><tbody>{% for c in ending %}<tr><td translate="no">{{ c.worker.name }}</td><td translate="no">{{ c.end_day }}</td><td><a href="{{ url_for('admin_staff_people', staff_id=c.staff_id) }}">Open</a></td></tr>
+    {% else %}<tr><td class="muted">None.</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

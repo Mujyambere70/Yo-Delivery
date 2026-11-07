@@ -1,0 +1,21 @@
+{% extends "admin/layout.html" %}
+{% block title %}Support desk{% endblock %}
+{% block heading %}Support desk{% endblock %}
+{% block content %}
+<div class="kpis">
+    <div class="kpi"><small>Open questions</small><b>{{ numbers.open }}</b></div>
+    <div class="kpi"><small>Late (no first answer in time)</small><b>{{ numbers.late }}</b></div>
+    <div class="kpi"><small>Answered in time (last 200)</small><b>{{ numbers.in_time_pct if numbers.in_time_pct is not none else '-' }}{{ ' %' if numbers.in_time_pct is not none }}</b></div>
+</div>
+<section class="panel">
+    <form method="get" class="v6-filters">
+        <select name="status" aria-label="Status"><option value="">Not closed</option>{% for s in ['Open', 'Answered', 'Closed'] %}<option {{ 'selected' if status == s }}>{{ s }}</option>{% endfor %}</select>
+        <label class="small"><input type="checkbox" name="mine" value="1" {{ 'checked' if mine }}> mine</label>
+        <button class="btn btn-sm btn-outline">Show</button>
+    </form>
+    <table class="at"><thead><tr><th>Number</th><th>Customer</th><th>About</th><th>Title</th><th>Priority</th><th>Answer by</th><th>Status</th><th>Agent</th></tr></thead><tbody>
+    {% for t in rows %}<tr class="{{ 'late' if t.late }}"><td><a href="{{ url_for('admin_support_ticket', number=t.number) }}" translate="no">{{ t.number }}</a></td><td translate="no">{{ t.customer }}</td><td>{{ topics.get(t.topic, t.topic) }} <span translate="no">{{ t.about }}</span></td><td>{{ t.subject }}</td>
+        <td><span class="pill-status {{ 'bad' if t.priority == 'Urgent' else '' }}">{{ t.priority }}</span></td><td translate="no">{{ t.due_at[:16] }}{% if t.late %} <span class="pill-status bad">late</span>{% endif %}</td><td>{{ t.status }}</td><td translate="no">{{ t.agent or '-' }}</td></tr>
+    {% else %}<tr><td colspan="8" class="muted">No questions.</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{# the boxes of abilities; "have" = the abilities of the worker, boxes I may not give are disabled #}
+{% set have = have if have is defined else [] %}
+<fieldset class="abil" style="grid-column:1/-1">
+    <legend>Abilities</legend>
+    {% set groups = [] %}{% for k, v in ABILITIES.items() %}{% if v[0] not in groups %}{% set _ = groups.append(v[0]) %}{% endif %}{% endfor %}
+    <div class="abil-grid">
+    {% for g in groups %}
+        <div class="abil-group"><b>{{ g }}</b>
+        {% for k, v in ABILITIES.items() if v[0] == g %}
+            {% set mine = ALL in my_abilities or k in my_abilities %}
+            <label class="check {{ '' if mine else 'muted' }}" title="{{ k }}"><input type="checkbox" name="abilities" value="{{ k }}" {{ 'checked' if k in have or ALL in have }} {{ '' if mine else 'disabled' }}> {{ v[1] }}</label>
+            {% if not mine and k in have %}<input type="hidden" name="abilities" value="{{ k }}">{% endif %}
+        {% endfor %}
+        </div>
+    {% endfor %}
+    </div>
+    {% if user.is_admin %}<label class="check"><input type="checkbox" name="abilities" value="all" {{ 'checked' if ALL in have }}> <b>Everything</b> (only the administrator can give this)</label>
+    {% elif ALL in have %}<input type="hidden" name="abilities" value="all">{% endif %}
+    <p class="small muted">Grey boxes are abilities you do not have yourself, so you cannot give them.</p>
+</fieldset>

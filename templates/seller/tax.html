@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Tax and invoices - Seller Centre{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap">
+    {% include "seller/_nav.html" %}
+    <section class="panel">
+        <h1>Tax and invoices</h1>
+        <p>A seller who is registered for GST gives <b>tax invoices</b>; a seller who is not registered gives <b>bills of supply</b> without tax. We check the number with its check character.</p>
+        <form method="post" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div><label for="tx">{{ 'INN' if shop.country == 'RU' else 'GSTIN' }} (leave empty if you are not registered)</label><input id="tx" type="text" name="tax_id" value="{{ shop.tax_id }}" maxlength="15" placeholder="{{ '7707083893' if shop.country == 'RU' else '22AAAAA0000A1Z5' }}"></div>
+            <div><button class="btn btn-orange">Check and save</button></div>
+        </form>
+        <p class="small">Now: {% if shop.tax_registered %}<span class="pill-status ok">registered</span> <span translate="no">{{ shop.tax_id }}</span>{% else %}<span class="pill-status warn">not registered</span>{% endif %}</p>
+    </section>
+    <section class="panel" id="invoices">
+        <h2>My invoices</h2>
+        <table class="at"><thead><tr><th>Number</th><th>Kind</th><th>Order</th><th>Date</th><th>Total</th><th></th></tr></thead><tbody>
+        {% for i in invoices %}<tr><td translate="no">{{ i.number }}</td><td>{{ i.kind }}</td><td translate="no">{{ i.order_number }}</td><td translate="no">{{ i.issued_at[:10] }}</td><td translate="no">{{ INVOICE_MONEY(i.total) }}</td><td><a href="{{ url_for('invoice_page', invoice_id=i.id) }}">Open</a> &middot; <a href="{{ url_for('invoice_xml', invoice_id=i.id) }}">XML</a></td></tr>
+        {% else %}<tr><td colspan="6" class="muted">No invoices yet. An invoice is made when the customer or the shop opens it.</td></tr>{% endfor %}</tbody></table>
+    </section>
+</div>
+{% endblock %}

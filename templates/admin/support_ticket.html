@@ -1,0 +1,16 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ t.number }} - Support{% endblock %}
+{% block heading %}{{ t.number }}: {{ t.subject }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('admin_support') }}">&larr; Support desk</a></p>
+<section class="panel">
+    <p class="small"><b translate="no">{{ t.customer }}</b> &middot; {{ topics.get(t.topic, t.topic) }} <span translate="no">{{ t.about }}</span> &middot; {{ t.priority }} &middot; answer by <span translate="no">{{ t.due_at[:16] }}</span>{% if t.late %} <span class="pill-status bad">late</span>{% endif %} &middot; {{ t.status }} &middot; agent: <span translate="no">{{ t.agent or '-' }}</span></p>
+    {% if t.status != 'Closed' %}<form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline" name="action" value="take">Take it</button></form>{% endif %}
+    <div class="msg-thread">{% for m in t.messages %}<div class="msg {{ 'staff' if m.from_staff }}"><small><b translate="no">{{ m.name }}</b> &middot; <span translate="no">{{ m.at[:16] }}</span></small><div>{{ m.body }}</div></div>{% endfor %}</div>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="ab">Answer</label><textarea id="ab" name="body" rows="4" maxlength="3000"></textarea>
+        <div class="actions"><button class="btn btn-orange" name="action" value="answer">Send the answer</button><button class="btn btn-outline" name="action" value="close">Send and close</button></div>
+    </form>
+</section>
+{% endblock %}

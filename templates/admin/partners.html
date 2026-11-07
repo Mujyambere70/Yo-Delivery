@@ -1,0 +1,37 @@
+{% extends "admin/layout.html" %}
+{% block title %}Courier partners{% endblock %}
+{% block heading %}Courier partner companies{% endblock %}
+{% block content %}
+{% if new_key %}<section class="panel"><h2>Key of {{ new_key.name }}</h2><p class="flash info">Copy the secret now and give it to the partner in a safe way. It is shown only once.</p>
+    <div class="secret-box">X-Yo-Key: {{ new_key.key_id }}<br>secret: {{ new_key.secret }}</div></section>{% endif %}
+<section class="panel">
+    <p class="small">Partners send tracking events to our API (<a href="{{ url_for('partner_api_page') }}">documentation</a>, <a href="{{ url_for('partner_openapi') }}">OpenAPI</a>). A parcel handed to a partner is moved only by the partner's events.</p>
+    <table class="at"><thead><tr><th>Company</th><th>Countries</th><th>Key</th><th>Open parcels</th><th>Events</th><th>Last call</th><th></th></tr></thead><tbody>
+    {% for p in partners %}<tr><td translate="no">{{ p.name }}</td><td>{{ p.countries }}</td><td translate="no"><code>{{ p.key_id }}</code> &middot; &hellip;{{ p.secret_hint }}</td><td>{{ p.open }}</td><td>{{ p.events }}</td><td translate="no">{{ p.last_call_at[:16] or '-' }}</td>
+        <td><form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ p.id }}"><input type="hidden" name="name" value="{{ p.name }}"><input type="hidden" name="key_id" value="{{ p.key_id }}">
+            <button class="btn btn-sm btn-outline" name="action" value="rotate">New secret</button>
+            <button class="btn btn-sm btn-outline" name="action" value="{{ 'off' if p.active else 'on' }}">{{ 'Stop' if p.active else 'Start' }}</button></form></td></tr>
+    {% else %}<tr><td colspan="7" class="muted">No partner yet.</td></tr>{% endfor %}</tbody></table>
+</section>
+<div class="v7-grid">
+<section class="panel">
+    <h2>Add a partner</h2>
+    <form method="post" class="form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="add">
+        <div><label for="pn">Company</label><input id="pn" type="text" name="name" maxlength="60" required></div>
+        <div><label for="pc">Countries (e.g. KE UG)</label><input id="pc" type="text" name="countries" maxlength="60"></div>
+        <div><button class="btn btn-orange">Add and make a key</button></div></form>
+</section>
+<section class="panel">
+    <h2>Hand a parcel to a partner</h2>
+    <form method="post" class="form-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="hand">
+        <div><label for="hn">Parcel number</label><input id="hn" type="text" name="number" maxlength="20" required></div>
+        <div><label for="hp">Partner</label><select id="hp" name="partner_id">{% for p in partners if p.active %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div>
+        <div><button class="btn btn-outline">Hand over</button></div></form>
+</section>
+</div>
+<section class="panel">
+    <h2>Last events</h2>
+    <table class="at small"><tbody>{% for e in log %}<tr><td translate="no">{{ e.partner }}</td><td translate="no">{{ e.number }}</td><td><code>{{ e.kind }}</code></td><td translate="no">{{ e.at[:16] }}</td><td>{{ e.place }}</td><td>{{ e.result }}</td></tr>
+    {% else %}<tr><td class="muted">No events yet.</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

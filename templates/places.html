@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Places we deliver to{% endblock %}
+{% block meta %}<meta name="description" content="Every town and village of the world in Yo Delivery: India with PIN codes, every village of Rwanda, every settlement of Russia.">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <section class="panel">
+        <h1 style="margin-top:0">&#127757; Places we deliver to</h1>
+        <p class="muted">Yo Courier picks up and delivers in <b>{{ '{:,}'.format(stats.total) }}</b> towns and villages of <b>{{ stats.countries }}</b> countries, and Yo Tickets knows <b>{{ '{:,}'.format(stats.airports) }}</b> airports.</p>
+        <div class="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0">
+            <div class="kpi"><small>Towns and cities</small><b>{{ '{:,}'.format(stats.kinds.get('town', 0) + stats.kinds.get('city', 0)) }}</b></div>
+            <div class="kpi"><small>Villages of Russia</small><b>{{ '{:,}'.format(stats.ru_villages) }}</b></div>
+            <div class="kpi"><small>Villages of Rwanda</small><b>{{ '{:,}'.format(stats.rw_villages) }}</b></div>
+            <div class="kpi"><small>Post offices of India (with PIN)</small><b>{{ '{:,}'.format(stats.in_post) }}</b></div>
+            <div class="kpi"><small>Places in Russia</small><b>{{ '{:,}'.format(stats.per_country.get('RU', 0)) }}</b></div>
+            <div class="kpi"><small>Places in India</small><b>{{ '{:,}'.format(stats.per_country.get('IN', 0)) }}</b></div>
+            <div class="kpi"><small>Places in Rwanda</small><b>{{ '{:,}'.format(stats.per_country.get('RW', 0)) }}</b></div>
+        </div>
+        <form method="get" class="form-grid places-form" style="align-items:end">
+            <div><label for="pq">Town, village or PIN code</label><input type="text" id="pq" name="q" value="{{ q }}" placeholder="Mugunga, Gakenke / 133207 / Красноярск" translate="no" autofocus></div>
+            <div><label for="pcc">Country (optional)</label><select id="pcc" name="cc"><option value="">All countries</option>{% for code, name in countries %}<option value="{{ code }}" {{ 'selected' if code == cc }}>{{ name }}</option>{% endfor %}</select></div>
+            <div><button class="btn btn-orange">Search</button></div>
+        </form>
+    </section>
+    {% if q %}
+    <section class="panel">
+        <h2>{{ hits|length }} <span>places found</span></h2>
+        {% if hits %}<div class="tw"><table class="tk-table">
+            <thead><tr><th>Place</th><th>Kind</th><th>Where</th><th>PIN</th><th></th></tr></thead>
+            <tbody>{% for p in hits %}<tr>
+                <td><b translate="no">{{ p.name }}</b></td><td>{{ KIND_NAMES.get(p.kind, p.kind) }}</td>
+                <td class="small" translate="no">{{ p.label[p.name|length + 2:] }}{% if p.approx %} <span class="muted" title="Approximate position">&asymp;</span>{% endif %}</td>
+                <td class="mono" translate="no">{{ p.pin }}</td>
+                <td class="nowrap"><a class="btn btn-sm btn-outline" href="{{ url_for('courier_book', from_country=p.cc, from_city=p.name, from_place=p.id) }}">Send from here</a></td></tr>
+            {% endfor %}</tbody></table></div>
+        {% else %}<p class="muted">No place with this name. Try the first letters only, or another spelling.</p>{% endif %}
+    </section>
+    {% endif %}
+    <p class="small muted">Sources: GeoNames (towns of the world, CC BY 4.0), the open data of the administrative units of Rwanda (provinces, districts, sectors, cells and villages), the list of the post offices of India (India Post, open government data), OurAirports (public domain). Positions of villages of Rwanda and of Indian post offices are approximate (&asymp;): near the centre of their district.</p>
+    <p class="small muted">Settlements of Russia: "Settlements of Russia: population and geographic coordinates" (Ministry of Health of the Russian Federation; processing: data-in.ru, ANO "TsPUR"), CC BY-NC-SA 4.0, for non-commercial use.</p>
+</div>
+{% endblock %}

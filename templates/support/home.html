@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Help and support{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap">
+    <h1>&#127911; <span>Ask our support team</span></h1>
+    <div class="v7-grid">
+        <section class="panel">
+            <h2>New question</h2>
+            <p class="small muted">We answer within {{ sla.Normal }} hours ({{ sla.Urgent }} hours when it is urgent). You get a message when we answer.</p>
+            <form method="post" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div><label for="st">About</label><select id="st" name="topic">{% for k, v in topics.items() %}<option value="{{ k }}" {{ 'selected' if topic == k }}>{{ v }}</option>{% endfor %}</select></div>
+                <div><label for="sa">Number (order, parcel or ticket)</label><input id="sa" type="text" name="about" value="{{ about }}" maxlength="40"></div>
+                <div style="grid-column:1/-1"><label for="ss">Title</label><input id="ss" type="text" name="subject" maxlength="120" required></div>
+                <div style="grid-column:1/-1"><label for="sb">Your question</label><textarea id="sb" name="body" rows="5" maxlength="3000" required></textarea></div>
+                <label class="check"><input type="checkbox" name="urgent" value="1"> <span>It is urgent (a parcel is at the door, money is missing)</span></label>
+                <div><button class="btn btn-orange">Send</button></div>
+            </form>
+        </section>
+        <section class="panel">
+            <h2>My questions</h2>
+            <table class="at small"><tbody>
+            {% for t in tickets %}<tr><td><a href="{{ url_for('support_ticket_page', number=t.number) }}" translate="no">{{ t.number }}</a></td><td>{{ t.subject }}</td><td><span class="pill-status {{ 'ok' if t.status == 'Answered' else 'warn' if t.status == 'Open' else '' }}">{{ t.status }}</span></td></tr>
+            {% else %}<tr><td class="muted">No questions yet.</td></tr>{% endfor %}</tbody></table>
+            <p class="small"><a href="{{ url_for('help_page') }}">Help Centre (answers to common questions)</a></p>
+        </section>
+    </div>
+</div>
+{% endblock %}

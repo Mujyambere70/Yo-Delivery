@@ -4,20 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Online Shopping & Fast Delivery{% endblock %} | Yo Delivery</title>
-    <meta name="description" content="Shop electronics, fashion, footwear, watches, grocery and more with fast delivery in India and to every country.">
+    {% block meta %}<meta name="description" content="Shop electronics, fashion, footwear, watches, grocery and more with fast delivery in India and to every country. Send parcels with Yo Courier, pay with Yo Pay.">{% endblock %}
     <meta name="author" content="Jean Michel Mujyambere">
     <meta name="theme-color" content="#ff6b35">
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+    {% block manifest %}<link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">{% endblock %}
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/app-icon-192.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='superapp.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='tickets.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='world.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='v6.css') }}">
+    <link rel="alternate" type="application/rss+xml" title="Yo Delivery Blog" href="{{ url_for('blog_feed') }}">
+    {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
+<a class="skip-link" href="#main">Skip to the content</a>
 
 {% if SETTINGS.announcement %}<div class="announce">&#128227; {{ SETTINGS.announcement }}</div>{% endif %}
 <div class="topstrip">
     <div class="wrap topstrip-row">
-        <span class="hide-sm">&#127757; We deliver to every country &middot; <a href="{{ url_for('track') }}">Track a parcel</a></span>
+        <span class="hide-sm">&#127757; We deliver to every country &middot; <a href="{{ url_for('track') }}">Track an order</a> &middot; <a href="{{ url_for('courier_home') }}">Send a parcel</a> &middot; <a href="{{ url_for('tickets_home') }}">Book a ticket</a></span>
         <span class="hide-sm"><a href="{{ url_for('sell') }}">&#127978; Sell on Yo Delivery</a></span>
         <details class="pick" aria-label="Language">
             <summary title="Language">&#127760; {{ LANGUAGES[LANG] }}</summary>
@@ -25,8 +32,12 @@
         </details>
         <details class="pick" aria-label="Currency">
             <summary title="Currency">{{ CURRENCY }}</summary>
-            <div class="pick-menu">{% for c in CURRENCIES %}<a href="{{ url_for('set_currency', code=c, next=request.full_path) }}" class="{{ 'on' if c == CURRENCY }}"><b translate="no">{{ c }}</b> {{ currency_name(c, LANG) }}</a>{% endfor %}
-                <small class="muted">Prices are converted with today's exchange rate. You pay in this currency by card.</small></div>
+            <div class="pick-menu">{% for c in MAIN_CURRENCIES + ([CURRENCY] if CURRENCY not in MAIN_CURRENCIES else []) %}<a href="{{ url_for('set_currency', code=c, next=request.full_path) }}" class="{{ 'on' if c == CURRENCY }}"><b translate="no">{{ c }}</b> {{ currency_name(c, LANG) }}</a>{% endfor %}
+                <form action="{{ url_for('set_currency') }}" method="get" class="cur-all"><input type="hidden" name="next" value="{{ request.full_path }}">
+                    <label for="curAll">All currencies ({{ CURRENCIES|length }})</label>
+                    <select id="curAll" name="code" onchange="this.form.submit()" translate="no">{% for c in CURRENCIES|sort %}<option value="{{ c }}" {{ 'selected' if c == CURRENCY }}>{{ c }} · {{ currency_name(c, LANG) }}</option>{% endfor %}</select>
+                    <noscript><button class="btn btn-sm btn-outline">OK</button></noscript></form>
+                <small class="muted">Prices are converted with the latest exchange rate (updated every hour). By card you pay in this currency, or in US dollars where cards do not support it.</small></div>
         </details>
     </div>
 </div>
@@ -58,10 +69,18 @@
                 <div class="acct-menu">
                     {% if user %}
                         {% if user.is_admin %}<a href="{{ url_for('admin_dashboard') }}" class="admin-link">&#128202; Admin Panel</a>{% endif %}
+                        {% if my_work and my_work.status == 'Active' %}<a href="{{ url_for('staff_home') }}" class="admin-link">&#128188; My work</a>{% endif %}
                         {% if my_shop %}<a href="{{ url_for('seller_dashboard') }}" class="admin-link">&#127978; Seller Centre</a>{% endif %}
+                        {% if my_courier %}<a href="{{ url_for('driver_home') }}" class="admin-link">&#128757; Courier app</a>{% endif %}
+                        {% if my_staff %}<a href="{{ url_for('conductor_home') }}" class="admin-link">&#127915; Conductor app</a>{% endif %}
                         <a href="{{ url_for('account') }}">&#128100; My Profile</a>
                         <a href="{{ url_for('orders') }}">&#128230; Orders</a>
+                        <a href="{{ url_for('courier_shipments') }}">&#128666; My shipments</a>
+                        <a href="{{ url_for('tickets_my') }}">&#127915; My trips</a>
+                        <a href="{{ url_for('pay_home') }}">&#128179; Yo Pay <small class="muted">{{ user.wallet|rupees }}</small></a>
+                        <a href="{{ url_for('rewards_home') }}">&#127873; Rewards</a>
                         <a href="{{ url_for('notifications') }}">&#128276; Notifications</a>
+                        <a href="{{ url_for('messages') }}">&#128172; Messages</a>
                         <a href="{{ url_for('wishlist') }}">&#9825; Wishlist</a>
                         <a href="{{ url_for('addresses') }}">&#128205; Saved Addresses</a>
                         <a href="{{ url_for('logout') }}">&#10162; Sign Out</a>
@@ -77,6 +96,14 @@
             </a>
         </div>
     </div>
+    <nav class="appbar" aria-label="Yo services">
+        <div class="wrap appbar-row">
+            {% set ep = request.endpoint or '' %}
+            {% for target, icon, label, prefix in [('index', '&#128717;', 'Shop', ''), ('courier_home', '&#128666;', 'Courier', 'courier'), ('tickets_home', '&#127915;', 'Tickets', 'tickets'), ('pay_home', '&#128179;', 'Yo Pay', 'pay'), ('rewards_home', '&#127873;', 'Rewards', 'rewards'), ('blog_home', '&#128240;', 'Blog & News', 'blog'), ('driver_home', '&#128757;', 'Deliver with Yo', 'driver')] %}
+            <a href="{{ url_for(target) }}" class="{{ 'on' if (prefix and ep.startswith(prefix)) or (not prefix and not ep.split('_')[0] in ('courier', 'pay', 'rewards', 'blog', 'driver', 'tickets', 'conductor')) }}"><span>{{ icon|safe }}</span>{{ label }}</a>
+            {% endfor %}
+        </div>
+    </nav>
     <nav class="catbar">
         <div class="wrap catbar-row">
             <a href="{{ url_for('search') }}">&#9776; All</a>
@@ -97,15 +124,16 @@
     {% endif %}
 {% endwith %}
 
-<main>{% block content %}{% endblock %}</main>
+<main id="main" tabindex="-1">{% block content %}{% endblock %}</main>
 
 <footer class="ftr">
     <a href="#" class="to-top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top</a>
     <div class="wrap ftr-grid">
         <div><h4>Get to Know Us</h4><a href="{{ url_for('about') }}">About Yo Delivery</a><a href="{{ url_for('about') }}#developer">About the developer</a><a href="{{ url_for('help_page') }}#contact">Contact Us</a></div>
         <div><h4>Shop</h4>{% for slug, name, _ in CATEGORIES[:5] %}<a href="{{ url_for('category', category=slug) }}">{{ name }}</a>{% endfor %}</div>
-        <div><h4>Make Money with Us</h4><a href="{{ url_for('sell') }}">Sell on Yo Delivery</a>{% if my_shop %}<a href="{{ url_for('seller_dashboard') }}">Seller Centre</a>{% endif %}</div>
-        <div><h4>Let Us Help You</h4><a href="{{ url_for('account') }}">Your Account</a><a href="{{ url_for('track') }}">Track a parcel</a><a href="{{ url_for('help_page') }}#returns">Returns &amp; Replacements</a><a href="{{ url_for('help_page') }}">Help Centre</a></div>
+        <div><h4>Make Money with Us</h4><a href="{{ url_for('sell') }}">Sell on Yo Delivery</a>{% if my_shop %}<a href="{{ url_for('seller_dashboard') }}">Seller Centre</a>{% endif %}<a href="{{ url_for('driver_home') }}">Deliver with Yo</a></div>
+        <div><h4>Yo Services</h4><a href="{{ url_for('courier_home') }}">Yo Courier</a><a href="{{ url_for('tickets_home') }}">Yo Tickets</a><a href="{{ url_for('pay_home') }}">Yo Pay</a><a href="{{ url_for('pay_emi') }}">EMI calculator</a><a href="{{ url_for('rewards_home') }}">Yo Rewards &amp; daily quiz</a><a href="{{ url_for('blog_home') }}">Blog &amp; News</a></div>
+        <div><h4>Let Us Help You</h4><a href="{{ url_for('account') }}">Your Account</a><a href="{{ url_for('track') }}">Track a parcel</a><a href="{{ url_for('help_page') }}#returns">Returns &amp; Replacements</a><a href="{{ url_for('help_page') }}">Help Centre</a><a href="{{ url_for('support_home') }}">Ask support</a><a href="{{ url_for('partner_api_page') }}">Courier partner API</a></div>
         <div><h4>Registered Office</h4><p>Yo Delivery (demo)<br>12 Mall Road, Ambala Cantt<br>Haryana 133001, India<br>support@yodelivery.example</p></div>
     </div>
     <div class="ftr-mid">
@@ -122,6 +150,11 @@
     </div>
 </footer>
 
+<script>/* the browser's time zone, so times are shown in the visitor's own time (version 5) */
+(function () { try { var z = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (z && document.cookie.indexOf("tz=" + z) < 0) document.cookie = "tz=" + z + ";path=/;max-age=31536000;samesite=lax";
+} catch (e) {} })();</script>
+<script src="{{ url_for('static', filename='places.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

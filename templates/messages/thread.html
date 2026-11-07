@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ t.other }} - Messages{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap acc">
+    {% include "_account_nav.html" %}
+    <div>
+        <p class="small"><a href="{{ url_for('messages') }}">&larr; Messages</a></p>
+        <h1 style="margin-bottom:2px"><span translate="no">{{ t.other }}</span></h1>
+        <p class="small muted" style="margin-top:0">{% if t.slug %}<a href="{{ url_for('product', slug=t.slug) }}" translate="no">{{ t.subject }}</a>{% else %}<span translate="no">{{ t.subject }}</span>{% endif %}</p>
+        <section class="panel">
+            <div class="chat" aria-live="polite">
+            {% for m in msgs %}
+                <div class="msg {{ 'me' if m.mine }} {{ 'hidden-msg' if m.status != 'Visible' }}">
+                    {{ m.body|e|replace('\n', '<br>'|safe) }}
+                    <small><span translate="no">{{ m.who }}</span> &middot; {{ m.created_at|nicedate('%d %b, %H:%M') }}
+                        {% if m.status == 'Held' %} &middot; <span>waits for a moderator</span>{% elif m.status == 'Hidden' %} &middot; <span>hidden by a moderator</span>{% endif %}
+                        {% if not m.mine and m.status == 'Visible' %}
+                        <form method="post" action="{{ url_for('messages_report', message_id=m.id) }}" style="display:inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="linklike" title="Report this message">Report</button></form>{% endif %}</small>
+                </div>
+            {% else %}<p class="muted">No messages yet.</p>{% endfor %}
+            <span id="end"></span>
+            </div>
+            <form method="post" class="chat-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="msgText" class="sr-only">Your message</label>
+                <textarea id="msgText" name="text" maxlength="1000" required placeholder="Write your message"></textarea>
+                <button class="btn btn-orange">Send</button>
+            </form>
+            <p class="hint">Never send money outside Yo Delivery. Report a message if somebody asks you to.</p>
+        </section>
+    </div>
+</div>
+{% endblock %}

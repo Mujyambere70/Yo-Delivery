@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Choose your seats - {{ t.number }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <p class="small"><a href="{{ back }}">&larr; Back to the results</a></p>
+    <section class="panel">
+        <div class="ship-head">
+            <div>
+                <h1 style="margin:0;font-size:22px">{{ ICONS[t.mode] }} <span translate="no">{{ t.number }}</span> &middot; <span translate="no">{{ t.from_city }}</span> &rarr; <span translate="no">{{ t.to_city }}</span></h1>
+                <p class="small muted" style="margin:2px 0 0"><span translate="no">{{ t.operator }}</span> &middot; <span>{{ t.name }}</span> &middot; <span>{{ t.day|nicedate }}</span></p>
+            </div>
+            <div class="tk-times" style="min-width:260px">
+                <div><b>{{ t.depart_time }}</b><small>{{ t.from_tz }}</small></div>
+                <div class="tk-line">{{ t.duration_text }}</div>
+                <div class="end"><b>{{ t.arrive_time }}{% if t.plus_days %}<span class="tk-plus">+{{ t.plus_days }}</span>{% endif %}</b><small>{{ t.to_tz }}</small></div>
+            </div>
+        </div>
+    </section>
+
+    {% if first %}<div class="tk-note">&#9992;&#65039; <span>Second flight of your connection. Your first flight is kept</span>: <b translate="no">{{ first.number }}</b> &middot; <span>seats</span> <span translate="no">{{ first.passengers|map(attribute='label')|join(', ') }}</span> (PNR <span translate="no">{{ first.pnr }}</span>).</div>
+    {% elif nxt %}<div class="tk-note">&#9992;&#65039; <span>Flight 1 of 2. Next</span>: <b translate="no">{{ nxt.number }}</b> <span translate="no">{{ nxt.from_city }} &rarr; {{ nxt.to_city }}</span> {{ nxt.depart_time }}.</div>{% endif %}
+    {% if not t.bookable %}
+    <div class="flash error">{{ 'This trip was cancelled by the operator.' if t.status == 'Cancelled' else 'Booking for this trip is closed.' }}</div>
+    {% endif %}
+
+    {% if t.classes|length > 1 %}
+    <div class="tk-cls-tabs" role="tablist">
+        {% for c in t.classes %}<a class="tk-class {{ 'full' if not c.seats }}" href="{{ url_for('tickets_seats', trip_id=t.trip_id, cls=c.cls, pax=pax) }}" {{ 'aria-current=page' if c.cls == cls }} style="{{ 'border-color:var(--orange);background:#fff7ed' if c.cls == cls }}"><small>{{ c.name }}</small><b>{{ c['from']|rupees }}</b><small class="left">{{ c.seats }} <span>free</span></small></a>{% endfor %}
+    </div>
+    {% endif %}
+
+    {% set cur_cls = t.classes|selectattr('cls', 'equalto', cls)|first %}
+    {% if t.mode == 'train' and cur_cls and cur_cls.seats < pax and t.bookable and user %}
+    <section class="panel">
+        <h2>&#9203; Waiting list</h2>
+        {% if t.chart_done %}<p class="muted">The chart of this train is ready: the waiting list is closed.</p>{% else %}
+        <p>Not enough free seats in this class ({{ cur_cls.seats }} free). Pay now and wait: when other travellers cancel, we give you their seats by ourselves. If the ticket is not confirmed {{ CHART }} hours before departure, all the money comes back.</p>
+        <form method="post" action="{{ url_for('tickets_waitlist', trip_id=t.trip_id) }}" class="form-grid" style="align-items:end">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="cls" value="{{ cls }}">
+            <div><label for="wlp">Passengers</label><select id="wlp" name="pax">{% for i in range(1, MAX_PAX + 1) %}<option {{ 'selected' if i == pax }}>{{ i }}</option>{% endfor %}</select></div>
+            <div><button class="btn btn-orange">Join the waiting list</button></div>
+        </form>{% endif %}
+    </section>
+    {% endif %}
+    <form id="seatForm" method="post" action="{{ url_for('tickets_hold', trip_id=t.trip_id) }}" data-max="{{ pax }}" data-currency="{{ money_cur }}" class="two-col">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="pax" value="{{ pax }}"><input type="hidden" name="cls" value="{{ cls }}">
+        {% for k, v in keep.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+        <section class="panel">
+            <h2>Choose {{ pax }} {{ 'seat' if pax == 1 else 'seats' }}</h2>
+            <div class="tk-legend"><span><i></i>Free</span><span><i class="sel"></i>Your choice</span><span><i class="tk"></i>Taken</span>{% if t.mode == 'flight' %}<span><i class="fee"></i>Seat with a fee (front, extra legroom, window or aisle)</span>{% endif %}</div>
+            {% set berths = t.mode == 'train' and cls in ('SL', '3A', '2A') %}
+            {% for sec in secs if sec.cls == cls %}
+                {% if t.mode == 'train' %}<details class="tk-coach" {{ 'open' if loop.first }}><summary>{{ sec.name }} &middot; {{ sec.free }} <span>free</span></summary>{% else %}<h3 style="margin:10px 0 0">{{ sec.name }} <small class="muted">&middot; {{ sec.free }} <span>free</span></small></h3>{% endif %}
+                <div class="tk-deck-wrap">
+                <div class="tk-deck {{ 'berths' if berths }}" style="--cols:{{ sec.cols }}">
+                    <div class="front">{{ {'bus': 'Front · driver', 'flight': 'Front of the plane', 'train': 'Door · toilets'}[t.mode] }}</div>
+                    {% for row in sec.rows %}{% for s in row %}
+                        {% if s %}<label class="tk-seat {{ 'taken' if s.taken }} {{ 'fee' if s.fee }}" title="{{ s.label }} · {{ s.kind_t }}{% if s.tag %} · {{ s.tag_t }}{% endif %}{% if not s.taken %} · {{ s.price|rupees }}{% endif %}">
+                            <input type="checkbox" name="seat" value="{{ s.code }}" data-label="{{ (sec.coach ~ '/' if sec.coach else '') ~ s.label }}" data-local="{{ s.local }}" {{ 'disabled data-taken' if s.taken or not t.bookable }} aria-label="{{ s.label }} {{ s.kind_t }}">
+                            <span>{{ s.label }}</span></label>
+                        {% else %}<span class="tk-gap"></span>{% endif %}
+                    {% endfor %}{% endfor %}
+                </div>
+                </div>
+                {% if t.mode == 'train' %}</details>{% endif %}
+            {% endfor %}
+            {% if berths %}<p class="hint">Berths: lower, middle and upper in each bay; the two on the right are the side lower and side upper berths.</p>{% endif %}
+            {% if t.mode == 'bus' and cls == 'sleeper' %}<p class="hint">Single berths are on the left, double berths on the right.</p>{% endif %}
+        </section>
+        <aside>
+            <section class="panel tk-sum">
+                <h2>Your seats</h2>
+                <div class="tk-chosen" id="seatChosen" aria-live="polite"></div>
+                <p class="muted" style="margin:0"><span>Chosen</span>: <b id="seatCount">0 / {{ pax }}</b></p>
+                <p style="margin:6px 0 0"><span class="muted">Fare for the seats</span><br><span class="big" id="seatTotal">—</span></p>
+                <p class="hint"><span>{{ 'Without GST, the convenience fee and airport fees.' if t.mode == 'flight' else 'Without GST and the convenience fee.' }}</span> <span>The full price is shown on the next page.</span></p>
+                {% if user %}
+                <button class="btn btn-orange btn-block" id="seatGo" {{ 'disabled' if not t.bookable }}>Keep these seats for {{ HOLD }} minutes</button>
+                {% else %}
+                <a class="btn btn-orange btn-block" href="{{ url_for('login', next=request.full_path) }}">Sign in to choose seats</a>
+                {% endif %}
+                <p class="hint">You can change the number of passengers: {% for i in range(1, MAX_PAX + 1) %}<a href="{{ url_for('tickets_seats', trip_id=t.trip_id, cls=cls, pax=i) }}" {{ 'style=font-weight:800' if i == pax }}>{{ i }}</a> {% endfor %}</p>
+            </section>
+        </aside>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='tickets.js') }}"></script>{% endblock %}

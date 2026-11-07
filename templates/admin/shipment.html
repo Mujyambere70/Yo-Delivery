@@ -1,0 +1,36 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ s.number }}{% endblock %}
+{% block heading %}Shipment <span class="mono">{{ s.number }}</span>{% endblock %}
+{% block head %}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('admin_shipments') }}">&larr; All shipments</a></p>
+<div class="adm-grid">
+    <section class="panel">
+        <div class="ph"><h2>{{ s.status }}</h2><span class="muted small">{{ s.zone_name }} &middot; {{ s.service_name }} &middot; {{ '%g'|format(s.distance_km) }} km</span></div>
+        <ul class="feed">{% for e in s.events %}<li><span class="dot"></span><div><b>{{ e.status }}</b> &middot; {{ e.note }}<small>{{ e.place }} &middot; {{ e.by_who }} &middot; {{ e.at }}</small></div></li>{% endfor %}</ul>
+        {% if s.status in ('Booked', 'At destination hub') and not s.courier_id %}
+        <form method="post" class="status-form mt">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Give the job to</label>
+            <select name="courier_id">{% for c in couriers if c.city == (s.to_city if s.status == 'At destination hub' else s.from_city) %}<option value="{{ c.id }}">{{ c.name }} &middot; {{ c.vehicle_name }} &middot; {{ c.jobs }} jobs{{ ' &middot; online' if c.online }}</option>{% else %}<option value="">No courier in this city</option>{% endfor %}</select>
+            <button class="btn btn-orange btn-sm">Assign</button>
+        </form>
+        {% endif %}
+    </section>
+    <section class="panel">
+        <h2>Details</h2>
+        <dl class="kv">
+            <dt>Sender</dt><dd>{{ s.from_name }}, {{ s.from_mobile }}<br>{{ s.from_address }}, {{ s.from_city }}</dd>
+            <dt>Receiver</dt><dd>{{ s.to_name }}, {{ s.to_mobile }}<br>{{ s.to_address }}, {{ s.to_city }} {{ s.to_postcode }} {{ s.to_country }}</dd>
+            <dt>Contents</dt><dd>{{ s.kind_name }}: {{ s.contents }}{% if s.fragile %} &middot; fragile{% endif %}{% if s.insured %} &middot; insured {{ s.declared|inr }}{% endif %}</dd>
+            <dt>Weight</dt><dd>{{ s.weight_g }} g (charged {{ s.charge_g }} g){% if s.length_cm %}, {{ s.length_cm }}&times;{{ s.width_cm }}&times;{{ s.height_cm }} cm{% endif %}</dd>
+            <dt>Price</dt><dd>{{ s.price|inr }} ({{ s.subtotal|inr }} + GST {{ s.tax|inr }}) &middot; {{ s.payment }} &middot; {{ 'paid' if s.paid else 'not paid yet' }}</dd>
+            <dt>Courier</dt><dd>{{ ('#' ~ s.courier_id) if s.courier_id else '—' }}{% if s.pickup_courier_id and s.pickup_courier_id != s.courier_id %} (pickup #{{ s.pickup_courier_id }}){% endif %}</dd>
+            <dt>Delivery code</dt><dd class="mono">{{ s.delivery_code }} &middot; wrong tries: {{ s.code_tries }}</dd>
+            {% if s.pod_name %}<dt>Received by</dt><dd>{{ s.pod_name }} ({{ s.pod_by }})</dd>{% endif %}
+            {% if s.rating %}<dt>Rating</dt><dd>{{ '★' * s.rating }} {{ s.feedback }}</dd>{% endif %}
+        </dl>
+        {% if s.pod_photo %}<p class="mt"><b>Proof of delivery photo</b><br><img src="{{ url_for('admin_private', name=s.pod_photo) }}" alt="Proof of delivery" style="max-width:280px;border-radius:8px"></p>{% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block manifest %}<link rel="manifest" href="{{ url_for('static', filename='courier.webmanifest') }}"><meta name="theme-color" content="#1e3a5f">{% endblock %}
+{% block title %}Courier app{% endblock %}
+{% block content %}
+<div class="wrap" {% if c.status == 'Approved' and c.online %}data-ping="{{ url_for('driver_ping') }}" data-token="{{ csrf_token() }}" data-jobs="{{ mine|length }}"{% endif %}>
+    <section class="panel drv-top">
+        <div>
+            <h1 style="margin:0">&#128757; Courier app</h1>
+            <p class="small muted" style="margin:2px 0 0"><span translate="no">{{ c.name }}</span> &middot; <span>{{ c.vehicle_name }}</span>{% if c.vehicle_no %} <span translate="no">{{ c.vehicle_no }}</span>{% endif %} &middot; <span translate="no">{{ c.city }}</span>{% if c.rating %} &middot; &#9733; {{ c.rating }}{% endif %}</p>
+        </div>
+        {% if c.status == 'Approved' %}
+        <form method="post" action="{{ url_for('driver_online') }}" class="switch-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="online" value="{{ '0' if c.online else '1' }}">
+            <span><span class="online-dot {{ 'on' if c.online }}"></span> <b>{{ 'Online' if c.online else 'Offline' }}</b></span>
+            <button class="btn {{ 'btn-outline' if c.online else 'btn-orange' }}">{{ 'Go offline' if c.online else 'Go online' }}</button>
+        </form>
+        {% else %}
+        <span class="pill-status {{ 'bad' if c.status in ('Rejected', 'Suspended') else '' }}">{{ c.status }}</span>
+        {% endif %}
+    </section>
+
+    {% if c.status != 'Approved' %}
+    <p class="drv-install" hidden><button type="button" class="btn btn-sm btn-outline" id="installCourier">&#128241; Install the Yo Courier app</button> <small class="muted">Works without network for 12 hours.</small></p>
+    <script>
+    (function () {                                     // version 6: install the courier app on the phone
+        var prompt = null, box = document.querySelector('.drv-install');
+        window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); prompt = e; box.hidden = false; });
+        document.getElementById('installCourier').addEventListener('click', function () {
+            if (prompt) { prompt.prompt(); prompt = null; box.hidden = true; }
+        });
+    })();
+    </script>
+    {% if user and not user.id_verified %}<p class="flash info">&#129706; <span>Please confirm your ID once (document + selfie).</span> <a href="{{ url_for('id_check') }}">Check my ID</a></p>{% endif %}
+    <section class="panel">
+        {% if c.status == 'Pending' %}<h2>Your application is being checked</h2><p>We will send you a message when you can start. It usually takes one working day.</p>
+        {% else %}<h2>Your courier account is {{ c.status|lower }}</h2>{% if c.reason %}<p>{{ c.reason }}</p>{% endif %}<p>Questions? Write to support@yodelivery.example.</p>{% endif %}
+    </section>
+    {% else %}
+    <div class="kpis">
+        <div class="kpi"><small>Yo Pay balance</small><b>{{ c.wallet|rupees }}</b><a href="{{ url_for('pay_home') }}" class="small">Open Yo Pay</a></div>
+        <div class="kpi"><small>Earned with Yo</small><b>{{ c.earned|rupees }}</b><span class="small muted">Deliveries: {{ c.jobs_done }}</span></div>
+        <div class="kpi {{ 'warn' if c.cash_in_hand > 200000 }}"><small>Cash to give to Yo</small><b>{{ c.cash_in_hand|rupees }}</b></div>
+        <div class="kpi"><small>Task board</small><b>{{ (board.get('todo', 0) + board.get('doing', 0)) }}</b><a href="{{ url_for('board_page', scope='courier') }}" class="small">Open the board</a></div>
+    </div>
+    {% if c.online %}<p class="gps-note" id="gpsNote">Your position is sent while this page is open (only during jobs it is shown to the sender).</p>{% endif %}
+    <p class="flash info" id="offlineNote" hidden>No network: you see the copy saved on your phone. Your position is sent when the network is back.</p>
+
+    <section class="panel">
+        <h2>My jobs ({{ mine|length }})</h2>
+        {% if mine|length > 1 %}<p><a class="btn btn-orange btn-sm" href="{{ url_for('driver_route') }}">&#128506; Plan my route for {{ mine|length }} parcels</a></p>{% endif %}
+        {% for j in mine %}
+        <a class="job mine" href="{{ url_for('driver_job', number=j.number) }}" style="color:inherit;text-decoration:none">
+            <div><h3><span translate="no">{{ j.number }}</span> &middot; <span>{{ j.kind_name }}</span> <span>{{ '%g'|format(j.charge_g / 1000) }} kg</span></h3>
+                <p><b>{{ {'pickup': 'Pick up at', 'handover': 'Bring to', 'deliver': 'Deliver to'}[j.next] }}:</b> {{ j.go_to }}, <span translate="no">{{ j.go_city }}</span></p>
+                <p><span class="pill-status blue">{{ j.status }}</span>{% if j.payment == 'cash' and not j.paid %} <span class="pill-status">Collect {{ j.price|rupees }} cash</span>{% endif %}</p></div>
+            <div class="earn">+{{ j.earning|rupees }}</div>
+        </a>
+        {% else %}<p class="muted">{{ 'No jobs right now. New jobs near you come automatically.' if c.online else 'Go online to get jobs.' }}</p>{% endfor %}
+    </section>
+
+    <section class="panel">
+        <h2>Open jobs in <span translate="no">{{ c.city }}</span> ({{ waiting|length }})</h2>
+        {% for j in waiting %}
+        <div class="job">
+            <div><h3><span translate="no">{{ j.number }}</span> &middot; <span>{{ j.kind_name }}</span> <span>{{ '%g'|format(j.charge_g / 1000) }} kg</span>{% if j.fragile %} &middot; <span>Fragile</span>{% endif %}</h3>
+                <p>{% if j.status == 'At destination hub' %}<span>From the Yo hub to</span>{% else %}<span>From</span> <span translate="no">{{ j.from_city }}</span> <span>to</span>{% endif %} <span translate="no">{{ j.to_city }}</span> &middot; <span>{{ j.status }}</span></p></div>
+            <form method="post" action="{{ url_for('driver_action', number=j.number, action='take') }}" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <span class="earn">+{{ j.earning|rupees }}</span> <button class="btn btn-orange btn-sm">Take the job</button>
+            </form>
+        </div>
+        {% else %}<p class="muted small">No open jobs in your city.</p>{% endfor %}
+    </section>
+
+    {% if done %}
+    <section class="panel">
+        <h2>Finished</h2>
+        <div class="tw"><table class="mini-table at"><tbody>
+            {% for j in done %}<tr><td class="mono" translate="no">{{ j.number }}</td><td>{{ j.kind_name }}</td><td><span translate="no">{{ j.from_city }}</span> &rarr; <span translate="no">{{ j.to_city }}</span></td><td><span class="pill-status {{ 'ok' if j.status == 'Delivered' else 'grey' }}">{{ j.status }}</span></td><td class="nowrap">{{ (j.delivered_at or j.moved_at or j.created_at)|nicedate('%d %b %H:%M') }}</td></tr>{% endfor %}
+        </tbody></table></div>
+    </section>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='courier.js') }}"></script>{% endblock %}

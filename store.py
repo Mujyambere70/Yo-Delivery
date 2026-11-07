@@ -28,14 +28,49 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import catalog
 import world
 from aftersales import ReturnsMixin
+from blog import BLOG_SCHEMA, BlogMixin
+from courier import COURIER_SCHEMA, CourierMixin
 from core import ShopError, now, to_dt          # noqa: F401  (ShopError, now and to_dt are used by app.py too)
 from db import Database
 from maintenance import MaintenanceMixin
 from notices import NoticesMixin
 from notify import Notifier
 from payments import PaymentsMixin
+from photocheck import PHOTO_SCHEMA, PhotoCheckMixin
 from recommend import RecommendMixin
+from rewards import REWARDS_SCHEMA, RewardsMixin
 from sellers import SellersMixin
+from taskboard import BOARD_SCHEMA, TaskBoardMixin
+from tickets import TICKETS_SCHEMA, TicketsMixin
+from worldwide import WORLD_SCHEMA, WorldMixin
+from chat import CHAT_SCHEMA, ChatMixin
+from learn import LEARN_SCHEMA, LearnMixin
+from staff import STAFF_SCHEMA, StaffMixin
+from jobs import JOBS_SCHEMA, JobsMixin
+from customs import CUSTOMS_SCHEMA, CustomsMixin
+from mobilemoney import MOBILE_SCHEMA, MobileMoneyMixin
+from routeplan import RoutePlanMixin
+from taxes import TAX_SCHEMA, TaxMixin
+from bankpay import BANK_SCHEMA, BankPayMixin
+from gtfs import GTFS_SCHEMA, GtfsMixin
+from chatmodel import CHATMODEL_SCHEMA, ChatModelMixin
+from translate import TranslateMixin
+from contentrec import CONTENT_SCHEMA, ContentRecMixin
+from idcheck import IDCHECK_SCHEMA, IdCheckMixin
+from cache import CACHE_SCHEMA, CacheMixin
+from workforce import WORKFORCE_SCHEMA, WorkforceMixin
+from yopay import YOPAY_SCHEMA, YoPayMixin
+# version 7
+from people import PEOPLE_SCHEMA, PeopleMixin
+from invoices import INVOICE_SCHEMA, InvoiceMixin
+from providers import PROVIDERS_SCHEMA, ProvidersMixin
+from partners import PARTNERS_SCHEMA, PartnersMixin
+from courierplus import CourierPlusMixin
+from gtfsrt import GtfsRtMixin
+from analytics import ANALYTICS_SCHEMA, AnalyticsMixin
+from helpdesk import SUPPORT_SCHEMA, SupportMixin
+from privacy import PRIVACY_SCHEMA, PrivacyMixin
+from rewards import POINTS_REVIEW
 
 # Default shop settings (the admin can change them on the Settings page)
 FREE_DELIVERY_FROM = 499 * 100     # free delivery for orders of ₹499 or more
@@ -46,7 +81,11 @@ DEFAULT_SETTINGS = {"free_delivery_from": FREE_DELIVERY_FROM, "delivery_fee": DE
                     # shipping abroad (the shop's own prices, in paise)
                     "intl_fee_near": 900 * 100, "intl_fee_world": 1800 * 100, "intl_free_from": 25000 * 100,
                     # marketplace
-                    "seller_commission": 10, "return_days": 7}
+                    "seller_commission": 10, "return_days": 7,
+                    # version 6: workers must turn on two-step sign-in before they open the admin pages
+                    "staff_need_2fa": 0,
+                    # version 7
+                    "dual_control": 0, "require_training": 0, "parcels_per_worker": 120}
 TEXT_SETTINGS = {"announcement"}
 MAX_QTY = 10
 CATEGORY_NAMES = {}                # slug -> name, kept up to date by Store
@@ -275,14 +314,32 @@ ACTIONS = ["Signed up", "Logged in", "Login failed", "Logged out", "Added to car
            "Admin: orders", "Admin: sellers", "Admin: settings"]
 
 
-EXTRA_SCHEMA = ""                  # tables of the newer modules are added by them
+# version 3 - the "super app": tables of the new modules
+EXTRA_SCHEMA = (YOPAY_SCHEMA + COURIER_SCHEMA + BLOG_SCHEMA + REWARDS_SCHEMA + BOARD_SCHEMA + PHOTO_SCHEMA +
+                TICKETS_SCHEMA + WORLD_SCHEMA + CHAT_SCHEMA + LEARN_SCHEMA + STAFF_SCHEMA + JOBS_SCHEMA + CUSTOMS_SCHEMA +
+                MOBILE_SCHEMA + WORKFORCE_SCHEMA + TAX_SCHEMA + BANK_SCHEMA + GTFS_SCHEMA + CHATMODEL_SCHEMA + CONTENT_SCHEMA + IDCHECK_SCHEMA + CACHE_SCHEMA +
+                # version 7
+                PEOPLE_SCHEMA + INVOICE_SCHEMA + PROVIDERS_SCHEMA + PARTNERS_SCHEMA + ANALYTICS_SCHEMA + SUPPORT_SCHEMA +
+                PRIVACY_SCHEMA)
 MIGRATIONS = {
     "users": [("is_admin", "INTEGER NOT NULL DEFAULT 0"), ("blocked", "INTEGER NOT NULL DEFAULT 0"),
               ("country", "TEXT NOT NULL DEFAULT 'IN'"), ("lang", "TEXT NOT NULL DEFAULT 'en'"),
               ("currency", "TEXT NOT NULL DEFAULT ''"), ("totp_secret", "TEXT NOT NULL DEFAULT ''"),
               ("totp_enabled", "INTEGER NOT NULL DEFAULT 0"), ("totp_last_step", "INTEGER NOT NULL DEFAULT 0"),
-              ("notify_email", "INTEGER NOT NULL DEFAULT 1"), ("notify_sms", "INTEGER NOT NULL DEFAULT 1")],
-    "addresses": [("country", "TEXT NOT NULL DEFAULT 'IN'")],
+              ("notify_email", "INTEGER NOT NULL DEFAULT 1"), ("notify_sms", "INTEGER NOT NULL DEFAULT 1"),
+              ("id_verified", "INTEGER NOT NULL DEFAULT 0")],
+    "addresses": [("country", "TEXT NOT NULL DEFAULT 'IN'"), ("place_id", "TEXT NOT NULL DEFAULT ''"),
+                  ("lat", "REAL"), ("lng", "REAL")],
+    # version 5: pickup and delivery in any town or village of the world
+    "shipments": [("from_place", "TEXT NOT NULL DEFAULT ''"), ("to_place", "TEXT NOT NULL DEFAULT ''"),
+                  ("from_country", "TEXT NOT NULL DEFAULT 'IN'"), ("tax_label", "TEXT NOT NULL DEFAULT ''")],
+    "couriers": [("place", "TEXT NOT NULL DEFAULT ''")],
+    "sellers": [("auto_payout", "INTEGER NOT NULL DEFAULT 1"), ("payout_to", "TEXT NOT NULL DEFAULT 'wallet'")],
+    "ticket_services": [("source", "TEXT NOT NULL DEFAULT 'demo'"), ("valid_from", "TEXT NOT NULL DEFAULT ''"),
+                        ("valid_to", "TEXT NOT NULL DEFAULT ''")],
+    # version 5: waiting lists, connections (two linked flights) and round trips
+    "ticket_bookings": [("wl", "INTEGER NOT NULL DEFAULT 0"), ("link_pnr", "TEXT NOT NULL DEFAULT ''"),
+                        ("return_of", "TEXT NOT NULL DEFAULT ''")],
     "products": [("active", "INTEGER NOT NULL DEFAULT 1"), ("seller_id", "INTEGER"),
                  ("approved", "INTEGER NOT NULL DEFAULT 1")],
     "orders": [("country", "TEXT NOT NULL DEFAULT 'IN'"), ("currency", "TEXT NOT NULL DEFAULT 'INR'"),
@@ -290,12 +347,36 @@ MIGRATIONS = {
                ("payment_status", "TEXT NOT NULL DEFAULT 'Paid'"), ("payment_ref", "TEXT NOT NULL DEFAULT ''"),
                ("paid_at", "TEXT NOT NULL DEFAULT ''"), ("courier", "TEXT NOT NULL DEFAULT ''"),
                ("awb", "TEXT NOT NULL DEFAULT ''"), ("notified_step", "INTEGER NOT NULL DEFAULT -1"),
-               ("lang", "TEXT NOT NULL DEFAULT 'en'"), ("refunded", "INTEGER NOT NULL DEFAULT 0")],
+               ("lang", "TEXT NOT NULL DEFAULT 'en'"), ("refunded", "INTEGER NOT NULL DEFAULT 0"),
+               ("emi_months", "INTEGER NOT NULL DEFAULT 0"), ("emi_monthly", "INTEGER NOT NULL DEFAULT 0")],
     "order_items": [("seller_id", "INTEGER"), ("commission", "REAL NOT NULL DEFAULT 0")],
 }
+# version 7: new columns of old tables
+for _t, _cols in {
+    "staff_leave": [("kind", "TEXT NOT NULL DEFAULT 'Annual'")],
+    "offices": [("lat", "REAL"), ("lng", "REAL"), ("geofence_m", "INTEGER NOT NULL DEFAULT 300"),
+                ("remote_ok", "INTEGER NOT NULL DEFAULT 0")],
+    "staff_shifts": [("in_lat", "REAL"), ("in_lng", "REAL"), ("in_dist_m", "INTEGER"),
+                     ("in_flag", "TEXT NOT NULL DEFAULT ''")],
+    "sellers": [("tax_id", "TEXT NOT NULL DEFAULT ''"), ("tax_registered", "INTEGER NOT NULL DEFAULT 0")],
+    "shipments": [("partner_id", "INTEGER"), ("partner_ref", "TEXT NOT NULL DEFAULT ''"),
+                  ("time_window", "TEXT NOT NULL DEFAULT ''"), ("pod_signature", "TEXT NOT NULL DEFAULT ''")],
+    "gtfs_feeds": [("rt_url", "TEXT NOT NULL DEFAULT ''"), ("rt_checked_at", "TEXT NOT NULL DEFAULT ''"),
+                   ("rt_result", "TEXT NOT NULL DEFAULT ''")],
+    "id_checks": [("live_ok", "INTEGER"), ("live_note", "TEXT NOT NULL DEFAULT ''")],
+    "orders": [("risk_score", "INTEGER NOT NULL DEFAULT 0"), ("risk_reasons", "TEXT NOT NULL DEFAULT ''"),
+               ("risk_status", "TEXT NOT NULL DEFAULT ''"), ("risk_released_at", "TEXT NOT NULL DEFAULT ''")],
+}.items():
+    MIGRATIONS.setdefault(_t, []).extend(_cols)
 
 
-class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMixin, MaintenanceMixin):
+class Store(PeopleMixin, InvoiceMixin, ProvidersMixin, PartnersMixin, CourierPlusMixin, GtfsRtMixin, AnalyticsMixin,
+            SupportMixin, PrivacyMixin,
+            PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMixin, MaintenanceMixin,
+            YoPayMixin, CourierMixin, BlogMixin, RewardsMixin, TaskBoardMixin, PhotoCheckMixin, TicketsMixin,
+            WorldMixin, ChatMixin, LearnMixin, StaffMixin, JobsMixin, CustomsMixin,
+            MobileMoneyMixin, RoutePlanMixin, WorkforceMixin, TaxMixin, BankPayMixin, GtfsMixin, ChatModelMixin,
+            TranslateMixin, ContentRecMixin, IdCheckMixin, CacheMixin):
     def __init__(self, db_path, driver=None, notifier=None, env=None):
         """db_path: an SQLite file, or a postgresql:// URL (DATABASE_URL).
         notifier: who sends emails / SMS / push (notify.Notifier); env: settings like STRIPE_SECRET_KEY."""
@@ -313,6 +394,11 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
                 for col, ddl in cols:
                     if col not in have:
                         conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}")
+            # version 5: the places of older rows (a Yo city name is also its place id)
+            conn.execute("UPDATE couriers SET place = city WHERE place = ''")
+            conn.execute("UPDATE shipments SET from_place = from_city WHERE from_place = ''")
+            conn.execute("UPDATE shipments SET to_place = to_city WHERE to_place = '' AND to_country = 'IN' "
+                         "AND from_country = 'IN' AND created_at < '2026-11-07'")
             # first run: categories, coupons and settings come from catalog.py / defaults
             if not conn.execute("SELECT 1 FROM categories").fetchone():
                 conn.executemany("INSERT INTO categories (slug, name, image, position) VALUES (?, ?, ?, ?)",
@@ -325,6 +411,20 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
             conn.executemany("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO NOTHING",
                              [(k, str(v)) for k, v in DEFAULT_SETTINGS.items()])
         self.refresh_categories()
+        self.open_wallet_ledgers()
+        self.ensure_ticket_operators()
+        self.ensure_head_office()
+        self.ensure_customs_rules()
+        self.ensure_tax_rules()
+        self.ensure_chat_model()
+        # version 7
+        self.ensure_income_tax_rules()
+        self.ensure_category_rates()
+        self.ensure_experiments()
+        try:
+            self.ensure_office_locations()
+        except Exception:                                  # the places file is optional for the shop itself
+            pass
 
     def _replace_old_database(self):
         """If the file was made by an older version of Yo Delivery (different tables),
@@ -390,9 +490,11 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
             if conn.execute("SELECT 1 FROM users WHERE email = ? OR mobile = ?", (email, mobile)).fetchone():
                 raise ShopError("An account with this email or mobile number already exists. Please sign in.")
             cur = conn.execute("INSERT INTO users (name, email, mobile, password, wallet, created_at, country, lang, "
-                               "currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                               (name.title(), email, mobile, generate_password_hash(password), wallet, when or now(),
+                               "currency) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?)",
+                               (name.title(), email, mobile, generate_password_hash(password), when or now(),
                                 country, lang, world.default_currency(country, lang)))
+            if wallet:
+                self.wallet_move(conn, cur.lastrowid, wallet, "signup", "", "Welcome bonus (demo money)", when=when)
             return cur.lastrowid
 
     def login(self, login, password):
@@ -410,7 +512,7 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
     def get_user(self, user_id):
         with self.db() as conn:
             row = conn.execute("SELECT id, name, email, mobile, wallet, created_at, is_admin, blocked, country, lang, "
-                               "currency, totp_enabled, notify_email, notify_sms FROM users WHERE id = ?",
+                               "currency, totp_enabled, notify_email, notify_sms, id_verified FROM users WHERE id = ?",
                                (user_id,)).fetchone()
         return dict(row) if row else None
 
@@ -470,6 +572,18 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
         d["mobile"] = mobile
         if len(d["line1"]) < 5:
             raise ShopError("Please enter house number and street.")
+        # version 5: the town or village chosen from the list of places of the world (and the pin on the map)
+        import courier
+        place = courier.resolve(d["city"], country, str(f.get("place_id", "")).strip()) if (
+            f.get("place_id") or d["city"]) else None
+        point = (None, None)
+        if place:
+            d["city"] = d["city"] or place["name"]
+            if country == "IN" and d["state"] not in STATES and place["region"] in STATES:
+                d["state"] = place["region"]
+            if country == "IN" and not d["pincode"] and re.fullmatch(r"\d{6}", place.get("pin") or ""):
+                d["pincode"] = place["pin"]
+            point = courier.CourierMixin._point_in(place, f.get("lat"), f.get("lng")) or (place["lat"], place["lng"])
         if country == "IN" and (not d["city"] or d["state"] not in STATES):
             raise ShopError("Please enter the city and choose the state.")
         if not d["city"]:
@@ -486,9 +600,10 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
                 conn.execute("UPDATE addresses SET is_default = 0 WHERE user_id = ?", (user_id,))
             cur = conn.execute(
                 "INSERT INTO addresses (user_id, name, mobile, line1, line2, city, state, pincode, kind, is_default, "
-                "country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (user_id, d["name"].title(), d["mobile"], d["line1"], d["line2"], d["city"].title(),
-                 d["state"], d["pincode"], d["kind"], int(make_default), country))
+                "country, place_id, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (user_id, d["name"].title(), d["mobile"], d["line1"], d["line2"],
+                 place["name"] if place else d["city"].title(), d["state"], d["pincode"], d["kind"],
+                 int(make_default), country, place["id"] if place else "", point[0], point[1]))
             return cur.lastrowid
 
     def set_default_address(self, user_id, address_id):
@@ -650,6 +765,7 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
                           rating, title, body, now()))
             conn.execute("UPDATE products SET rating_sum = rating_sum + ?, rating_count = rating_count + 1 "
                          "WHERE id = ?", (rating, product_id))
+            self.add_points(conn, user_id, POINTS_REVIEW, "Product review", str(product_id), once=True)
 
     # =================================================================
     # Cart & wishlist  (cart = dict {product_id: qty})
@@ -720,6 +836,9 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
         with self.db() as conn:
             c = conn.execute("SELECT * FROM coupons WHERE code = ? AND active = 1", (code,)).fetchone()
         if c is None:
+            personal = self.personal_coupon(code, user_id, items_total)     # a Yo Rewards coupon?
+            if personal is not None:
+                return personal
             raise ShopError("This coupon code is not valid.")
         kind, amount, max_off, minimum = c["kind"], c["amount"], c["max_off"], c["min_order"]
         if items_total < minimum * 100:
@@ -757,13 +876,21 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
     # Orders
     # =================================================================
 
-    def place_order(self, user_id, address_id, payment, coupon="", upi_id="", when=None, currency=None, rates=None):
+    def place_order(self, user_id, *args, **kwargs):
+        """Version 7: every new order also gets its risk check (support.py)."""
+        number = self._place_order(user_id, *args, **kwargs)
+        self.after_order_placed(number)
+        return number
+
+    def _place_order(self, user_id, address_id, payment, coupon="", upi_id="", when=None, currency=None, rates=None,
+                     emi_months=0):
         """Create an order from the user's cart. Everything happens in ONE database transaction:
         stock is reduced, wallet is charged, the cart is emptied - or nothing changes at all.
 
         payment: cod (India only), wallet, upi (India only, simulated) or card. A card order waits for the
         payment gateway (status 'Pending'); its stock is kept for PAYMENT_WINDOW_MINUTES.
-        currency/rates: the customer's currency and today's rates - the order remembers the amount in it."""
+        currency/rates: the customer's currency and today's rates - the order remembers the amount in it.
+        emi_months: a card payment in monthly instalments (an EMI plan of yopay.emi_plans), 0 = pay in full."""
         cart = self.get_cart(user_id)
         items = self.cart_items(cart)
         if not items:
@@ -796,8 +923,16 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
             method, note, status = "Card", "Waiting for the card payment", "Pending"
         else:
             raise ShopError("Please choose a payment method.")
+        emi = None
+        if emi_months:
+            from yopay import emi_plans
+            emi = next((p for p in emi_plans(summary["total"]) if p["months"] == emi_months), None)
+            if payment != "card" or emi is None:
+                raise ShopError("This EMI plan is not available for this order.")
 
         currency = currency if currency in world.CURRENCIES else "INR"
+        if payment == "card":                               # a currency cards do not use is charged in US dollars
+            currency = world.card_currency(currency)
         local = world.convert(summary["total"], currency, rates or {})
         if local is None:                                   # no exchange rate today: charge in rupees
             currency, local = "INR", summary["total"]
@@ -811,12 +946,12 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
                 if q > stock:
                     raise ShopError(f"Sorry, only {stock} left of {p.name[:40]}. Please update your cart.")
                 conn.execute("UPDATE products SET stock = stock - ? WHERE id = ?", (q, p.id))
-            if payment == "wallet":
-                bal = conn.execute("SELECT wallet FROM users WHERE id = ?", (user_id,)).fetchone()[0]
-                if bal < summary["total"]:
-                    raise ShopError(f"Not enough Yo Pay balance ({rupees(bal)}). Choose another payment method.")
-                conn.execute("UPDATE users SET wallet = wallet - ? WHERE id = ?", (summary["total"], user_id))
             number = "OD" + to_dt(when).strftime("%y%m%d") + "".join(random.choices("0123456789", k=8))
+            if payment == "wallet":
+                try:
+                    self.wallet_move(conn, user_id, -summary["total"], "order", number, "Shop order " + number, when=when)
+                except ShopError as e:
+                    raise ShopError(str(e).rstrip(".") + ". Choose another payment method.")
             line3 = (address["state"] + " - " if address["state"] else "") + address["pincode"]
             addr_text = ", ".join(x for x in (address["line1"], address["line2"], address["city"], line3,
                                               world.country_name(country) if country != "IN" else "") if x)
@@ -843,6 +978,12 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
                 [(order_id, p.id, p.slug, p.name, p.price, p.mrp, q, p.seller_id, sellers.get(p.seller_id, 0))
                  for p, q in items])
             conn.execute("DELETE FROM cart WHERE user_id = ?", (user_id,))
+            if summary["coupon"]:
+                self.use_personal_coupon(conn, summary["coupon"], user_id, number)
+            if emi:
+                conn.execute("UPDATE orders SET emi_months = ?, emi_monthly = ? WHERE id = ?",
+                             (emi["months"], emi["monthly"], order_id))
+            self.auto_tasks_for_order(conn, number, order_id)
         return number
 
     @staticmethod
@@ -864,14 +1005,19 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
             return max(events)
         if order.get("payment_status") == "Pending" or order.get("payment_status") == "Failed":
             return 0
+        if order.get("risk_status") == "Review":          # version 7: waits for the safety check
+            return 0
         return self._step(self._clock_start(order))
 
     @staticmethod
     def _clock_start(order):
         """Tracking starts when the order is placed - for a card order, when it is paid."""
+        start = order["placed_at"]
         if order.get("payment_method") == "Card" and order.get("paid_at"):
-            return order["paid_at"]
-        return order["placed_at"]
+            start = order["paid_at"]
+        if order.get("risk_released_at"):                 # version 7: the clock starts after the safety check
+            start = max(start, order["risk_released_at"])
+        return start
 
     def tracking(self, order):
         """List of tracking steps: (name, time text or '', done?)."""
@@ -896,6 +1042,8 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
             return "Cancelled"
         if order.get("payment_status") in ("Pending", "Failed"):
             return "Awaiting payment"
+        if order.get("risk_status") == "Review":          # version 7
+            return "Safety check"
         return TRACK_STEPS[self._order_step(order)]
 
     def orders(self, user_id):
@@ -932,8 +1080,9 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
             for it in o["items"]:
                 conn.execute("UPDATE products SET stock = stock + ? WHERE id = ?", (it["qty"], it["product_id"]))
             if o["payment_method"] in ("Yo Pay Wallet", "UPI"):
-                conn.execute("UPDATE users SET wallet = wallet + ? WHERE id = ?", (o["total"], user_id))
+                self.wallet_move(conn, user_id, o["total"], "refund", number, "Order cancelled " + number)
                 conn.execute("UPDATE orders SET refunded = ? WHERE id = ?", (o["total"], o["id"]))
+            self.give_back_coupon(conn, number)
         if o["payment_method"] == "Card" and o.get("payment_status") == "Paid":
             self.refund_card(o, o["total"], "Order cancelled")
         return o
@@ -1115,6 +1264,12 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
         except (TypeError, ValueError):
             raise ShopError("Please enter valid amounts (0 or more), a commission of 0-50 % and 0-60 return days.")
         new["announcement"] = " ".join(f.get("announcement", "").split())[:160]
+        new["staff_need_2fa"] = 1 if f.get("staff_need_2fa") == "1" else 0
+        new["require_training"] = 1 if f.get("require_training") == "1" else 0          # version 7
+        try:
+            new["parcels_per_worker"] = max(10, min(int(f.get("parcels_per_worker") or 120), 2000))
+        except ValueError:
+            raise ShopError("Please write the parcels a worker handles in a shift as a number.")
         with self.db() as conn:
             conn.executemany("INSERT INTO settings (key, value) VALUES (?, ?) "
                              "ON CONFLICT (key) DO UPDATE SET value = excluded.value",
@@ -1291,7 +1446,7 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
         with self.db() as conn:
             conn.execute("UPDATE users SET password = ? WHERE id = ?", (generate_password_hash(new), user_id))
 
-    def adjust_wallet(self, user_id, rupees_change):
+    def adjust_wallet(self, user_id, rupees_change, reason=""):
         try:
             change = round(float(rupees_change) * 100)
         except (TypeError, ValueError):
@@ -1302,8 +1457,7 @@ class Store(PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMi
             bal = conn.execute("SELECT wallet FROM users WHERE id = ?", (user_id,)).fetchone()["wallet"]
             if bal + change < 0:
                 raise ShopError(f"The wallet has only {rupees(bal)}; it cannot go below zero.")
-            conn.execute("UPDATE users SET wallet = wallet + ? WHERE id = ?", (change, user_id))
-        return bal + change
+            return self.wallet_move(conn, user_id, change, "admin", "", reason or "Changed by the admin")
 
     def delete_user(self, user_id, acting_admin_id):
         if user_id == acting_admin_id:

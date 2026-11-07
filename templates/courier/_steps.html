@@ -1,0 +1,5 @@
+{# the progress bar of a shipment: s.steps = [{name, done, at}] #}
+{% set now_i = s.steps_list.index(s.status) if s.status in s.steps_list else -1 %}
+<ol class="track-n" data-steps style="grid-template-columns: repeat({{ s.steps|length }}, 1fr)">
+    {% for st in s.steps %}<li class="{{ 'done' if st.done and loop.index0 != now_i or (s.status == 'Delivered') }} {{ 'now' if loop.index0 == now_i and s.status != 'Delivered' }}"><span class="dot"></span><b>{{ st.name }}</b><small>{{ st.at|nicedate('%d %b %H:%M') if st.at else '' }}</small></li>{% endfor %}
+</ol>

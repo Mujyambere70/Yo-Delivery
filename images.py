@@ -1,5 +1,6 @@
 """
-images.py - pictures uploaded by the admin or a seller (products and categories).
+images.py - pictures uploaded by the admin, a seller or a courier (products, categories, blog covers,
+courier photos and proof-of-delivery photos).
 
 Every uploaded file is opened with Pillow (so only real images are accepted),
 then turned into an 800x800 JPG - the same format as the built-in product pictures:
@@ -15,6 +16,7 @@ import io
 
 from PIL import Image, ImageDraw, ImageOps, UnidentifiedImageError
 
+import photocheck
 from store import ShopError
 
 SIZE = 800
@@ -77,7 +79,26 @@ def save_product_images(files, slug, store):
              _square(pictures[2]) if len(pictures) > 2 else _closeup(first)]
     for i, view in enumerate(views, start=1):
         store.save_media(f"products/{slug}-{i}.jpg", "image/jpeg", _jpeg(view))
+    # automatic photo check of the main picture (advice for the seller and the admin)
+    store.save_photo_check(f"products/{slug}-1.jpg", "product", photocheck.analyse(first), owner=slug)
     return len(files)
+
+
+def save_private_photo(file, name, store, purpose, owner=""):
+    """A courier's photo or a proof-of-delivery photo: kept in the database under private/... (never public),
+    checked automatically. Returns the check result."""
+    if not name.startswith("private/"):
+        raise ValueError("private photos only")
+    img = _open(file)
+    report = photocheck.analyse(img, purpose)
+    store.save_media(name, "image/jpeg", _jpeg(ImageOps.contain(img, (1000, 1000), Image.LANCZOS), 84))
+    return store.save_photo_check(name, purpose, report, owner=owner)
+
+
+def save_blog_cover(file, slug, store):
+    img = _open(file)
+    store.save_media(f"blog/{slug}.jpg", "image/jpeg", _jpeg(ImageOps.fit(img, (1200, 630), Image.LANCZOS), 84))
+    return f"blog/{slug}.jpg"
 
 
 def save_category_image(file, slug, store):

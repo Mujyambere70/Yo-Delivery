@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Other languages - {{ p.name }}{% endblock %}
+{% block content %}
+<div class="wrap">
+    {% include "seller/_nav.html" %}
+    <section class="panel">
+        <h1 style="margin-top:0">&#127760; <span>Product texts in other languages</span></h1>
+        <p class="muted"><b translate="no">{{ p.name }}</b>. <span>Customers see these texts when the shop is in their language; empty languages show your English text. Write one feature per line in the description.</span></p>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="lang-tabs">
+            {% for code, name in LANGS.items() %}{% set t = texts.get(code, {}) %}
+                <details {{ 'open' if t or loop.first }}>
+                    <summary>{{ name }} {% if drafts.get(code) %}<span class="pill-status warn">draft</span>{% elif t %}&#10003;{% endif %}</summary>
+                    {% if drafts.get(code) %}<p class="small draft-note">{{ 'Draft from the translation service.' if drafts[code]['from'] == 'service' else 'Draft from the shop\'s translation memory: words in [brackets] are still in English.' }} <span>Known words:</span> {{ drafts[code]['known'] }} %. <b>Please check every line.</b></p>{% endif %}
+                    <label for="n_{{ code }}">Product name</label>
+                    <input id="n_{{ code }}" name="name_{{ code }}" value="{{ t.get('name', '') }}" maxlength="120" lang="{{ code }}" dir="{{ 'rtl' if code == 'ar' else 'auto' }}" translate="no">
+                    <label for="a_{{ code }}">Description (one feature per line)</label>
+                    <textarea id="a_{{ code }}" name="about_{{ code }}" rows="4" lang="{{ code }}" dir="{{ 'rtl' if code == 'ar' else 'auto' }}" translate="no">{{ t.get('about', '') }}</textarea>
+                </details>
+            {% endfor %}
+            </div>
+            <button class="btn btn-orange">Save</button>
+            <button class="btn btn-outline" name="action" value="draft" formnovalidate>&#129302; Make drafts for the empty languages</button>
+            <a class="btn btn-outline" href="{{ url_for('seller_products') }}">Back</a>
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}My work{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <section class="panel staff-hero">
+        <div>
+            <p class="small muted staff-path">{% for o in path %}<span translate="no">{{ o.name }}</span>{% if not loop.last %} &rsaquo; {% endif %}{% endfor %}</p>
+            <h1 style="margin:4px 0">&#128188; <span>My work</span></h1>
+            <p><b translate="no">{{ w.name }}</b> &middot; <span translate="no">{{ w.title }}</span> &middot; {{ WORKER_KINDS.get(w.kind, w.kind) }}{% if w.is_manager %} &middot; <span class="tag ok-tag">Manager</span>{% endif %}</p>
+            {% if w.status != 'Active' %}<p class="flash error">Your account is suspended. Please talk to your manager.</p>{% endif %}
+            {% if on_leave %}<p class="flash info">You are on time off today.</p>{% endif %}
+        </div>
+        <div class="staff-clock">
+            {% if shift %}
+            <p class="small muted">This week</p>
+            <b class="big">{{ (shift.week_min // 60) }} h {{ '%02d'|format(shift.week_min % 60) }} min</b>
+            <form method="post" action="{{ url_for('staff_clock') }}" id="clock-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="lat"><input type="hidden" name="lng"><input type="hidden" name="acc">
+                {% if shift.open %}
+                <input type="hidden" name="action" value="out">
+                <p class="small">Clocked in since <span translate="no">{{ shift.open.start_at[11:16] }}</span></p>
+                <button class="btn btn-outline">&#9209; Clock out</button>
+                {% else %}
+                <input type="hidden" name="action" value="in">
+                <button class="btn btn-orange" {{ 'disabled' if w.status != 'Active' }}>&#9654; Clock in</button>
+                {% endif %}
+            </form>
+            {% endif %}
+            <a class="small" href="{{ url_for('staff_card') }}">&#129706; My staff ID card</a>
+            <a class="small" href="{{ url_for('staff_me') }}">&#128196; My contract, holidays and payslips</a>
+        </div>
+    </section>
+
+    <div class="staff-grid">
+        <section class="panel" id="tasks">
+            <h2>My tasks</h2>
+            {% for t in tasks %}
+            <div class="v6-task {{ 'overdue' if t.overdue }}">
+                <div><b>{{ t.title }}</b> <span class="pill-status {{ 'warn' if t.priority in ('High', 'Urgent') else '' }}">{{ t.priority }}</span>
+                    {% if t.due_day %}<small class="muted"><span>due</span> <span translate="no">{{ t.due_day }}</span>{% if t.overdue %} &middot; <b>late</b>{% endif %}</small>{% endif %}
+                    {% if t.details %}<p class="small">{{ t.details }}</p>{% endif %}
+                    <small class="muted"><span>from</span> <span translate="no">{{ t.given_by or '-' }}</span> &middot; {{ t.status }}</small></div>
+                <form method="post" action="{{ url_for('staff_task_move', task_id=t.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if t.status == 'To do' %}<button class="btn btn-sm btn-outline" name="status" value="In progress">Start</button>{% endif %}
+                    {% if t.status in ('To do', 'In progress') %}<button class="btn btn-sm btn-orange" name="status" value="Done">Done</button>{% endif %}
+                </form>
+            </div>
+            {% else %}<p class="muted">No open tasks.</p>{% endfor %}
+        </section>
+        <section class="panel">
+            <h2>My shifts this week</h2>
+            <table class="at"><tbody>{% for r in rota %}<tr><td translate="no">{{ r.day }}</td><td translate="no">{{ r.start_hm }} &ndash; {{ r.end_hm }}</td><td><small>{{ r.note }}</small></td></tr>
+            {% else %}<tr><td class="muted">No shifts planned yet.</td></tr>{% endfor %}</tbody></table>
+            <p class="small muted">Times are in the time of your office. Please clock in when you start.</p>
+        </section>
+    </div>
+
+    <div class="staff-grid">
+        <section class="panel">
+            <h2>What I can do</h2>
+            <div class="staff-apps">
+                {% if 'hub.scan' in my_abilities or ALL in my_abilities %}<a class="btn btn-orange" href="{{ url_for('hub_page') }}">&#128230; Scan parcels at the hub</a>{% endif %}
+                {% if is_courier %}<a class="btn btn-orange" href="{{ url_for('driver_home') }}">&#128757; Courier app</a>{% endif %}
+                {% if is_conductor %}<a class="btn btn-orange" href="{{ url_for('conductor_home') }}">&#127915; Conductor app</a>{% endif %}
+                {% if 'board.use' in my_abilities or ALL in my_abilities %}<a class="btn btn-outline" href="{{ url_for('board_page', scope='admin') }}">&#128203; Team task board</a>{% endif %}
+            </div>
+            {% if pages %}
+            <p class="small muted" style="margin-top:12px">Back office pages you may open:</p>
+            <ul class="staff-pages">{% for prefix, ability in pages %}<li><a href="{{ prefix }}">{{ ABILITIES[ability][1] if ability in ABILITIES else prefix }}</a></li>{% endfor %}</ul>
+            {% endif %}
+            <details style="margin-top:10px"><summary>All my abilities ({{ 'everything' if ALL in my_abilities else my_abilities|length }})</summary>
+                <ul class="small">{% for a in my_abilities|sort %}<li>{{ ABILITIES[a][1] if a in ABILITIES else 'Everything' }}</li>{% else %}<li class="muted">No abilities yet. Ask your manager.</li>{% endfor %}</ul>
+            </details>
+        </section>
+
+        <section class="panel">
+            <h2>Time off</h2>
+            <form method="post" action="{{ url_for('staff_leave') }}" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div><label for="lf">First day</label><input type="date" id="lf" name="from_day" required></div>
+                <div><label for="lt">Last day</label><input type="date" id="lt" name="to_day" required></div>
+                <div><label for="lk">Kind</label><select id="lk" name="kind"><option value="Annual">Holiday (paid)</option><option value="Sick">Sick</option><option value="Unpaid">Unpaid</option></select></div>
+                <div style="grid-column:1/-1"><label for="lr">Reason (optional)</label><input type="text" id="lr" name="reason" maxlength="200"></div>
+                <div><button class="btn btn-outline">Ask my manager</button></div>
+            </form>
+            <table class="at small" style="margin-top:10px"><tbody>
+                {% for r in leave_mine[:6] %}<tr><td translate="no">{{ r.from_day }} &ndash; {{ r.to_day }}</td><td>{{ {'Annual': 'Holiday', 'Sick': 'Sick', 'Unpaid': 'Unpaid'}.get(r.kind, r.kind) }}</td><td>{{ r.reason }}</td><td><span class="pill-status {{ 'ok' if r.status == 'Approved' else 'warn' if r.status == 'Waiting' else '' }}">{{ r.status }}</span></td></tr>
+                {% else %}<tr><td class="muted">No requests yet.</td></tr>{% endfor %}
+            </tbody></table>
+        </section>
+    </div>
+
+    {% if leave_team %}
+    <section class="panel">
+        <h2>Time off to decide ({{ leave_team|length }})</h2>
+        <table class="at"><thead><tr><th>Worker</th><th>Office</th><th>Days</th><th>Reason</th><th></th></tr></thead><tbody>
+        {% for r in leave_team %}<tr><td translate="no">{{ r.name }}</td><td translate="no">{{ r.office }}</td><td translate="no">{{ r.from_day }} &ndash; {{ r.to_day }}</td><td>{{ r.reason }}</td>
+            <td><div class="actions">
+                <form method="post" action="{{ url_for('staff_leave_decide', leave_id=r.id, decision='approve') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-orange">Approve</button></form>
+                <form method="post" action="{{ url_for('staff_leave_decide', leave_id=r.id, decision='refuse') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline">Refuse</button></form>
+            </div></td></tr>{% endfor %}
+        </tbody></table>
+    </section>
+    {% endif %}
+
+    {% if team %}
+    <section class="panel">
+        <h2>My team</h2>
+        <table class="at"><thead><tr><th>Name</th><th>Job</th><th>Office</th><th>Status</th></tr></thead><tbody>
+        {% for t in team %}<tr><td>{% if 'staff.manage' in my_abilities or ALL in my_abilities %}<a href="{{ url_for('admin_staff_edit', staff_id=t.id) }}" translate="no">{{ t.name }}</a>{% else %}<span translate="no">{{ t.name }}</span>{% endif %}{% if t.is_manager %} <span class="tag ok-tag">Manager</span>{% endif %}</td>
+            <td translate="no">{{ t.title }}</td><td translate="no">{{ t.office }}</td><td>{{ t.status }}</td></tr>{% endfor %}
+        </tbody></table>
+        {% if 'staff.manage' in my_abilities or ALL in my_abilities %}<p><a class="btn btn-outline btn-sm" href="{{ url_for('admin_staff') }}">Add or manage workers</a> <a class="btn btn-outline btn-sm" href="{{ url_for('admin_offices') }}">Offices</a></p>{% endif %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* version 7: clock in with the position of the phone (the office checks the distance) */
+(function () {
+    var f = document.getElementById('clock-form');
+    if (!f || !navigator.geolocation) return;
+    f.addEventListener('submit', function (e) {
+        if (f.elements.action.value !== 'in' || f.dataset.sent) return;
+        e.preventDefault();
+        var go = function () { f.dataset.sent = '1'; f.submit(); };
+        navigator.geolocation.getCurrentPosition(function (p) {
+            f.elements.lat.value = p.coords.latitude; f.elements.lng.value = p.coords.longitude;
+            f.elements.acc.value = Math.round(p.coords.accuracy); go();
+        }, go, {enableHighAccuracy: true, timeout: 8000, maximumAge: 60000});
+    });
+})();
+</script>
+{% endblock %}

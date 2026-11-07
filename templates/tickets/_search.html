@@ -1,0 +1,17 @@
+{# the search form of Yo Tickets; compact=True on the results pages #}
+<form class="tk-search {{ 'compact' if compact }}" action="{{ url_for('tickets_search') }}" method="get" role="search" aria-label="Search tickets">
+    {% if not compact %}<h2 style="margin:0 0 8px">Where do you want to go?</h2>{% endif %}
+    <div class="seg tk-modes" role="radiogroup" aria-label="Travel by">
+        {% for m, name in MODES.items() %}<label><input type="radio" name="mode" value="{{ m }}" {{ 'checked' if f.mode == m }}><span>{{ ICONS[m] }} {{ name }}</span></label>{% endfor %}
+    </div>
+    <div class="tk-fields">
+        <div><label for="tkf">Leaving from</label><input id="tkf" type="text" name="from" value="{{ f['from'] }}" required autocomplete="off" data-place="from_place" translate="no" placeholder="Town, village or airport"><input type="hidden" name="from_place" value="{{ f.from_place }}"></div>
+        <button type="button" class="tk-swap" data-swap title="Swap the cities" aria-label="Swap the cities">&#8646;</button>
+        <div><label for="tkt">Going to</label><input id="tkt" type="text" name="to" value="{{ f.to }}" required autocomplete="off" data-place="to_place" translate="no" placeholder="Town, village or airport"><input type="hidden" name="to_place" value="{{ f.to_place }}"></div>
+        <div><label for="tkd">Date</label><input id="tkd" type="date" name="date" value="{{ f.date }}" min="{{ today }}" max="{{ last_day }}" required></div>
+        {% if not f.return_of %}<div><label for="tkr">Return (optional)</label><input id="tkr" type="date" name="ret" value="{{ f.ret }}" min="{{ today }}" max="{{ last_day }}"></div>{% else %}<input type="hidden" name="return_of" value="{{ f.return_of }}">{% endif %}
+        <div><label for="tkp">Passengers</label><select id="tkp" name="pax">{% for i in range(1, MAX_PAX + 1) %}<option {{ 'selected' if f.pax|string == i|string }}>{{ i }}</option>{% endfor %}</select></div>
+        <button class="btn btn-orange">Search</button>
+    </div>
+    {% if not compact %}<p class="hint" style="margin:6px 0 0">Every town and village: India, Russia, Rwanda and the whole world. Buses and trains inside a country, flights between 3,214 airports (with one change when there is no direct flight).</p>{% endif %}
+</form>

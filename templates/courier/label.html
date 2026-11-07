@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Label {{ s.number }} | Yo Courier</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='superapp.css') }}">
+</head>
+<body class="label-page" style="background:#e5e7eb">
+<p class="center no-print" style="margin-top:14px"><button class="btn btn-orange" onclick="window.print()">&#128424; Print the label</button> <a class="btn btn-outline" href="{{ url_for('courier_shipment', number=s.number) }}">Back</a></p>
+<div class="label-sheet">
+    <div class="lb-row">
+        <div><img src="{{ url_for('static', filename='images/logo.png') }}" alt="" style="height:30px;display:inline-block;vertical-align:middle"> <b style="font-size:20px" translate="no">yo<span style="color:#ff6b35">courier</span></b><br>
+            <span class="label-big" style="font-size:18px">{{ s.service_name|upper }}</span> · <span>{{ s.zone_name }}</span></div>
+        <div style="text-align:end"><h3>Weight</h3><span class="label-big">{{ '%g'|format(s.charge_g / 1000) }} kg</span>{% if s.fragile %}<br><b style="color:#c62828">&#9888; FRAGILE</b>{% endif %}</div>
+    </div>
+    <div class="lb-row">
+        <div><h3>From</h3><b>{{ s.from_name }}</b><br>{{ s.from_address }}<br><b translate="no">{{ s.from_city }}</b><br><span translate="no">{{ s.from_mobile }}</span></div>
+        <div><h3>To</h3><b style="font-size:16px">{{ s.to_name }}</b><br>{{ s.to_address }}<br><b translate="no" style="font-size:16px">{{ s.to_city }}{% if s.to_postcode %} {{ s.to_postcode }}{% endif %}</b>{% if s.to_country != 'IN' %}<br><b>{{ s.to_country_name|upper }}</b>{% endif %}<br><span translate="no">{{ s.to_mobile }}</span></div>
+    </div>
+    <div class="lb-row" style="border-bottom:none">
+        <div><h3>Consignment</h3><span class="label-big" translate="no">{{ s.number }}</span><br><small><span>Booked</span> <span>{{ s.created_at|nicedate('%d %b %Y') }}</span> · <span>{{ s.kind_name }}</span>: <span translate="no">{{ s.contents }}</span></small><br><small>{{ 'PREPAID' if s.paid else 'CASH AT PICKUP' }}</small></div>
+        <div style="display:flex;gap:10px;align-items:center"><div class="label-qr" id="qr" data-qr="{{ track_url }}"></div><small>Scan to track</small></div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='vendor/qrcode.js') }}"></script>
+<script>
+(function () { var box = document.getElementById("qr"); if (!window.qrcode) { box.textContent = box.getAttribute("data-qr"); return; }
+  var q = qrcode(0, "M"); q.addData(box.getAttribute("data-qr")); q.make(); box.innerHTML = q.createSvgTag({ cellSize: 3, margin: 0 }); })();
+</script>
+</body>
+</html>

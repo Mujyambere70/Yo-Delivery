@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}EMI calculator{% endblock %}
+{% block meta %}<meta name="description" content="Yo Pay EMI calculator: monthly instalments for 3 to 24 months, total interest and no-cost EMI.">{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <h1>&#129518; EMI calculator</h1>
+    <div class="two-col">
+        <section class="panel">
+            <form method="get" class="toolbar" id="emiForm" data-url="{{ url_for('pay_emi_json') }}">
+                <label for="amount" style="margin:0">Amount (₹)</label>
+                <input id="amount" type="number" name="amount" value="{{ '%g'|format(amount / 100) }}" min="1" step="1" style="width:180px">
+                <button class="btn btn-orange btn-sm">Calculate</button>
+            </form>
+            <div id="emiOut">
+            {% if plans %}
+            <table class="emi-table" style="margin-top:12px">
+                <thead><tr><th>Months</th><th>Interest / year</th><th>Every month</th><th>Interest</th><th>Total</th></tr></thead>
+                <tbody>{% for p in plans %}<tr class="{{ 'nocost' if p.no_cost }}"><td>{{ p.months }}{% if p.no_cost %}<span class="nocost-tag">No-cost EMI</span>{% endif %}</td><td>{{ '%g'|format(p.rate) }}%</td><td><b>{{ p.monthly|rupees }}</b></td><td>{{ p.interest|rupees }}</td><td>{{ p.total|rupees }}</td></tr>{% endfor %}</tbody>
+            </table>
+            {% else %}<p class="muted">EMI is possible from {{ EMI_FROM|rupees }}.</p>{% endif %}
+            </div>
+        </section>
+        <aside class="panel small">
+            <h3>How it is calculated</h3>
+            <p>Monthly payment <b>E = P × r × (1 + r)<sup>n</sup> ÷ ((1 + r)<sup>n</sup> − 1)</b>, where P is the amount, r the interest per month (yearly rate ÷ 12 ÷ 100) and n the number of months.</p>
+            <p><b>No-cost EMI</b> (3 and 6 months, from {{ NO_COST_FROM|rupees }}): the shop pays the interest, so you pay only the price.</p>
+            <p class="muted">Demo rates, not an offer of a real bank. You can choose EMI when you pay by card at checkout.</p>
+        </aside>
+    </div>
+</div>
+{% endblock %}

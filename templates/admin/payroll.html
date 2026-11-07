@@ -1,0 +1,28 @@
+{% extends "admin/layout.html" %}
+{% block title %}Payroll{% endblock %}
+{% block heading %}Payroll{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="flash info">Test mode: payroll makes payslips; no money moves. Income tax and contributions use the <b>example rules</b> below - a payroll adviser of each country must check them before real use. One person makes the run, <b>another person</b> approves it.</p>
+    <form method="post" class="form-grid v6-plan">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div><label for="pc">Country</label><select id="pc" name="country">{% for c in countries %}<option>{{ c }}</option>{% endfor %}</select></div>
+        <div><label for="pm">Month</label><input id="pm" type="month" name="month" required></div>
+        <div><button class="btn btn-orange">Make the payroll</button></div>
+    </form>
+</section>
+<section class="panel">
+    <h2>Payroll runs</h2>
+    <table class="at"><thead><tr><th>Country</th><th>Month</th><th>Workers</th><th>Gross</th><th>Net</th><th>Status</th><th>Made by</th><th>Approved by</th><th></th></tr></thead><tbody>
+    {% for r in runs %}<tr><td>{{ r.country }}</td><td translate="no">{{ r.month }}</td><td>{{ r.workers }}</td><td translate="no">{{ minor_money(r.total_gross, r.currency) }}</td><td translate="no">{{ minor_money(r.total_net, r.currency) }}</td>
+        <td><span class="pill-status {{ 'ok' if r.status == 'Paid' else 'warn' if r.status in ('Draft', 'Approved') else '' }}">{{ r.status }}</span></td><td translate="no">{{ r.made_by }}</td><td translate="no">{{ r.approved_by_name or '-' }}</td><td><a href="{{ url_for('admin_payroll_run', run_id=r.id) }}">Open</a></td></tr>
+    {% else %}<tr><td colspan="9" class="muted">No payroll yet.</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel">
+    <h2>Income tax rules (examples)</h2>
+    <table class="at small"><thead><tr><th>Country</th><th>Tax</th><th>How</th><th>Bands</th><th>Worker's contributions</th><th>Note</th></tr></thead><tbody>
+    {% for r in rules %}<tr><td>{{ r.country }}</td><td translate="no">{{ r.name }}</td><td>{{ {'month': 'each month', 'year_cumulative': 'from 1 January (cumulative)', 'year_projected': '1/12 of the yearly tax'}.get(r.method) }}</td>
+        <td translate="no">{% for upto, pct in r.bracket_list %}{{ pct }} %{% if upto %} up to {{ '{:,}'.format(upto) }}{% else %} above{% endif %}{% if not loop.last %}; {% endif %}{% endfor %}{% if r.deduction %}; deduction {{ '{:,}'.format(r.deduction) }}{% endif %}{% if r.rebate_upto %}; no tax up to {{ '{:,}'.format(r.rebate_upto) }}{% endif %}{% if r.cess_pct %}; cess {{ '%g'|format(r.cess_pct) }} %{% endif %}</td>
+        <td>{{ '%g'|format(r.social_pct) }} %</td><td><small>{{ r.note }}</small></td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

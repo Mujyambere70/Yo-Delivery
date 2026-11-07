@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ MODES[mode] }} {{ r['from'].name }} to {{ r.to.name }}: timetable and fares{% endblock %}
+{% block meta %}<meta name="description" content="{{ MODES[mode] }} tickets from {{ r['from'].name }} to {{ r.to.name }}: {{ r.services|length }} services, departure times, travel time and fares from {{ r.services|map(attribute='fare_from')|min|rupees }}. Choose your seat and get a QR e-ticket with Yo Tickets.">
+<link rel="canonical" href="{{ request.base_url }}">{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="wrap">
+        <span class="pill">{{ ICONS[mode] }} Yo Tickets</span>
+        <h1><span>{{ MODES[mode] }}</span>: <span translate="no">{{ r['from'].name }}</span> &rarr; <span translate="no">{{ r.to.name }}</span></h1>
+        <p>{{ r.services|length }} <span>{{ 'services' if r.services|length != 1 else 'service' }}</span> &middot; <span>from</span> <span>{{ r.services|map(attribute='fare_from')|min|rupees }}</span> &middot; <span>{{ '%.0f'|format(r.services[0].distance_km) }} km</span> &middot; <span>fastest</span> <span>{{ (r.services|sort(attribute='duration_min'))[0].duration_text }}</span></p>
+        <div style="margin-top:16px">{% with compact=False %}{% include "tickets/_search.html" %}{% endwith %}</div>
+    </div>
+</section>
+<div class="wrap">
+    {% for n in r.notes %}<div class="tk-note">{{ n }}</div>{% endfor %}
+    <section class="panel">
+        <h2>Timetable</h2>
+        <div class="tw"><table class="tk-table">
+            <thead><tr><th>Service</th><th>Departs</th><th>Arrives</th><th>Time</th><th>Runs on</th><th>Classes</th><th>Fare from</th></tr></thead>
+            <tbody>{% for s in r.services %}<tr>
+                <td><b translate="no">{{ s.number }}</b><br><small class="muted"><span translate="no">{{ s.operator }}</span> &middot; <span>{{ s.name }}</span></small></td>
+                <td><b>{{ s.depart_local }}</b></td>
+                <td><b>{{ s.arrive_local }}</b>{% if s.plus_days %}<span class="tk-plus">+{{ s.plus_days }}</span>{% endif %}</td>
+                <td>{{ s.duration_text }}</td>
+                <td>{% if s.daily %}<span>Daily</span>{% else %}{% for d in s.runs %}<span>{{ d }}</span> {% endfor %}{% endif %}</td>
+                <td>{% for c in s.class_names %}<span>{{ c }}</span>{{ ', ' if not loop.last }}{% endfor %}</td>
+                <td><b>{{ s.fare_from|rupees }}</b></td></tr>{% endfor %}
+            </tbody>
+        </table></div>
+        <p class="hint">Local times of the cities (IST in India). Fares without GST and fees; bus and flight fares go up when the trip fills up.</p>
+        <p><a class="btn btn-orange" href="{{ search_url }}">See seats for tomorrow</a></p>
+    </section>
+    <section class="panel">
+        <h2>Other popular routes</h2>
+        <div class="tk-routes">{% for p in popular if not (p.mode == mode and p['from'] == r['from'].name and p.to == r.to.name) %}<a class="tk-route" href="{{ p.url }}"><span class="ico">{{ ICONS[p.mode] }}</span><span><b><span translate="no">{{ p['from'] }}</span> &rarr; <span translate="no">{{ p.to }}</span></b><small>{{ MODES[p.mode] }}</small></span></a>{% endfor %}</div>
+    </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='tickets.js') }}"></script>{% endblock %}

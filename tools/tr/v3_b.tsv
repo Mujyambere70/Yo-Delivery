@@ -1,0 +1,133 @@
+Track a shipment · Yo Courier	Отследить отправление · Yo Courier	Suivre un envoi · Yo Courier	Seguir un envío · Yo Courier	تتبع شحنة · Yo Courier	跟踪寄件 · Yo Courier	Kurikirana icyoherezwa · Yo Courier
+🔍 Track a shipment	🔍 Отследить отправление	🔍 Suivre un envoi	🔍 Seguir un envío	🔍 تتبع شحنة	🔍 跟踪寄件	🔍 Kurikirana icyoherezwa
+My shipments · Yo Courier	Мои отправления · Yo Courier	Mes envois · Yo Courier	Mis envíos · Yo Courier	شحناتي · Yo Courier	我的寄件 · Yo Courier	Ibyo nohereje · Yo Courier
+Consignment number	Номер отправления	Numéro d'envoi	Número de envío	رقم الشحنة	运单号	Nimero y'icyoherezwa
+Consignment number, e.g. YC2611061234567	Номер отправления, например YC2611061234567	Numéro d'envoi, ex. YC2611061234567	Número de envío, p. ej. YC2611061234567	رقم الشحنة، مثل YC2611061234567	运单号，例如 YC2611061234567	Nimero y'icyoherezwa, urugero YC2611061234567
+Deliveries: {0}	Доставок: {0}	Livraisons : {0}	Entregas: {0}	التوصيلات: {0}	已配送：{0}	Ibyagejejwe: {0}
+Track	Отследить	Suivre	Seguir	تتبع	跟踪	Kurikirana
+Enter the consignment number from the booking message (it starts with	Введите номер отправления из сообщения о заказе (начинается с	Saisissez le numéro d'envoi du message de réservation (il commence par	Escribe el número de envío del mensaje de reserva (empieza por	أدخل رقم الشحنة من رسالة الحجز (يبدأ بـ	请输入预约消息中的运单号（以	Andika nimero y'icyoherezwa iri mu butumwa bwo gutumiza (itangirwa na
+). Looking for a shop order?	). Ищете заказ из магазина?	). Vous cherchez une commande de la boutique ?	). ¿Buscas un pedido de la tienda?	). تبحث عن طلب من المتجر؟	开头）。要查找商城订单？	). Urashaka itumiza ryo mu iduka?
+Consignment	Отправление	Envoi	Envío	الشحنة	运单	Icyoherezwa
+to	в	vers	a	إلى	至	kugera
+Expected by	Ожидается до	Prévu pour le	Previsto para el	متوقع بحلول	预计送达	Biteganyijwe bitarenze
+Booked	Оформлено	Réservé	Reservado	تم الحجز	已下单	Byatumijwe
+Courier assigned	Курьер назначен	Coursier attribué	Repartidor asignado	تم تعيين مندوب	已派骑手	Umugemuzi yabonetse
+Picked up	Забрано	Enlevé	Recogido	تم الاستلام	已取件	Byafashwe
+In transit	В пути	En transit	En tránsito	قيد النقل	运输中	Biri mu nzira
+At destination hub	В пункте назначения	Au centre de destination	En el centro de destino	في مركز الوصول	已到达目的地中心	Bigeze ku kigo cy'aho bijya
+Out for delivery	Передано курьеру для доставки	En cours de livraison	En reparto	خرج للتسليم	派送中	Biri gushyikirizwa
+Delivered	Доставлено	Livré	Entregado	تم التسليم	已送达	Byagejejwe
+Delivery failed	Доставка не удалась	Échec de livraison	Entrega fallida	تعذر التسليم	派送失败	Kugeza byanze
+Cancelled	Отменено	Annulé	Cancelado	ملغى	已取消	Byahagaritswe
+Returned to sender	Возвращено отправителю	Retourné à l'expéditeur	Devuelto al remitente	أعيد إلى المرسل	已退回寄件人	Byasubijwe uwabyohereje
+Pickup	Забор	Enlèvement	Recogida	الاستلام	取件点	Aho bifatirwa
+Delivery	Доставка	Livraison	Entrega	التسليم	收件点	Aho bigezwa
+Yo hub	Хаб Yo	Centre Yo	Centro Yo	مركز Yo	Yo 中转中心	Ikigo cya Yo
+Live	В эфире	En direct	En vivo	مباشر	实时	Ubu
+City centres only (privacy)	Только центры городов (конфиденциальность)	Centres-villes seulement (confidentialité)	Solo centros de ciudad (privacidad)	مراكز المدن فقط (للخصوصية)	仅显示城市中心（隐私）	Hagati mu mijyi gusa (ibanga)
+Exact addresses (only you see them)	Точные адреса (видите только вы)	Adresses exactes (vous seul les voyez)	Direcciones exactas (solo tú las ves)	العناوين الدقيقة (تراها أنت فقط)	精确地址（仅您可见）	Aderesi nyazo (ni wowe uzibona gusa)
+History	История	Historique	Historial	السجل	物流记录	Amateka
+For privacy this page shows no addresses, phone numbers or the delivery code. The sender sees everything after signing in.	Для конфиденциальности здесь нет адресов, телефонов и кода доставки. Отправитель видит всё после входа.	Par confidentialité, cette page n'affiche ni adresses, ni numéros, ni code de livraison. L'expéditeur voit tout après connexion.	Por privacidad, esta página no muestra direcciones, teléfonos ni el código de entrega. El remitente lo ve todo al iniciar sesión.	للخصوصية لا تعرض هذه الصفحة العناوين أو أرقام الهواتف أو رمز التسليم. يرى المرسل كل شيء بعد تسجيل الدخول.	为保护隐私，本页不显示地址、电话或取件码。寄件人登录后可查看全部信息。	Kubera ibanga, iyi paji ntigaragaza aderesi, nimero za telefoni cyangwa kode. Uwohereje abona byose iyo yinjiye.
+Label	Этикетка	Étiquette	Etiqueta	الملصق	面单	Ikirango
+🖨 Label	🖨 Этикетка	🖨 Étiquette	🖨 Etiqueta	🖨 الملصق	🖨 面单	🖨 Ikirango
+🔗 Copy tracking link	🔗 Скопировать ссылку	🔗 Copier le lien de suivi	🔗 Copiar enlace de seguimiento	🔗 نسخ رابط التتبع	🔗 复制跟踪链接	🔗 Koporora umuyoboro
+Cancel this shipment?	Отменить это отправление?	Annuler cet envoi ?	¿Cancelar este envío?	إلغاء هذه الشحنة؟	取消此寄件？	Guhagarika iki cyoherezwa?
+Delivery code - give it to the receiver	Код доставки — передайте его получателю	Code de livraison - donnez-le au destinataire	Código de entrega: dáselo al destinatario	رمز التسليم - أعطه للمستلم	取件码 - 请告知收件人	Kode yo kwakira - yihe uwakira
+The courier hands over the parcel only with this code.	Курьер отдаст посылку только по этому коду.	Le coursier ne remet le colis qu'avec ce code.	El repartidor solo entrega el paquete con este código.	لا يسلّم المندوب الطرد إلا بهذا الرمز.	骑手只凭此码交付包裹。	Umugemuzi atanga ipaki gusa iyo ahawe iyi kode.
+To	Кому	À	Para	إلى	收件人	Kuri
+Weight	Вес	Poids	Peso	الوزن	重量	Uburemere
+{0} kg	{0} кг	{0} kg	{0} kg	{0} كغ	{0} 公斤	{0} kg
+(charged {0} kg)	(к оплате {0} кг)	(facturé {0} kg)	(cobrado {0} kg)	(محسوب {0} كغ)	（计费 {0} 公斤）	(yishyuwe {0} kg)
+{0} km	{0} км	{0} km	{0} km	{0} كم	{0} 公里	{0} km
+Fragile	Хрупкое	Fragile	Frágil	قابل للكسر	易碎	Kimeneka
+Received by	Получил(а)	Reçu par	Recibido por	استلمه	签收人	Byakiriwe na
+Total	Итого	Total	Total	الإجمالي	合计	Igiteranyo
+GST 18%	GST 18%	GST 18 %	GST 18 %	ضريبة GST 18%	GST 18%	GST 18%
+Up to 0.5 kg	До 0,5 кг	Jusqu'à 0,5 kg	Hasta 0,5 kg	حتى 0.5 كغ	0.5 公斤以内	Kugeza kuri 0.5 kg
+Extra weight: {0} kg	Доп. вес: {0} кг	Poids supplémentaire : {0} kg	Peso extra: {0} kg	وزن إضافي: {0} كغ	续重：{0} 公斤	Uburemere bw'inyongera: {0} kg
+Distance: {0} km	Расстояние: {0} км	Distance : {0} km	Distancia: {0} km	المسافة: {0} كم	距离：{0} 公里	Intera: {0} km
+Documents discount	Скидка на документы	Remise documents	Descuento de documentos	خصم المستندات	文件优惠	Igabanywa ku nyandiko
+Express service	Экспресс-доставка	Service express	Servicio exprés	خدمة سريعة	特快服务	Serivisi yihuse
+Fragile handling	Бережная доставка	Manutention fragile	Manejo frágil	مناولة حساسة	易碎品处理	Kwitonda ku bimeneka
+Insurance	Страховка	Assurance	Seguro	التأمين	保险	Ubwishingizi
+Paid with Yo Pay	Оплачено через Yo Pay	Payé avec Yo Pay	Pagado con Yo Pay	مدفوع عبر Yo Pay	已用 Yo Pay 支付	Byishyuwe na Yo Pay
+Paid in cash at pickup	Оплачено наличными при заборе	Payé en espèces à l'enlèvement	Pagado en efectivo en la recogida	مدفوع نقدًا عند الاستلام	取件时已付现金	Byishyuwe amafaranga igihe byafatwaga
+Pay in cash at pickup	Оплата наличными при заборе	Paiement en espèces à l'enlèvement	Pago en efectivo en la recogida	ادفع نقدًا عند الاستلام	取件时付现金	Kwishyura amafaranga igihe bifatwa
+refunded	возвращено	remboursé	reembolsado	تم الاسترداد	已退款	byasubijwe
+How was the courier?	Как вам курьер?	Comment était le coursier ?	¿Qué tal el repartidor?	كيف كان المندوب؟	骑手服务如何？	Umugemuzi yari ameze ate?
+A few words (optional)	Пара слов (необязательно)	Quelques mots (facultatif)	Unas palabras (opcional)	بضع كلمات (اختياري)	说几句（选填）	Amagambo make (si ngombwa)
+Send	Отправить	Envoyer	Enviar	إرسال	发送	Ohereza
+You rated this delivery	Вы оценили эту доставку	Vous avez noté cette livraison	Valoraste esta entrega	قيّمت هذا التوصيل	您已评价此次配送	Watanze amanota kuri uku kugeza
+Delivered by our partner courier.	Доставлено нашим партнёром.	Livré par notre coursier partenaire.	Entregado por nuestro repartidor asociado.	تم التسليم بواسطة شريكنا.	由合作快递送达。	Byagejejwe n'umufatanyabikorwa wacu.
+You have not sent anything yet.	Вы ещё ничего не отправляли.	Vous n'avez encore rien envoyé.	Aún no has enviado nada.	لم ترسل أي شيء بعد.	您还没有寄过东西。	Nta kintu uratohereza.
+Print the label	Распечатать этикетку	Imprimer l'étiquette	Imprimir la etiqueta	اطبع الملصق	打印面单	Capura ikirango
+🖨 Print the label	🖨 Распечатать этикетку	🖨 Imprimer l'étiquette	🖨 Imprimir la etiqueta	🖨 اطبع الملصق	🖨 打印面单	🖨 Capura ikirango
+Back	Назад	Retour	Volver	رجوع	返回	Subira inyuma
+Scan to track	Сканируйте, чтобы отследить	Scannez pour suivre	Escanea para seguir	امسح للتتبع	扫码跟踪	Sikaninga ukurikirane
+PREPAID	ПРЕДОПЛАЧЕНО	PRÉPAYÉ	PREPAGADO	مدفوع مسبقًا	已预付	BYISHYUWE MBERE
+CASH AT PICKUP	НАЛИЧНЫЕ ПРИ ЗАБОРЕ	ESPÈCES À L'ENLÈVEMENT	EFECTIVO EN LA RECOGIDA	نقدًا عند الاستلام	取件付现	AMAFARANGA IGIHE BIFATWA
+STANDARD	СТАНДАРТ	STANDARD	ESTÁNDAR	عادي	标准	BISANZWE
+EXPRESS	ЭКСПРЕСС	EXPRESS	EXPRÉS	سريع	特快	BYIHUSE
+{0}, {1} kg, {2}	{0}, {1} кг, {2}	{0}, {1} kg, {2}	{0}, {1} kg, {2}	{0}، {1} كغ، {2}	{0}，{1} 公斤，{2}	{0}, {1} kg, {2}
+Given to the nearest free courier: {0}	Передано ближайшему свободному курьеру: {0}	Attribué au coursier libre le plus proche : {0}	Asignado al repartidor libre más cercano: {0}	أُسند إلى أقرب مندوب متاح: {0}	已派给最近的空闲骑手：{0}	Byahawe umugemuzi uri hafi: {0}
+Taken by the courier: {0}	Курьер взял заказ: {0}	Pris par le coursier : {0}	Aceptado por el repartidor: {0}	أخذه المندوب: {0}	骑手已接单：{0}	Byafashwe n'umugemuzi: {0}
+Given by the admin: {0}	Назначено администратором: {0}	Attribué par l'administrateur : {0}	Asignado por el administrador: {0}	أسنده المسؤول: {0}	由管理员指派：{0}	Byahawe n'umuyobozi: {0}
+Picked up by {0}	Забрал(а) {0}	Enlevé par {0}	Recogido por {0}	استلمه {0}	{0} 已取件	Byafashwe na {0}
+Picked up by {0} - cash received	Забрал(а) {0} — оплата наличными получена	Enlevé par {0} - espèces reçues	Recogido por {0} - efectivo recibido	استلمه {0} - تم استلام النقد	{0} 已取件 - 已收现金	Byafashwe na {0} - amafaranga yakiriwe
+{0} is going to the receiver	{0} едет к получателю	{0} se rend chez le destinataire	{0} va hacia el destinatario	{0} في الطريق إلى المستلم	{0} 正在前往收件人处	{0} ari kujya ku wakira
+Handed over at the Yo hub by {0}. On the way to {1}	{0} сдал(а) посылку в хаб Yo. В пути в {1}	Déposé au centre Yo par {0}. En route vers {1}	Entregado en el centro Yo por {0}. En camino a {1}	سلّمه {0} في مركز Yo. في الطريق إلى {1}	{0} 已交到 Yo 中转中心，正发往 {1}	Byashyizwe ku kigo cya Yo na {0}. Biri mu nzira bijya {1}
+Arrived at the destination hub	Прибыло в пункт назначения	Arrivé au centre de destination	Llegó al centro de destino	وصل إلى مركز الوصول	已到达目的地中心	Bigeze ku kigo cy'aho bijya
+Received by {0} (delivery code checked)	Получил(а) {0} (код доставки проверен)	Reçu par {0} (code de livraison vérifié)	Recibido por {0} (código de entrega verificado)	استلمه {0} (تم التحقق من رمز التسليم)	{0} 已签收（取件码已核验）	Byakiriwe na {0} (kode yagenzuwe)
+Received by {0} (delivery code checked), photo taken	Получил(а) {0} (код доставки проверен), сделано фото	Reçu par {0} (code vérifié), photo prise	Recibido por {0} (código verificado), foto tomada	استلمه {0} (تم التحقق من الرمز)، والتقطت صورة	{0} 已签收（取件码已核验），已拍照	Byakiriwe na {0} (kode yagenzuwe), ifoto yafashwe
+{0} (attempt {1})	{0} (попытка {1})	{0} (tentative {1})	{0} (intento {1})	{0} (المحاولة {1})	{0}（第 {1} 次尝试）	{0} (inshuro ya {1})
+Kept at the Yo hub - we will try again	Хранится в хабе Yo — попробуем ещё раз	Gardé au centre Yo - nous réessaierons	Guardado en el centro Yo: lo intentaremos de nuevo	محفوظ في مركز Yo - سنحاول مجددًا	暂存于 Yo 中转中心 - 我们会再次派送	Bibitswe ku kigo cya Yo - tuzongera tugerageze
+The parcel goes back to the sender	Посылка возвращается отправителю	Le colis retourne à l'expéditeur	El paquete vuelve al remitente	يعود الطرد إلى المرسل	包裹将退回寄件人	Ipaki isubira ku wayohereje
+No Yo courier free - a partner company picks it up	Нет свободного курьера Yo — забирает компания-партнёр	Aucun coursier Yo libre - une entreprise partenaire l'enlève	Ningún repartidor Yo libre: lo recoge una empresa asociada	لا يوجد مندوب Yo متاح - تستلمه شركة شريكة	暂无空闲 Yo 骑手 - 由合作公司取件	Nta mugemuzi wa Yo uhari - ikigo cy'umufatanyabikorwa kirabifata
+Picked up by our partner courier	Забрано нашим партнёром	Enlevé par notre coursier partenaire	Recogido por nuestro repartidor asociado	استلمه شريكنا	合作快递已取件	Byafashwe n'umufatanyabikorwa wacu
+On the way	В пути	En route	En camino	في الطريق	运输中	Biri mu nzira
+The partner courier is going to the receiver	Курьер-партнёр едет к получателю	Le coursier partenaire se rend chez le destinataire	El repartidor asociado va hacia el destinatario	المندوب الشريك في الطريق إلى المستلم	合作快递正前往收件人处	Umugemuzi w'umufatanyabikorwa ari kujya ku wakira
+Partner courier is delivering it	Доставляет курьер-партнёр	Le coursier partenaire le livre	El repartidor asociado lo está entregando	المندوب الشريك يوصله	合作快递正在派送	Umugemuzi w'umufatanyabikorwa ari kubigeza
+Yo Global Express partner is delivering it	Доставляет партнёр Yo Global Express	Le partenaire Yo Global Express le livre	El socio de Yo Global Express lo está entregando	شريك Yo Global Express يوصله	Yo Global Express 合作方正在派送	Umufatanyabikorwa wa Yo Global Express ari kubigeza
+Delivered by our partner courier	Доставлено нашим партнёром	Livré par notre coursier partenaire	Entregado por nuestro repartidor asociado	تم التسليم بواسطة شريكنا	由合作快递送达	Byagejejwe n'umufatanyabikorwa wacu
+The courier did not come in time - finding another courier	Курьер не приехал вовремя — ищем другого	Le coursier n'est pas venu à temps - recherche d'un autre coursier	El repartidor no llegó a tiempo: buscando otro	لم يأتِ المندوب في الوقت - نبحث عن مندوب آخر	骑手未按时到达 - 正在重新派单	Umugemuzi ntiyaje ku gihe - turashaka undi
+Cancelled by the sender	Отменено отправителем	Annulé par l'expéditeur	Cancelado por el remitente	ألغاه المرسل	寄件人已取消	Byahagaritswe n'uwohereje
+Cancelled by the sender - the money is back in Yo Pay	Отменено отправителем — деньги возвращены в Yo Pay	Annulé par l'expéditeur - l'argent est revenu sur Yo Pay	Cancelado por el remitente: el dinero volvió a Yo Pay	ألغاه المرسل - أعيد المال إلى Yo Pay	寄件人已取消 - 款项已退回 Yo Pay	Byahagaritswe n'uwohereje - amafaranga yasubiye kuri Yo Pay
+Receiver not available	Получателя нет на месте	Destinataire absent	Destinatario no disponible	المستلم غير متاح	收件人不在	Uwakira ntahari
+Address not found	Адрес не найден	Adresse introuvable	Dirección no encontrada	العنوان غير موجود	找不到地址	Aderesi ntiyabonetse
+Receiver refused the parcel	Получатель отказался	Le destinataire a refusé le colis	El destinatario rechazó el paquete	رفض المستلم الطرد	收件人拒收	Uwakira yanze ipaki
+Receiver asked for another day	Получатель попросил другой день	Le destinataire a demandé un autre jour	El destinatario pidió otro día	طلب المستلم يومًا آخر	收件人要求改天派送	Uwakira yasabye undi munsi
+Pickup booked: {0}	Забор оформлен: {0}	Enlèvement réservé : {0}	Recogida reservada: {0}	تم حجز الاستلام: {0}	已预约取件：{0}	Gufata byatumijwe: {0}
+Your shipment {0} to {1} ({2}) is booked. We are finding a courier near you.	Ваше отправление {0} для {1} ({2}) оформлено. Ищем курьера рядом с вами.	Votre envoi {0} pour {1} ({2}) est réservé. Nous cherchons un coursier près de chez vous.	Tu envío {0} para {1} ({2}) está reservado. Buscamos un repartidor cerca de ti.	تم حجز شحنتك {0} إلى {1} ({2}). نبحث عن مندوب قريب منك.	您寄给 {1}（{2}）的 {0} 已下单，正在为您寻找附近的骑手。	Icyoherezwa cyawe {0} kijya kuri {1} ({2}) cyatumijwe. Turashaka umugemuzi uri hafi yawe.
+Courier on the way: {0}	Курьер в пути: {0}	Coursier en route : {0}	Repartidor en camino: {0}	المندوب في الطريق: {0}	骑手正在赶来：{0}	Umugemuzi ari mu nzira: {0}
+{0} will pick up your shipment {1}.	{0} заберёт ваше отправление {1}.	{0} va enlever votre envoi {1}.	{0} recogerá tu envío {1}.	سيستلم {0} شحنتك {1}.	{0} 将上门取走您的寄件 {1}。	{0} azafata icyoherezwa cyawe {1}.
+Out for delivery: {0}	Передано на доставку: {0}	En cours de livraison : {0}	En reparto: {0}	خرج للتسليم: {0}	派送中：{0}	Biri gushyikirizwa: {0}
+{0} is bringing {1} to {2}. Delivery code: {3}.	{0} везёт {1} получателю {2}. Код доставки: {3}.	{0} apporte {1} à {2}. Code de livraison : {3}.	{0} lleva {1} a {2}. Código de entrega: {3}.	{0} يوصل {1} إلى {2}. رمز التسليم: {3}.	{0} 正在把 {1} 送给 {2}。取件码：{3}。	{0} ari kuzana {1} kwa {2}. Kode: {3}.
+Picked up: {0}	Забрано: {0}	Enlevé : {0}	Recogido: {0}	تم الاستلام: {0}	已取件：{0}	Byafashwe: {0}
+{0} picked up {1} and is going to {2}. Delivery code: {3}.	{0} забрал(а) {1} и едет к получателю {2}. Код доставки: {3}.	{0} a enlevé {1} et se rend chez {2}. Code de livraison : {3}.	{0} recogió {1} y va hacia {2}. Código de entrega: {3}.	استلم {0} الشحنة {1} وهو في الطريق إلى {2}. رمز التسليم: {3}.	{0} 已取走 {1}，正前往 {2}。取件码：{3}。	{0} yafashe {1} none ari kujya kwa {2}. Kode: {3}.
+{0} picked up {1}. It goes to the Yo hub in {2} now.	{0} забрал(а) {1}. Сейчас посылка едет в хаб Yo в {2}.	{0} a enlevé {1}. Il part maintenant au centre Yo de {2}.	{0} recogió {1}. Ahora va al centro Yo de {2}.	استلم {0} الشحنة {1}. وهي الآن في الطريق إلى مركز Yo في {2}.	{0} 已取走 {1}，正送往 {2} 的 Yo 中转中心。	{0} yafashe {1}. Ubu bijya ku kigo cya Yo cya {2}.
+In transit: {0}	В пути: {0}	En transit : {0}	En tránsito: {0}	قيد النقل: {0}	运输中：{0}	Biri mu nzira: {0}
+Your shipment {0} left {1} and is on the way to {2}.	Ваше отправление {0} покинуло {1} и едет в {2}.	Votre envoi {0} a quitté {1} et est en route vers {2}.	Tu envío {0} salió de {1} y va camino a {2}.	غادرت شحنتك {0} مدينة {1} وهي في الطريق إلى {2}.	您的寄件 {0} 已离开 {1}，正发往 {2}。	Icyoherezwa cyawe {0} cyavuye {1} kiri mu nzira kijya {2}.
+Delivered: {0}	Доставлено: {0}	Livré : {0}	Entregado: {0}	تم التسليم: {0}	已送达：{0}	Byagejejwe: {0}
+{0} was delivered to {1}. Thank you for using Yo Courier!	{0} доставлено: получил(а) {1}. Спасибо, что пользуетесь Yo Courier!	{0} a été livré à {1}. Merci d'utiliser Yo Courier !	{0} fue entregado a {1}. ¡Gracias por usar Yo Courier!	تم تسليم {0} إلى {1}. شكرًا لاستخدامك Yo Courier!	{0} 已由 {1} 签收。感谢使用 Yo Courier！	{0} yagejejwe kuri {1}. Murakoze gukoresha Yo Courier!
+{0} was delivered in {1}.	{0} доставлено в {1}.	{0} a été livré à {1}.	{0} fue entregado en {1}.	تم تسليم {0} في {1}.	{0} 已在 {1} 送达。	{0} yagejejwe muri {1}.
+{0} is out for delivery in {1}.	{0} доставляется в {1}.	{0} est en cours de livraison à {1}.	{0} está en reparto en {1}.	{0} خرج للتسليم في {1}.	{0} 正在 {1} 派送。	{0} iri gushyikirizwa muri {1}.
+Delivery not possible: {0}	Доставка невозможна: {0}	Livraison impossible : {0}	Entrega imposible: {0}	تعذر التسليم: {0}	无法派送：{0}	Kugeza ntibishobotse: {0}
+{0}. The parcel will be returned to you.	{0}. Посылка будет возвращена вам.	{0}. Le colis vous sera retourné.	{0}. El paquete te será devuelto.	{0}. سيُعاد الطرد إليك.	{0}。包裹将退回给您。	{0}. Ipaki izagusubizwa.
+{0}. We will try again soon.	{0}. Скоро попробуем ещё раз.	{0}. Nous réessaierons bientôt.	{0}. Lo intentaremos pronto otra vez.	{0}. سنحاول مجددًا قريبًا.	{0}。我们会尽快再次派送。	{0}. Tuzongera tugerageze vuba.
+New job: {0}	Новый заказ: {0}	Nouvelle course : {0}	Nuevo trabajo: {0}	مهمة جديدة: {0}	新订单：{0}	Akazi gashya: {0}
+Pick up {0} {1} in {2}. Open the Yo Courier app.	Заберите {0} {1} в {2}. Откройте приложение курьера Yo.	Enlevez {0} {1} à {2}. Ouvrez l'appli Yo Courier.	Recoge {0} {1} en {2}. Abre la app de Yo Courier.	استلم {0} {1} في {2}. افتح تطبيق Yo Courier.	请到 {2} 取 {0} {1}，打开 Yo Courier 应用。	Fata {0} {1} muri {2}. Fungura porogaramu ya Yo Courier.
+documents	документы	documents	documentos	المستندات	文件	inyandiko
+parcel	посылку	colis	paquete	الطرد	包裹	ipaki
+groceries	продукты	courses	compras	البقالة	生鲜	ibiribwa
+Job cancelled: {0}	Заказ отменён: {0}	Course annulée : {0}	Trabajo cancelado: {0}	ألغيت المهمة: {0}	订单已取消：{0}	Akazi kahagaritswe: {0}
+The sender cancelled {0}. You do not need to go to the pickup.	Отправитель отменил {0}. Ехать за посылкой не нужно.	L'expéditeur a annulé {0}. Inutile d'aller à l'enlèvement.	El remitente canceló {0}. No necesitas ir a la recogida.	ألغى المرسل {0}. لا داعي للذهاب للاستلام.	寄件人已取消 {0}，无需前往取件。	Uwohereje yahagaritse {0}. Ntukeneye kujya kubifata.
+Job taken back: {0}	Заказ передан другому: {0}	Course reprise : {0}	Trabajo retirado: {0}	سُحبت المهمة: {0}	订单已改派：{0}	Akazi kahawe undi: {0}
+You did not pick up in time, so the job went to another courier and you are offline now.	Вы не забрали посылку вовремя, поэтому заказ передан другому курьеру, а вы теперь офлайн.	Vous n'avez pas enlevé à temps : la course est passée à un autre coursier et vous êtes hors ligne.	No recogiste a tiempo, así que el trabajo pasó a otro repartidor y ahora estás desconectado.	لم تستلم في الوقت، لذا ذهبت المهمة إلى مندوب آخر وأنت الآن غير متصل.	您未按时取件，订单已改派给其他骑手，您已下线。	Ntiwafashe ku gihe, akazi kahawe undi mugemuzi kandi ubu ntukiri ku murongo.
+Courier account: {0}	Аккаунт курьера: {0}	Compte coursier : {0}	Cuenta de repartidor: {0}	حساب المندوب: {0}	骑手账户：{0}	Konti y'umugemuzi: {0}
+Approved	Одобрен	Approuvé	Aprobada	مقبول	已通过	Byemejwe
+Rejected	Отклонён	Refusé	Rechazada	مرفوض	已拒绝	Byanzwe
+Suspended	Приостановлен	Suspendu	Suspendida	موقوف	已暂停	Byahagaritswe by'agateganyo
+Pending	На проверке	En attente	Pendiente	قيد المراجعة	审核中	Birategereje
+You can now go online in the Yo Courier app and take jobs.	Теперь вы можете выйти онлайн в приложении Yo Courier и брать заказы.	Vous pouvez maintenant vous connecter dans l'appli Yo Courier et prendre des courses.	Ya puedes conectarte en la app de Yo Courier y aceptar trabajos.	يمكنك الآن الاتصال في تطبيق Yo Courier وقبول المهام.	您现在可以在 Yo Courier 应用中上线接单了。	Ubu ushobora kujya ku murongo muri Yo Courier ugafata akazi.
+Your application to deliver with Yo was not accepted.	Ваша заявка на работу курьером Yo не принята.	Votre candidature de coursier Yo n'a pas été acceptée.	Tu solicitud para repartir con Yo no fue aceptada.	لم يُقبل طلبك للتوصيل مع Yo.	您的 Yo 骑手申请未通过。	Ubusabe bwawe bwo gugemura na Yo ntibwemewe.
+Your courier account is paused. Please contact Yo support.	Ваш аккаунт курьера приостановлен. Свяжитесь с поддержкой Yo.	Votre compte coursier est suspendu. Contactez le support Yo.	Tu cuenta de repartidor está en pausa. Contacta con soporte de Yo.	حساب المندوب الخاص بك موقوف. تواصل مع دعم Yo.	您的骑手账户已暂停，请联系 Yo 客服。	Konti yawe y'umugemuzi yahagaritswe by'agateganyo. Vugana n'ubufasha bwa Yo.

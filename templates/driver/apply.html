@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block manifest %}<link rel="manifest" href="{{ url_for('static', filename='courier.webmanifest') }}"><meta name="theme-color" content="#1e3a5f">{% endblock %}
+{% block title %}Deliver with Yo{% endblock %}
+{% block content %}
+<section class="page-hero"><div class="wrap">
+    <span class="pill">Yo Courier app</span>
+    <h1>Deliver with Yo</h1>
+    <p>Choose your own hours, take jobs near you and get your earning in Yo Pay right after every delivery.</p>
+</div></section>
+<div class="wrap two-col">
+    <form method="post" enctype="multipart/form-data" class="panel">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <h2>Your application</h2>
+        <label>Vehicle</label>
+        <div class="seg">{% for k, v in VEHICLES.items() %}<label><input type="radio" name="vehicle" value="{{ k }}" {{ 'checked' if f.get('vehicle', 'motorbike') == k }}><span>{{ {'bicycle': '&#128690;', 'motorbike': '&#128757;', 'car': '&#128663;', 'van': '&#128666;'}[k]|safe }} {{ v[0] }}<small>up to {{ v[1] // 1000 }} kg</small></span></label>{% endfor %}</div>
+        <div class="form-grid">
+            <div><label for="vn">Registration number</label><input id="vn" type="text" name="vehicle_no" value="{{ f.get('vehicle_no', '') }}" maxlength="20" placeholder="HR 01 AB 1234" translate="no"><p class="hint">Not needed for a bicycle.</p></div>
+            <div><label for="ccountry">Country</label><select id="ccountry" name="country">{% for code, name in countries %}<option value="{{ code }}" {{ 'selected' if code == f.get('country', 'IN') }}>{{ name }}</option>{% endfor %}</select></div>
+            <div><label for="city">Town or village where you will work</label><input id="city" type="text" name="city" value="{{ f.get('city', '') }}" data-place="place" data-cc="#ccountry" required translate="no" placeholder="Start typing, then choose from the list">
+                <input type="hidden" name="place" value="{{ f.get('place', '') }}"><span class="pl-note" data-place-note="city"></span>
+                <small class="muted">You also get the jobs of the villages up to 15 km around it.</small></div>
+        </div>
+        <label for="photo">Your photo (optional, for the admin's check)</label>
+        <input id="photo" type="file" name="photo" accept="image/jpeg,image/png,image/webp">
+        <p class="hint">Only the Yo team sees it. An automatic photo check looks at the size, sharpness and light, and whether the same photo was already used by another account.</p>
+        <label class="check"><input type="checkbox" name="agree" value="1"> I will keep parcels safe, hand them over only with the delivery code, and follow the traffic rules.</label>
+        <button class="btn btn-orange btn-lg btn-block">Send my application</button>
+    </form>
+    <aside>
+        <section class="panel">
+            <h3>How you earn</h3>
+            <ul class="steps-list small">
+                <li>Same-city job: 70% of the price (before tax).</li>
+                <li>Pickup for another city: 25%, delivery from the Yo hub: 25%.</li>
+                <li>The earning goes to your Yo Pay wallet at once.</li>
+                <li>Cash from senders: give it to the Yo hub; your task board reminds you.</li>
+            </ul>
+        </section>
+        <section class="panel small muted">Demo project: no real deliveries and no real money.</section>
+    </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "admin/layout.html" %}
+{% block title %}Analytics{% endblock %}
+{% block heading %}Analytics{% endblock %}
+{% block content %}
+<section class="panel">
+    <form method="get" class="v6-filters"><label class="small">Days <select name="days">{% for d in [7, 28, 56, 90] %}<option {{ 'selected' if days == d }}>{{ d }}</option>{% endfor %}</select></label>
+        <button class="btn btn-sm btn-outline">Show</button>
+        <a class="btn btn-sm btn-outline" href="{{ url_for('admin_analytics', days=days, rebuild=1) }}">Rebuild now</a>
+        <a class="btn btn-sm btn-outline" href="{{ url_for('admin_analytics_csv') }}">&#8681; CSV (90 days)</a></form>
+    <p class="small muted">From the data warehouse (table fact_daily, rebuilt every night). You see: <b>{{ a.scope }}</b>.{% if a.demo %} Hub numbers before today include <b>demo history</b>.{% endif %}</p>
+    <div class="kpis kpis-small">{% for k, label in metrics.items() %}<div class="kpi"><small>{{ label }}</small><b translate="no">{{ (a.totals.get(k, 0)|rupees) if k in ('revenue', 'ticket_revenue') else '{:,}'.format(a.totals.get(k, 0)) }}</b></div>{% endfor %}</div>
+</section>
+<div class="v7-grid">
+{% for k in ['orders', 'parcels', 'hub_parcels', 'tickets'] %}
+<section class="panel"><h2>{{ metrics[k] }} per day</h2>
+    {% set vals = a.days|map('string')|list %}{% set mx = [1] %}{% for d in a.days %}{% set v = a.by_day.get(d, {}).get(k, 0) %}{% if v > mx[0] %}{% set _ = mx.pop() %}{% set _ = mx.append(v) %}{% endif %}{% endfor %}
+    <div class="v7-bars" role="img" aria-label="{{ metrics[k] }} per day">{% for d in a.days %}{% set v = a.by_day.get(d, {}).get(k, 0) %}<span style="height:{{ (100 * v / mx[0])|round(1) }}%" title="{{ d }}: {{ v }}"></span>{% endfor %}</div>
+    <div class="v7-bars-legend"><span>{{ a.days[0] }}</span><span>{{ a.days[-1] }}</span></div></section>
+{% endfor %}
+</div>
+{% if a.countries %}<section class="panel"><h2>By country</h2>
+    <table class="at small"><thead><tr><th>Country</th>{% for k in ['orders', 'revenue', 'parcels', 'delivered', 'customers'] %}<th>{{ metrics[k] }}</th>{% endfor %}</tr></thead><tbody>
+    {% for c in a.countries %}<tr><td>{{ c }}</td>{% for k in ['orders', 'revenue', 'parcels', 'delivered', 'customers'] %}<td translate="no">{{ (a.by_country.get((c, k), 0)|rupees) if k == 'revenue' else a.by_country.get((c, k), 0) }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></section>{% endif %}
+{% endblock %}

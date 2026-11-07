@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Invoices of {{ number }}{% endblock %}
+{% block content %}
+<div class="wrap narrow"><section class="panel">
+    <h1>Invoices of order <span translate="no">{{ number }}</span></h1>
+    <p class="small muted">Every seller of the order gives his own invoice; Yo Delivery gives one for the delivery charge.</p>
+    <ul>{% for i in invoices %}<li><a href="{{ url_for('invoice_page', invoice_id=i.id) }}">{{ i.kind }} <span translate="no">{{ i.number }}</span></a> &middot; <span translate="no">{{ i.issuer_name }}</span> &middot; {{ INVOICE_MONEY(i.total) }}</li>{% endfor %}</ul>
+    <p><a href="{{ url_for('order', number=number) }}">&larr; The order</a></p>
+</section></div>
+{% endblock %}

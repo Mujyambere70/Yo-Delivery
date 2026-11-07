@@ -17,16 +17,36 @@ import secrets
 import time
 from datetime import datetime
 from functools import wraps
+from types import SimpleNamespace
 
-from flask import (Flask, Response, abort, flash, jsonify, redirect, render_template, request, send_from_directory,
+from flask import (Flask, Response, abort, flash, g, jsonify, redirect, render_template, request, send_from_directory,
                    session, url_for)
 
+import admin_v3
+import tickets_views
+import world_views
+import v5_views
+import staff as staff_rules
+import staff_views
+import workforce_views
+import addresscheck
+import v6b_views
+import v7_views
+import v7b_views
+import v6_views
+import blog_views
+import board_views
+import courier_views
 import demo_data
 import i18n
 import images
 import otp
 import jinja2
+import pay_views
+import rewards_views
 import world
+import yopay
+from core import now
 from aftersales import RETURN_REASONS
 from sellers import SELLER_STATUSES
 from store import (ACTIONS, CATEGORY_NAMES, STATES, TRACK_STEPS, ShopError, Store, delivery_date_text,
@@ -87,6 +107,13 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         return world.format_when(value, with_time="%H" in fmt or "%I" in fmt)
     app.jinja_env.filters["nicedate"] = live(nicedate)
 
+    def localtime(value, fmt="%d %b %Y, %H:%M"):
+        """A time that is already local (a departure in the time of its city): never converted."""
+        if not value:
+            return ""
+        return world.format_when(value, with_time="%H" in fmt or "%I" in fmt, convert=False)
+    app.jinja_env.filters["localtime"] = live(localtime)
+
     def coupon_text(c):
         """Coupon description in the visitor's currency, built from the coupon's numbers
         (the page translator turns the English sentence into the visitor's language)."""
@@ -109,11 +136,19 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
 
     app.jinja_env.globals.update(csrf_token=csrf_token, TRACK_STEPS=TRACK_STEPS, GST=GST, picture=picture,
                                  delivery_date=delivery_date_text, LANGUAGES=world.LANGUAGES,
-                                 CURRENCIES=world.CURRENCIES, DEVELOPER=DEVELOPER,
+                                 CURRENCIES=world.CURRENCIES, MAIN_CURRENCIES=world.MAIN_CURRENCIES,
+                                 DEVELOPER=DEVELOPER,
                                  currency_name=world.currency_name, now_year=datetime.now().year)
 
     def user_id():
         return session.get("uid")
+
+    def L(items):
+        """Product names and descriptions in the visitor's language when the seller wrote them (version 5)."""
+        try:
+            return store.localize_products(list(items))
+        except Exception:
+            return list(items)
 
     def visitor():
         if "visitor" not in session:
@@ -151,7 +186,11 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                 "RATES": world.current_rates(),
                 "FREE_DELIVERY_FROM": settings["free_delivery_from"], "SETTINGS": settings,
                 "LANG": lang, "RTL": lang in world.RTL_LANGUAGES, "CURRENCY": world.current_currency(),
-                "my_shop": store.seller_of(uid) if user else None,
+                "my_shop": store.seller_membership(uid)[0] if user else None,
+                "my_courier": store.courier_of(uid) if user else None,
+                "my_staff": store.staff_of(uid) if user else None,
+                "my_work": store.worker_of(uid) if user else None,
+                "can": (lambda ability: store.can(uid, ability)) if user else (lambda ability: False),
                 "unseen": store.unseen_count(uid) if user else 0}
 
     # ---------------- language, currency, housekeeping, security ----------------
@@ -167,11 +206,14 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         lang = session.get("lang") or (u["lang"] if u and u["lang"] != "en" else None)
         if lang not in world.LANGUAGES:
             lang = request.accept_languages.best_match(list(world.LANGUAGES)) or "en"
-        cur = session.get("currency") or (u["currency"] if u and u["currency"] else None) or LANG_CURRENCY[lang]
+        region = world.country_from_languages(request.headers.get("Accept-Language", ""))
+        cur = (session.get("currency") or (u["currency"] if u and u["currency"] else None)
+               or (world.default_currency(u["country"], lang) if u else None)          # the home currency
+               or (world.default_currency(region, lang) if region else LANG_CURRENCY[lang]))
         today = rates()
         if cur != "INR" and not today.get(cur):           # no exchange rate yet: show and charge rupees, honestly
             cur = "INR"
-        world.set_context(lang=lang, currency=cur, rates=today)
+        world.set_context(lang=lang, currency=cur, rates=today, tz=request.cookies.get("tz", ""))
 
     @app.after_request
     def translate(resp):
@@ -186,6 +228,11 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         resp.headers["X-Frame-Options"] = "DENY"
         resp.headers["X-Content-Type-Options"] = "nosniff"
         resp.headers["Referrer-Policy"] = "same-origin"
+        # version 7 (security check): the browser features the pages may use, and HTTPS only once it is used
+        resp.headers["Permissions-Policy"] = "camera=(self), geolocation=(self), microphone=(), payment=(self)"
+        resp.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
+            resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return resp
 
     @app.before_request
@@ -196,6 +243,28 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
             except Exception as e:                      # never block the shop because of this
                 app.logger.warning("housekeeping failed: %s", e)
 
+    # version 6: the numbers of every request (monitoring page, alerts)
+    @app.before_request
+    def start_timer():
+        g.t0 = time.time()
+
+    @app.after_request
+    def count_request(resp):
+        if request.endpoint not in ("static", "img", "health") and hasattr(g, "t0"):
+            store.record_request((time.time() - g.t0) * 1000, resp.status_code)
+        return resp
+
+    @app.teardown_request
+    def count_crash(exc):
+        if exc is not None and hasattr(g, "t0"):
+            store.record_request((time.time() - g.t0) * 1000, 500)
+
+    @app.route("/healthz")
+    def health():
+        """For Fly.io and uptime services: 200 when the database and the places file answer."""
+        h = store.health()
+        return jsonify(h), (200 if h["ok"] else 503)
+
     @app.before_request
     def check_csrf():
         if user_id():                       # a blocked account is signed out immediately
@@ -204,7 +273,8 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                 session.clear()
                 flash("Your account has been blocked. Please contact customer support.", "error")
                 return redirect(url_for("index"))
-        if request.method == "POST" and request.endpoint not in ("stripe_webhook", "push_subscribe"):
+        if request.method == "POST" and request.endpoint not in ("stripe_webhook", "push_subscribe", "payment_callback",
+                                                                 "partner_events_api"):
             sent = request.form.get("csrf_token", "")
             if not sent or not secrets.compare_digest(sent, session.get("csrf_token", "")):
                 abort(400)
@@ -230,9 +300,27 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                 flash("Please sign in with an admin account.", "info")
                 return redirect(url_for("login", next=request.full_path))
             u = store.get_user(user_id())
-            if not u or not u["is_admin"]:
+            if not u:
                 abort(403)
-            return view(*a, **kw)
+            if not u["is_admin"]:
+                if store.setting("staff_need_2fa") and not u["totp_enabled"] and not request.path.startswith(
+                        "/admin/account"):            # version 6: the shop can ask every worker for 2-step sign-in
+                    flash("Please turn on two-step sign-in (an app code) before you open the admin pages.", "info")
+                    return redirect(url_for("admin_account"))
+                # version 6: workers open the admin pages their abilities allow (staff.py)
+                need = staff_rules.ability_for_path(request.path, request.method)
+                if need is None or not store.can(u["id"], need):
+                    if request.path.rstrip("/") == "/admin" and store.worker_of(u["id"]):
+                        return redirect(url_for("staff_home"))
+                    abort(403)
+            resp = view(*a, **kw)
+            if request.method == "POST":
+                try:
+                    store.log_staff_action(u["id"], request.path, sorted(k for k in request.form if k != "csrf_token"),
+                                           getattr(resp, "status_code", 200))
+                except Exception:                      # the log must never break the page
+                    pass
+            return resp
         return wrapper
 
     def seller_required(view):
@@ -241,9 +329,14 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
             if not user_id():
                 flash("Please sign in to open your Seller Centre.", "info")
                 return redirect(url_for("login", next=request.full_path))
-            shop = store.seller_of(user_id())
+            shop, abilities = store.seller_membership(user_id())
             if not shop:
                 return redirect(url_for("sell"))
+            need = staff_rules.seller_ability_for_path(request.path)   # employees of a shop (version 6)
+            if need and need not in abilities:
+                flash("The owner of the shop has not given you this. Ask him to tick it on the Team page.", "info")
+                return redirect(url_for("seller_dashboard"))
+            request.shop_abilities = abilities
             if shop["status"] != "Approved" and request.endpoint not in ("seller_dashboard",):
                 flash("Your shop is not approved, so this page is not available yet.", "info")
                 return redirect(url_for("seller_dashboard"))
@@ -273,8 +366,10 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                 store.set_preferences(user_id(), lang=code, currency="RUB" if code == "ru" else None)
         return redirect(safe_next())
 
+    @app.route("/currency", defaults={"code": None})
     @app.route("/currency/<code>")
     def set_currency(code):
+        code = (code or request.args.get("code", "")).upper()
         if code in world.CURRENCIES:
             session["currency"] = code
             if user_id():
@@ -283,6 +378,8 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
 
     @app.route("/img/<path:name>")
     def img(name):
+        if name.startswith("private/") or ".." in name:       # courier and delivery photos: admins only
+            abort(404)
         found = store.media(name)
         if found:
             mime, blob, when = found
@@ -305,13 +402,13 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         recent = store.recently_viewed(visitor(), user_id(), 8)
         return render_template(
             "index.html",
-            deals=store.products(order="deals", limit=8),
-            electronics=store.products(category="electronics", limit=8),
-            fashion=store.products(category="fashion", limit=8) + store.products(category="footwear", limit=4),
-            grocery=store.products(category="grocery", limit=8),
-            home_books=store.products(category="home") + store.products(category="books"),
-            new_arrivals=store.products(order="new", limit=10),
-            for_you=store.recommended(visitor(), user_id(), 10) if recent or user_id() else [],
+            deals=L(store.products(order="deals", limit=8)),
+            electronics=L(store.products(category="electronics", limit=8)),
+            fashion=L(store.products(category="fashion", limit=8) + store.products(category="footwear", limit=4)),
+            grocery=L(store.products(category="grocery", limit=8)),
+            home_books=L(store.products(category="home") + store.products(category="books")),
+            new_arrivals=L(store.products(order="new", limit=10)),
+            for_you=L(store.recommended(visitor(), user_id(), 10)) if recent or user_id() else [],
             recent=recent)
 
     def listing(category=""):
@@ -329,7 +426,7 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                                min_price=num("min"), max_price=num("max"), min_rating=num("rating") or 0,
                                min_discount=num("discount") or 0, sort=sort)
         cat = category or a.get("category", "")
-        return render_template("listing.html", results=results, q=q, category=cat,
+        return render_template("listing.html", results=L(results), q=q, category=cat,
                                category_name=CATEGORY_NAMES.get(cat, ""),
                                brands=store.brands(cat), chosen_brands=brands, sort=sort, args=a)
 
@@ -371,13 +468,23 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                 delivery = {"pin": pin, "country": "IN", "date": delivery_date_text(pin), "days": delivery_days(pin)}
             else:
                 delivery = {"pin": pin, "country": "IN", "error": "Please enter a valid 6-digit pincode."}
-        similar = [x for x in store.products(category=p.category) if x.id != p.id][:8]
+        # version 7: an A/B test - group A sees the mix of version 6, group B only the text + picture neighbours
+        ab_unit = str(user_id() or visitor())
+        ab = store.ab_variant("similar_products", ab_unit)
+        if request.args.get("rec") in ("A", "B"):             # the visitor came here by clicking a similar product
+            store.ab_event("similar_products", ab_unit, request.args["rec"], "click", p.id)
+        picked = store.content_similar(p.id, 8) if ab == "B" else store.similar_products(p.id, 8)
+        similar = L(picked or [x for x in store.products(category=p.category) if x.id != p.id][:8])
+        if ab and picked:
+            store.ab_event("similar_products", ab_unit, ab, "view", p.id)
         sold_by = store.shop_names().get(p.seller_id) if p.seller_id else None
+        L([p])
         return render_template("product.html", p=p, reviews=store.reviews(p.id), breakdown=store.rating_breakdown(p),
                                delivery=delivery, similar=similar, country=country,
                                countries=world.countries(world.current_lang()),
-                               together=store.bought_together(p.id, 4), also_viewed=store.also_viewed(p.id, 8),
-                               sold_by=sold_by, can_review=user_id() and store.can_review(user_id(), p.id))
+                               together=L(store.bought_together(p.id, 4)), also_viewed=L(store.also_viewed(p.id, 8)),
+                               sold_by=sold_by, can_review=user_id() and store.can_review(user_id(), p.id),
+                               learned=L(store.learned_similar(p.id, 8)), ab=ab if picked else None)
 
     @app.route("/s/<slug>")
     def storefront(slug):
@@ -473,9 +580,10 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         if request.method == "POST":
             payment = request.form.get("payment", "")
             try:
+                emi = request.form.get("emi", "0")
                 number = store.place_order(uid, request.form.get("address_id"), payment, session.get("coupon", ""),
                                            request.form.get("upi_id", ""), currency=world.current_currency(),
-                                           rates=rates())
+                                           rates=rates(), emi_months=int(emi) if emi.isdigit() else 0)
             except ShopError as e:
                 flash(str(e), "error")
                 return redirect(url_for("checkout", address=request.form.get("address_id", "")))
@@ -492,7 +600,7 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         return render_template("checkout.html", items=items, s=summary, addresses=addresses, chosen=chosen,
                                states=STATES, wallet=store.get_user(uid)["wallet"], country=country,
                                countries=world.countries(world.current_lang()), dial=world.DIAL_CODES,
-                               gateway=store.gateway())
+                               gateway=store.gateway(), emi_plans=yopay.emi_plans(summary["total"]))
 
     @app.route("/pay/<number>", methods=["GET", "POST"])
     @login_required
@@ -734,6 +842,10 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         if u.get("is_admin") and not request.values.get("next"):
             flash(f"Welcome, {u['name'].split()[0]}! You are signed in as admin.", "success")
             return redirect(url_for("admin_dashboard"))
+        w = store.worker_of(u["id"])
+        if w and w["status"] == "Active" and not request.values.get("next"):
+            flash(f"Welcome, {u['name'].split()[0]}! Here is your work for today.", "success")
+            return redirect(url_for("staff_home"))
         flash(f"Welcome back, {u['name'].split()[0]}!", "success")
         return redirect(safe_next())
 
@@ -742,12 +854,20 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         if user_id():
             return redirect(url_for("index"))
         if request.method == "POST":
+            who, ip = request.form.get("login", ""), (request.access_route or [request.remote_addr or ""])[0]
             try:
-                u = store.login(request.form.get("login", ""), request.form.get("password", ""))
+                store.login_allowed(who, ip)            # version 5: at most 5 wrong passwords in 15 minutes
             except ShopError as e:
-                act("Login failed", "Wrong password or unknown account: " + request.form.get("login", "")[:60], uid=0)
                 flash(str(e), "error")
-                return render_template("login.html", login=request.form.get("login", "")), 401
+                return render_template("login.html", login=who), 429
+            try:
+                u = store.login(who, request.form.get("password", ""))
+            except ShopError as e:
+                store.login_failed(who, ip)
+                act("Login failed", "Wrong password or unknown account: " + who[:60], uid=0)
+                flash(str(e), "error")
+                return render_template("login.html", login=who), 401
+            store.login_ok(who)
             if u.get("totp_enabled"):                    # second step: code from the authenticator app
                 session.update(pending_uid=u["id"], pending_at=time.time(), pending_tries=0,
                                pending_next=request.values.get("next", ""))
@@ -929,6 +1049,9 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                     aid = store.add_address(user_id(), f)
                     act("Address added", f"{f.get('city', '')} {f.get('pincode', '')} {f.get('country', 'IN')}")
                     flash("Address saved.", "success")
+                    for warning in addresscheck.check(f.get("country", "IN"), f.get("pincode", ""), f.get("place_id", ""),
+                                                      f.get("city", ""))["warnings"]:      # version 6: look again
+                        flash(warning, "info")
                     if f.get("next", "").startswith("/checkout"):
                         return redirect(url_for("checkout", address=aid))
             except ShopError as e:
@@ -1069,7 +1192,24 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         with store.db() as conn:
             counts = {"sellers": conn.execute("SELECT COUNT(*) FROM sellers WHERE status = 'Pending'").fetchone()[0],
                       "products": conn.execute("SELECT COUNT(*) FROM products WHERE approved = 0").fetchone()[0],
-                      "returns": conn.execute("SELECT COUNT(*) FROM returns WHERE status = 'Requested'").fetchone()[0]}
+                      "returns": conn.execute("SELECT COUNT(*) FROM returns WHERE status = 'Requested'").fetchone()[0],
+                      "couriers": conn.execute("SELECT COUNT(*) FROM couriers WHERE status = 'Pending'").fetchone()[0],
+                      "posts": conn.execute("SELECT COUNT(*) FROM posts WHERE status = 'Review'").fetchone()[0],
+                      "shipments": conn.execute("SELECT COUNT(*) FROM shipments WHERE status IN ('Booked', "
+                                                "'At destination hub') AND courier_id IS NULL").fetchone()[0],
+                      "board": conn.execute("SELECT COUNT(*) FROM board_tasks WHERE board = 'admin' AND "
+                                            "status <> 'done'").fetchone()[0],
+                      "tickets": conn.execute("SELECT COUNT(*) FROM ticket_bookings WHERE status = 'Held'").fetchone()[0],
+                      "chat": conn.execute("SELECT COUNT(*) FROM chat_messages WHERE status = 'Held'").fetchone()[0]}
+        counts["leave"] = sum(1 for r in store.leave_list(user_id()) if r["status"] == "Waiting")
+        counts["alerts"] = store.open_alerts()
+        counts["staff_tasks"] = sum(1 for t in store.task_list(user_id()) if t["overdue"])
+        counts["id_checks"] = len(store.id_checks("Waiting"))
+        with store.db() as conn:                          # version 7
+            counts["support"] = conn.execute("SELECT COUNT(*) FROM support_tickets WHERE status = 'Open'").fetchone()[0]
+            counts["claims"] = conn.execute("SELECT COUNT(*) FROM parcel_claims WHERE status = 'Waiting'").fetchone()[0]
+            counts["risk"] = conn.execute("SELECT COUNT(*) FROM orders WHERE risk_status = 'Review'").fetchone()[0]
+            counts["approvals"] = conn.execute("SELECT COUNT(*) FROM approvals WHERE status = 'Waiting'").fetchone()[0]
         return render_template(template, counts=counts, **kw)
 
     @app.route("/admin")
@@ -1140,7 +1280,7 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                     act("Admin: customers", f"Reset password of {c['name']}")
                     flash("New password set. Tell the customer the new password.", "success")
                 elif action == "wallet":
-                    bal = store.adjust_wallet(uid, f.get("amount"))
+                    bal = store.adjust_wallet(uid, f.get("amount"), f.get("reason", "").strip()[:80])
                     act("Admin: customers", f"Wallet of {c['name']} changed by ₹{f.get('amount')} "
                         f"({f.get('reason', '').strip()[:60] or 'no reason'}) -> {rupees(bal)}")
                     flash(f"Wallet updated. New balance: {rupees(bal)}.", "success")
@@ -1507,6 +1647,10 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
 
     @app.errorhandler(403)
     def forbidden(e):
+        if user_id() and store.worker_of(user_id()):
+            return render_template("error.html", code=403, title="Not allowed",
+                                   message="You do not have the ability to open this page or to do this. "
+                                           "Ask your manager."), 403
         return render_template("error.html", code=403, title="Admins only",
                                message="This page is only for store administrators."), 403
 
@@ -1524,6 +1668,16 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
     def too_big(e):
         return render_template("error.html", code=413, title="File too large",
                                message="The file is too large. Pictures can be at most 12 MB."), 413
+
+    # ======================================================
+    # Version 3 - the Yo super app: Courier, Yo Pay, Rewards, Blog, task boards
+    # ======================================================
+    helpers = SimpleNamespace(login_required=login_required, admin_required=admin_required,
+                              seller_required=seller_required, act=act, user_id=user_id, safe_next=safe_next,
+                              base_url=base_url, admin_page=admin_page, now=now, visitor=visitor)
+    for module in (courier_views, pay_views, rewards_views, blog_views, board_views, admin_v3, tickets_views,
+                   world_views, v5_views, staff_views, v6_views, workforce_views, v6b_views, v7_views, v7b_views):
+        module.register(app, store, helpers)
 
     return app
 

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Passengers {{ t.number }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <p class="small"><a href="{{ url_for('conductor_home') }}">&larr; Conductor app</a></p>
+    <section class="panel">
+        <div class="ship-head">
+            <div>
+                <h1 style="margin:0;font-size:22px">{{ ICONS[t.mode] }} <span translate="no">{{ t.number }}</span> &middot; <span translate="no">{{ t.from_city }}</span> &rarr; <span translate="no">{{ t.to_city }}</span></h1>
+                <p class="small muted" style="margin:2px 0 0">{{ t.depart_local|localtime }} <span>{{ t.from_tz }}</span> &middot; <span>{{ t.name }}</span></p>
+            </div>
+            <div class="kpi" style="min-width:180px"><small>Boarded</small><b>{{ people|selectattr('boarded_at')|list|length }} / {{ people|length }}</b><span class="small muted">+ {{ others }} <span>seats sold by other channels</span></span></div>
+        </div>
+    </section>
+    {% with trip_id=t.trip_id %}{% include "tickets/_scan.html" %}{% endwith %}
+    <section class="panel">
+        <h2>Passengers (Yo Tickets)</h2>
+        <div class="tw"><table class="tk-table">
+            <thead><tr><th>Seat</th><th>Name</th><th>Age</th><th>PNR</th><th>Status</th></tr></thead>
+            <tbody>{% for p in people %}<tr>
+                <td><b translate="no">{{ p.label }}</b></td><td translate="no">{{ p.name }}</td><td>{{ p.age }}{% if p.gender %} {{ p.gender }}{% endif %}</td>
+                <td class="mono" translate="no">{{ p.pnr }}</td>
+                <td>{% if p.boarded_at %}<span class="boarded">&#10003; Boarded</span> <small class="muted">{{ p.boarded_local }} {{ t.from_tz }}</small>{% else %}<span class="muted">Not yet</span>{% endif %}</td></tr>
+            {% else %}<tr><td colspan="5" class="muted">No Yo Tickets passengers on this trip yet.</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='tickets.js') }}"></script>{% endblock %}

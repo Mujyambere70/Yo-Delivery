@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Customs declaration {{ s.number }}{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px;max-width:820px">
+    <section class="panel customs-form">
+        <div class="ph"><h1 style="margin:0">Customs declaration</h1><b class="mono" translate="no">{{ s.number }}</b></div>
+        <p class="small muted">In the style of the postal forms CN 22 / CN 23. Stick it on the parcel next to the label.</p>
+        <div class="form-grid">
+            <div><small class="muted">From</small><p translate="no">{{ s.from_name }}<br>{{ s.from_address }}, {{ s.from_city }}</p></div>
+            <div><small class="muted">To</small><p translate="no">{{ s.to_name }}<br>{{ s.to_address }}, {{ s.to_city }} {{ s.to_postcode }} ({{ s.to_country }})</p></div>
+        </div>
+        <p><b>Why:</b> {{ d.reason_name }}</p>
+        <table class="at"><thead><tr><th>What is inside</th><th>Pieces</th><th>Value</th></tr></thead><tbody>
+            {% for x in d['items'] %}<tr><td translate="no">{{ x.desc }}</td><td>{{ x.qty }}</td><td>{{ x.value|rupees }}</td></tr>{% endfor %}
+            <tr><td><b>Total</b></td><td></td><td><b>{{ d.total_value|rupees }}</b></td></tr>
+        </tbody></table>
+        <p><b>Weight:</b> {{ '%g'|format(s.charge_g / 1000) }} kg &middot; <b>Estimated duties and taxes for the receiver:</b> {{ d.duty_estimate|rupees }}{% if d.rule_country == '*' %} <small class="muted">(example rule of the demo)</small>{% endif %}</p>
+        <p class="small">I confirm that this parcel has no dangerous or forbidden goods, and that the information above is true.</p>
+        <p class="small">Date: {{ d.created_at[:10] }} &nbsp;&nbsp; Signature of the sender: ______________________</p>
+    </section>
+    <p style="text-align:center"><a href="#" onclick="window.print();return false">Print</a> &middot; <a href="{{ url_for('courier_shipment', number=s.number) if s.user_id == user.id else url_for('admin_shipment', number=s.number) }}">Back</a></p>
+</div>
+{% endblock %}

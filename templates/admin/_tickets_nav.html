@@ -1,0 +1,7 @@
+<div class="panel toolbar">
+    {% set ep = request.endpoint %}
+    <a href="{{ url_for('admin_tickets') }}" class="chip {{ 'on' if ep in ('admin_tickets', 'admin_ticket') }}">&#127915; Bookings</a>
+    <a href="{{ url_for('admin_ticket_trips') }}" class="chip {{ 'on' if ep == 'admin_ticket_trips' }}">&#128652; Trips (delay / cancel)</a>
+    <a href="{{ url_for('admin_ticket_services') }}" class="chip {{ 'on' if ep == 'admin_ticket_services' }}">&#128467; Services</a>
+    <a href="{{ url_for('admin_ticket_staff') }}" class="chip {{ 'on' if ep == 'admin_ticket_staff' }}">&#128100; Conductors</a>
+</div>

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block manifest %}<link rel="manifest" href="{{ url_for('static', filename='courier.webmanifest') }}"><meta name="theme-color" content="#1e3a5f">{% endblock %}
+{% block title %}My route{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <section class="panel">
+        <h1 style="margin-top:0">&#128506; <span>My route</span></h1>
+        {% if plan.stops %}
+        <p>{{ plan.stops|length }} <span>stops</span> &middot; <b>{{ plan.km }} km</b>{% if plan.saved_km > 0.5 %} &middot; <span class="pill-status ok">{{ plan.saved_km }} km <span>shorter than job by job</span></span>{% endif %}</p>
+        <p class="small muted">Pickups always come before their delivery. Distances are straight lines x 1.3; follow the street map for the real road.</p>
+        {% set pts = [plan.start] + plan.stops|map(attribute='point')|list %}
+        {% set lats = pts|map(attribute=0)|list %}{% set lngs = pts|map(attribute=1)|list %}
+        {% set la0, la1, lo0, lo1 = lats|min, lats|max, lngs|min, lngs|max %}
+        {% set sx = 560 / ([lo1 - lo0, 0.0001]|max) %}{% set sy = 260 / ([la1 - la0, 0.0001]|max) %}{% set sc = [sx, sy]|min %}
+        <svg class="route-map" viewBox="0 0 600 300" role="img" aria-label="The stops in order">
+            <rect width="600" height="300" fill="#f1f5f9" rx="10"/>
+            {% set ns = namespace(px=20 + (plan.start[1] - lo0) * sc, py=280 - (plan.start[0] - la0) * sc) %}
+            <circle cx="{{ ns.px }}" cy="{{ ns.py }}" r="7" fill="#1e3a5f"><title>You are here</title></circle>
+            {% for s in plan.stops %}{% set x = 20 + (s.point[1] - lo0) * sc %}{% set y = 280 - (s.point[0] - la0) * sc %}
+            <line x1="{{ ns.px }}" y1="{{ ns.py }}" x2="{{ x }}" y2="{{ y }}" stroke="#f97316" stroke-width="3" stroke-dasharray="6 4"/>
+            {% set ns.px, ns.py = x, y %}{% endfor %}
+            {% for s in plan.stops %}{% set x = 20 + (s.point[1] - lo0) * sc %}{% set y = 280 - (s.point[0] - la0) * sc %}
+            <circle cx="{{ x }}" cy="{{ y }}" r="11" fill="{{ '#16a34a' if s.kind == 'pickup' else '#f97316' }}" stroke="#fff" stroke-width="2"><title>{{ s.n }}. {{ s.address }}</title></circle>
+            <text x="{{ x }}" y="{{ y + 4 }}" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">{{ s.n }}</text>{% endfor %}
+        </svg>
+        <p class="small"><span style="color:#16a34a">&#9679;</span> <span>pick up</span> &nbsp; <span style="color:#f97316">&#9679;</span> <span>deliver or bring to the hub</span></p>
+        <ol class="route-list">
+        {% for s in plan.stops %}
+            <li><b>{{ 'Pick up' if s.kind == 'pickup' else ('Bring to the hub' if s.who == 'Yo hub' else 'Deliver') }}</b> <span class="mono" translate="no">{{ s.number }}</span>
+                <br><span translate="no">{{ s.who }} &middot; {{ s.address }}, {{ s.city }}</span>
+                <br><small class="muted">+{{ s.leg_km }} km &middot; <span>total</span> {{ s.total_km }} km{% if s.eta %} &middot; <span>arrive about</span> <span translate="no">{{ s.eta }}</span>{% endif %}</small>
+                {% if s.window_text %}<br><small><span>Receiver at home</span> <span translate="no">{{ s.window_text }}</span>{% if s.late_min %} <span class="pill-status bad">{{ s.late_min }} min late</span>{% endif %}</small>{% endif %}
+                &middot; <a class="small" href="{{ url_for('driver_job', number=s.number) }}">Open the job</a></li>
+        {% endfor %}
+        </ol>
+        {% if plan.late %}<p class="flash info">{{ plan.late }} stop(s) cannot be reached in the time the receiver chose. Please call them.</p>{% endif %}
+        <section class="nav-steps" id="nav-steps" data-points="{{ ([plan.start] + plan.stops|map(attribute='point')|list)|tojson|forceescape }}">
+            <h2>&#129517; <span>Turn by turn</span></h2>
+            <p class="small muted" id="nav-status">Road directions from the routing server. Without network you see the last list you loaded.</p>
+            <ol class="small" id="nav-list"></ol>
+        </section>
+        {% else %}
+        <p class="muted">You have no jobs now.</p>
+        {% endif %}
+        <p><a href="{{ url_for('driver_home') }}">&larr; Courier app</a></p>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* version 7: turn-by-turn directions (OSRM steps); the last list is kept on the phone for no network */
+(function () {
+    var box = document.getElementById('nav-steps'); if (!box) return;
+    var pts = JSON.parse(box.dataset.points || '[]').filter(Boolean), list = document.getElementById('nav-list'),
+        status = document.getElementById('nav-status'), key = 'yo-nav-' + location.pathname;
+    var words = {'turn': 'Turn', 'new name': 'Go on', 'depart': 'Start', 'arrive': 'Arrive', 'merge': 'Merge',
+                 'on ramp': 'Take the ramp', 'off ramp': 'Take the exit', 'fork': 'Keep', 'end of road': 'At the end of the road, turn',
+                 'continue': 'Go straight', 'roundabout': 'At the roundabout, take exit', 'rotary': 'At the roundabout, take exit'};
+    var side = {'left': 'left', 'right': 'right', 'slight left': 'slightly left', 'slight right': 'slightly right',
+                'sharp left': 'sharp left', 'sharp right': 'sharp right', 'straight': 'straight', 'uturn': 'back (U-turn)'};
+    function show(items) { list.innerHTML = ''; items.forEach(function (t) { var li = document.createElement('li'); li.textContent = t; list.appendChild(li); }); }
+    function text(st) {
+        var m = st.maneuver || {}, w = words[m.type] || 'Go on', d = side[m.modifier] || '';
+        if (m.type === 'roundabout' || m.type === 'rotary') return w + ' ' + (m.exit || 1) + (st.name ? ' to ' + st.name : '');
+        return (w + ' ' + d + (st.name ? ' on ' + st.name : '')).trim() + ' (' + (st.distance >= 1000 ? (st.distance / 1000).toFixed(1) + ' km' : Math.round(st.distance) + ' m') + ')';
+    }
+    try { var old = JSON.parse(localStorage.getItem(key) || 'null'); if (old) show(old); } catch (e) {}
+    if (pts.length < 2 || !navigator.onLine) return;
+    var coords = pts.map(function (p) { return p[1] + ',' + p[0]; }).join(';');
+    fetch('https://router.project-osrm.org/route/v1/driving/' + coords + '?steps=true&overview=false')
+        .then(function (r) { return r.json(); }).then(function (j) {
+            var out = [];
+            (j.routes && j.routes[0] ? j.routes[0].legs : []).forEach(function (leg, i) {
+                out.push('Stop ' + (i + 1) + ':'); leg.steps.forEach(function (st) { out.push(text(st)); }); });
+            if (out.length) { show(out); try { localStorage.setItem(key, JSON.stringify(out)); } catch (e) {} }
+        }).catch(function () { status.textContent = 'No road directions now (no network or the routing server is busy).'; });
+})();
+</script>
+{% endblock %}

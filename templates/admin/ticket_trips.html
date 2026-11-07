@@ -1,0 +1,31 @@
+{% extends "admin/layout.html" %}
+{% block title %}Trips{% endblock %}
+{% block heading %}Yo Tickets: trips{% endblock %}
+{% block content %}
+{% include "admin/_tickets_nav.html" %}
+<div class="panel toolbar">
+    {% for m, n in MODES.items() %}<a href="{{ url_for('admin_ticket_trips', mode='' if mode == m else m, day=day, q=q) }}" class="chip {{ 'on' if mode == m }}">{{ n }}</a>{% endfor %}
+    <form method="get" class="inline" style="flex:1"><input type="hidden" name="mode" value="{{ mode }}"><input type="date" name="day" value="{{ day }}" aria-label="Date"><input type="search" name="q" value="{{ q }}" placeholder="Service number or city"><button class="btn btn-outline btn-sm">Show</button></form>
+</div>
+<section class="panel"><div class="tw">
+<table class="at">
+    <thead><tr><th>Trip</th><th>Route</th><th>Departure (local)</th><th>Seats taken</th><th>Yo bookings</th><th>Status</th><th>Delay or cancel</th></tr></thead>
+    <tbody>{% for r in rows %}<tr>
+        <td>{{ {'bus': '🚌', 'train': '🚆', 'flight': '✈️'}[r.mode] }} <b>{{ r.number }}</b><br><small class="muted">{{ r.operator }} &middot; #{{ r.id }}</small></td>
+        <td>{{ r.from_city }} &rarr; {{ r.to_city }}</td>
+        <td class="nowrap">{{ r.depart_local[:16] }}</td>
+        <td>{{ r.taken }} / {{ r.capacity }}</td>
+        <td>{{ r.bookings }}</td>
+        <td><span class="st {{ 'st-cancelled' if r.status == 'Cancelled' else 'st-delivered' }}">{{ r.status }}</span>{% if r.delay_min %}<br><small class="err">late {{ r.delay_min }} min</small>{% endif %}{% if r.note %}<br><small class="muted">{{ r.note }}</small>{% endif %}</td>
+        <td>{% if r.status == 'Scheduled' %}
+            <form method="post" class="inline" style="gap:4px;flex-wrap:wrap">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="trip_id" value="{{ r.id }}">
+                <input type="number" name="delay" value="{{ r.delay_min }}" min="0" max="1440" style="width:80px" aria-label="Delay in minutes">
+                <input name="reason" placeholder="Reason (optional)" style="width:150px">
+                <button class="btn btn-outline btn-sm" name="action" value="delay">Save delay</button>
+                <button class="btn btn-sm" name="action" value="cancel" style="background:#fee2e2;color:#991b1b">Cancel trip</button>
+            </form>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="7" class="muted">No trips. Trips are made when somebody searches for a date.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+<p class="small muted">"Cancel trip" gives every traveller all the money back (fees too) and sends them a message. A delay is shown on the e-ticket and sent as a message.</p>
+{% endblock %}

@@ -1,0 +1,60 @@
+{# Kanban board: cols {todo: [...], doing: [...], done: [...]}; scope = seller | courier | admin #}
+<form method="post" action="{{ url_for('board_add', scope=scope) }}" class="panel kadd">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div><label for="kt">New task</label><input id="kt" type="text" name="title" maxlength="120" required placeholder="e.g. Take new product photos"></div>
+    <div><label for="kp">Priority</label><select id="kp" name="priority">{% for k, n in PRIORITIES.items() %}<option value="{{ k }}" {{ 'selected' if k == 'normal' }}>{{ n }}</option>{% endfor %}</select></div>
+    <div><label for="kd">Due date</label><input id="kd" type="date" name="due"></div>
+    <button class="btn btn-orange">Add</button>
+</form>
+<div class="kanban" id="kanban" data-token="{{ csrf_token() }}" data-move="{{ url_for('board_move', scope=scope, task_id=0) }}">
+    {% for key, name in COLS.items() %}
+    <section class="kcol" data-col="{{ key }}">
+        <h3>{{ name }} <em>{{ cols[key]|length }}</em></h3>
+        <div class="klist">
+            {% for t in cols[key] %}
+            <article class="kcard p-{{ t.priority }}" draggable="true" data-id="{{ t.id }}">
+                <b>{{ t.title }}</b>
+                <small>{% if t.auto %}<span class="auto">Yo</span> {% endif %}<span>{{ PRIORITIES[t.priority] }}</span>{% if t.due %} &middot; <span class="{{ 'late' if t.late }}">{{ t.due|nicedate }}</span>{% endif %}{% if t.link %} &middot; <a href="{{ t.link }}">Open</a>{% endif %}</small>
+                {% if t.notes %}<p class="small muted" style="margin:4px 0 0">{{ t.notes }}</p>{% endif %}
+                <div class="k-move">
+                    {% for k2, n2 in COLS.items() if k2 != key %}<form method="post" action="{{ url_for('board_edit', scope=scope, task_id=t.id) }}" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="{{ k2 }}"><button class="btn btn-outline btn-sm">&rarr; {{ n2 }}</button></form>{% endfor %}
+                </div>
+                <details><summary>Edit</summary>
+                    <form method="post" action="{{ url_for('board_edit', scope=scope, task_id=t.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="text" name="title" value="{{ t.title }}" maxlength="120" aria-label="Task">
+                        <textarea name="notes" rows="2" aria-label="Notes">{{ t.notes }}</textarea>
+                        <div class="form-grid"><select name="priority" aria-label="Priority">{% for k3, n3 in PRIORITIES.items() %}<option value="{{ k3 }}" {{ 'selected' if k3 == t.priority }}>{{ n3 }}</option>{% endfor %}</select><input type="date" name="due" value="{{ t.due }}" aria-label="Due date"></div>
+                        <div class="btn-row" style="margin-top:6px"><button class="btn btn-orange btn-sm">Save</button><button class="btn btn-danger btn-sm" name="delete" value="1">Delete</button></div>
+                    </form>
+                </details>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+</div>
+<p class="hint">Drag a card to another column (or use the buttons). Cards marked <span class="auto" style="background:#eef2ff;color:#3730a3;font-weight:700;padding:0 6px;border-radius:4px">Yo</span> were added automatically. Done cards stay for 14 days.</p>
+<script>
+(function () {
+  var board = document.getElementById("kanban"), dragged = null;
+  if (!board) return;
+  board.addEventListener("dragstart", function (e) { var c = e.target.closest(".kcard"); if (!c) return; dragged = c; c.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; });
+  board.addEventListener("dragend", function () { if (dragged) dragged.classList.remove("dragging"); board.querySelectorAll(".kcol").forEach(function (c) { c.classList.remove("over"); }); });
+  board.querySelectorAll(".kcol").forEach(function (col) {
+    col.addEventListener("dragover", function (e) {
+      if (!dragged) return; e.preventDefault(); col.classList.add("over");
+      var list = col.querySelector(".klist"), after = null;
+      list.querySelectorAll(".kcard:not(.dragging)").forEach(function (c) { var r = c.getBoundingClientRect(); if (!after && e.clientY < r.top + r.height / 2) after = c; });
+      if (after) list.insertBefore(dragged, after); else list.appendChild(dragged);
+    });
+    col.addEventListener("dragleave", function (e) { if (!col.contains(e.relatedTarget)) col.classList.remove("over"); });
+    col.addEventListener("drop", function (e) {
+      e.preventDefault(); col.classList.remove("over"); if (!dragged) return;
+      var next = dragged.nextElementSibling, body = new URLSearchParams({ csrf_token: board.getAttribute("data-token"), status: col.getAttribute("data-col"), before: next ? next.getAttribute("data-id") : "" });
+      fetch(board.getAttribute("data-move").replace("/0/", "/" + dragged.getAttribute("data-id") + "/"), { method: "POST", body: body, credentials: "same-origin" })
+        .then(function (r) { if (!r.ok) throw 0; location.reload(); }).catch(function () { location.reload(); });
+    });
+  });
+})();
+</script>

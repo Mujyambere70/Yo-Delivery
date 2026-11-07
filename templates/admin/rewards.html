@@ -1,0 +1,43 @@
+{% extends "admin/layout.html" %}
+{% block title %}Rewards & Quiz{% endblock %}
+{% block heading %}Yo Rewards &amp; daily quiz{% endblock %}
+{% block content %}
+<div class="kpis">
+    <div class="kpi"><small>Quizzes played</small><b>{{ st.attempts }}</b><span>{{ st.correct }} right answers</span></div>
+    <div class="kpi"><small>Points from the quiz</small><b>{{ st.points }}</b></div>
+    <div class="kpi"><small>Reward coupons</small><b>{{ st.coupons }}</b><span>{{ st.coupons_used }} used</span></div>
+    <div class="kpi"><small>Questions</small><b>{{ qs|length }}</b><span>{{ lang or 'all languages' }}</span></div>
+</div>
+<div class="adm-grid">
+    <section class="panel">
+        <div class="ph"><h2>Question bank</h2><span>{% for code in [''] + LANGUAGES.keys()|list %}<a href="{{ url_for('admin_rewards', lang=code) }}" class="chip {{ 'on' if code == lang }}">{{ code or 'All' }}</a>{% endfor %}</span></div>
+        <div class="tw"><table class="at">
+            <thead><tr><th>#</th><th>Lang</th><th>Question</th><th>Right answer</th><th></th></tr></thead>
+            <tbody>{% for q in qs %}<tr class="{{ 'hidden-row' if not q.active }}"><td>{{ q.id }}</td><td>{{ q.lang }}</td><td>{{ q.question }}<br><small class="muted">{{ q.topic }}</small></td><td>{{ q.options[q.answer] }}</td>
+                <td><div class="actions"><a class="btn btn-outline btn-sm" href="{{ url_for('admin_rewards', lang=lang, edit=q.id) }}">Edit</a>
+                <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="toggle"><input type="hidden" name="question_id" value="{{ q.id }}"><button class="btn btn-outline btn-sm">{{ 'Hide' if q.active else 'Show' }}</button></form></div></td></tr>{% endfor %}</tbody>
+        </table></div>
+    </section>
+    <div>
+        <section class="panel">
+            <h2>{{ 'Edit question #' ~ edit.id if edit and edit.id else 'New question' }}</h2>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if edit and edit.id %}<input type="hidden" name="question_id" value="{{ edit.id }}">{% endif %}
+                <div class="form-grid"><div><label>Language</label><select name="lang">{% for code, name in LANGUAGES.items() %}<option value="{{ code }}" {{ 'selected' if (edit.lang if edit else (lang or 'en')) == code }}>{{ name }}</option>{% endfor %}</select></div>
+                <div><label>Topic</label><input type="text" name="topic" value="{{ edit.topic if edit else 'General' }}" maxlength="40"></div></div>
+                <label>Question</label><input type="text" name="question" value="{{ edit.question if edit else '' }}" maxlength="300" required>
+                {% for i in range(4) %}<label><input type="radio" name="answer" value="{{ i }}" {{ 'checked' if edit and edit.answer|string == i|string }} style="width:auto"> Answer {{ i + 1 }} (mark the right one)</label>
+                <input type="text" name="option{{ i }}" value="{{ (edit.options[i] if edit.options is defined else edit.get('option' ~ i, '')) if edit else '' }}" maxlength="120" required>{% endfor %}
+                <label>Explanation (shown after answering)</label><input type="text" name="explanation" value="{{ edit.explanation if edit else '' }}" maxlength="400">
+                <button class="btn btn-orange btn-block">Save</button>
+            </form>
+        </section>
+        <section class="panel">
+            <h2>Top players (30 days)</h2>
+            <ol class="leaders">{% for l in leaders %}<li><span>{{ l.name }}</span><b>{{ l.points }}</b></li>{% else %}<li><span class="muted">Nobody yet</span></li>{% endfor %}</ol>
+            <p class="small muted">Rewards: {% for k, r in REWARDS.items() %}{{ r[0] }} points = {{ r[1]|inr }} {{ 'coupon' if r[3] == 'coupon' else 'Yo Pay' }}{{ ', ' if not loop.last }}{% endfor %}</p>
+        </section>
+    </div>
+</div>
+{% endblock %}

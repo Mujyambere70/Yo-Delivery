@@ -42,6 +42,16 @@
                 <div class="co-title"><span class="step-num">4</span><h2>Payment</h2></div>
                 <label class="pay"><input type="radio" name="payment" value="card" checked onchange="payChange()">
                     <span><b>Credit / debit card</b><small>{% if gateway == 'stripe' %}Secure payment page of Stripe (test mode &mdash; no real money is taken){% else %}Yo Delivery test payment gateway &mdash; no real money is taken{% endif %}. You pay {{ s.total|rupees }} in {{ CURRENCY }}.</small></span></label>
+                {% if emi_plans %}
+                <div class="pay-extra" id="emiBox">
+                    <label for="emi" class="small">Pay in full or in monthly instalments (EMI)</label>
+                    <select id="emi" name="emi">
+                        <option value="0">Pay in full &middot; {{ s.total|rupees }}</option>
+                        {% for p in emi_plans %}<option value="{{ p.months }}">{{ p.months }} months &times; {{ p.monthly|rupees }}{% if p.no_cost %} &middot; No-cost EMI{% else %} &middot; {{ '%g'|format(p.rate) }}% a year (+{{ p.interest|rupees }}){% endif %}</option>{% endfor %}
+                    </select>
+                    <a href="{{ url_for('pay_emi', amount='%d'|format(s.total // 100)) }}" target="_blank" class="small">How EMI is calculated</a>
+                </div>
+                {% endif %}
                 {% if not s.international %}
                 <label class="pay"><input type="radio" name="payment" value="upi" onchange="payChange()">
                     <span><b>UPI</b><small>Pay with any UPI app (demo &mdash; no real money is taken)</small></span></label>
@@ -84,6 +94,8 @@
 {% block scripts %}
 <script>
   function payChange() {
+    const card = document.querySelector('input[name=payment][value=card]'), emiBox = document.getElementById('emiBox');
+    if (card && emiBox) { emiBox.style.display = card.checked ? 'block' : 'none'; if (!card.checked) document.getElementById('emi').value = '0'; }
     const upi = document.querySelector('input[name=payment][value=upi]');
     const box = document.getElementById('upiBox');
     if (!upi || !box) return;

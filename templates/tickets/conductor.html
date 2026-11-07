@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Conductor app{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <section class="panel drv-top">
+        <div>
+            <h1 style="margin:0">&#127915; Conductor app</h1>
+            <p class="small muted" style="margin:2px 0 0"><span translate="no">{{ st.operator }}</span> &middot; <span>{{ MODES[st.mode] }}</span> &middot; <span translate="no">{{ user.name }}</span></p>
+        </div>
+    </section>
+    {% with trip_id=None %}{% include "tickets/_scan.html" %}{% endwith %}
+    <section class="panel">
+        <h2>Trips of {{ st.operator }} (today and tomorrow)</h2>
+        {% for t in trips %}
+        <a class="tk-mini" href="{{ url_for('conductor_trip', trip_id=t.trip_id) }}">
+            <span class="ico">{{ ICONS[t.mode] }}</span>
+            <span style="flex:1"><b translate="no">{{ t.number }}</b> &middot; <span translate="no">{{ t.from_city }}</span> &rarr; <span translate="no">{{ t.to_city }}</span><br>
+                <small class="muted">{{ t.depart_local|localtime }} <span>{{ t.from_tz }}</span>{% if t.status == 'Cancelled' %} &middot; <span>Cancelled</span>{% endif %}</small></span>
+            <span class="small"><b>{{ t.boarded }}</b> / {{ t.passengers }} <span>boarded</span></span>
+        </a>
+        {% else %}
+        <p class="muted">No trips in the next 36 hours yet. A trip appears here when a traveller searches for it.</p>
+        {% endfor %}
+    </section>
+    <p class="small muted">Demo: sign in as the demo customer, book a {{ st.operator }} {{ MODES[st.mode]|lower }} ticket, then check it in here.</p>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='tickets.js') }}"></script>{% endblock %}

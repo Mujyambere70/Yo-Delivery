@@ -1,0 +1,14 @@
+{% extends "admin/layout.html" %}
+{% block title %}Bank transfers{% endblock %}
+{% block heading %}Bank transfers to sellers (test mode){% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="small muted">When a seller chooses "bank", the daily payout is sent as a bank transfer. In test mode no money leaves the shop: the test bank answers "Paid" a few minutes later. Only the last 4 digits of each account are kept.</p>
+    <div class="tw"><table class="at">
+        <thead><tr><th>Reference</th><th>Shop</th><th>Bank</th><th>Amount</th><th>Status</th><th>Sent</th><th>Paid</th></tr></thead>
+        <tbody>{% for t in rows %}<tr><td translate="no">{{ t.ref }}</td><td translate="no">{{ t.shop_name }}</td><td translate="no">{{ t.bank }} ****{{ t.last4 }}</td><td>{{ t.amount|inr }}</td>
+            <td><span class="pill-status {{ 'ok' if t.status == 'Paid' else 'warn' }}">{{ t.status }}</span></td><td><small>{{ t.created_at[:16] }}</small></td><td><small>{{ t.settled_at[:16] or '-' }}</small></td></tr>
+        {% else %}<tr><td colspan="7" class="muted">No bank transfers yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+{% endblock %}
