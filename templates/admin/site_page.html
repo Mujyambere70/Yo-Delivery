@@ -1,0 +1,37 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ 'New page' if new else page.title or page.slug }}{% endblock %}
+{% block heading %}{{ 'New page' if new else 'Edit the page' }}{% endblock %}
+{% block content %}
+<p class="small"><a href="{{ url_for('admin_site') }}#pages">&#8592; Site content</a>{% if not new %} &middot; <a href="{{ url_for('about') if page.slug == 'about' else url_for('site_page', slug=page.slug) }}" target="_blank">&#8599; See the page</a>{% endif %}</p>
+{% if not new %}
+<div class="site-tabs">{% for code, name in LANGS.items() %}<a href="{{ url_for('admin_site_page', slug=page.slug, lang=code) }}" class="{{ 'on' if code == lang }}" translate="no">{{ name }}{% if code in have %} &#10003;{% endif %}</a>{% endfor %}</div>
+{% endif %}
+<div class="edit-grid">
+<section class="panel">
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="lang" value="{{ lang }}">
+        {% if new %}<label for="ps">Address of the page (/page/...)</label><input id="ps" type="text" name="slug" value="{{ page.slug }}" maxlength="48" pattern="[a-z0-9][a-z0-9-]+" placeholder="shipping-rules" required>{% endif %}
+        <label for="pt">Title{% if lang != 'en' %} ({{ LANGS[lang] }}){% endif %}</label>
+        <input id="pt" type="text" name="title" value="{{ page.title }}" maxlength="120" required {% if lang != 'en' %}lang="{{ lang }}"{% endif %}>
+        <label for="pb">Text</label>
+        <textarea id="pb" name="body" maxlength="20000" required {% if lang != 'en' %}lang="{{ lang }}"{% endif %}>{{ page.body }}</textarea>
+        <p class="small muted">## Heading &middot; - list &middot; 1. numbered list &middot; **bold** &middot; [link](/track) &middot; &gt; quote. Placeholders: {phone} {email} {hours} {free_delivery_from} {delivery_fee} {cod_limit} {return_days}.</p>
+        {% if lang == 'en' %}
+        <label class="check"><input type="checkbox" name="published" value="1" {{ 'checked' if page.published }}> Published (people can open it)</label>
+        <label class="check"><input type="checkbox" name="in_footer" value="1" {{ 'checked' if page.in_footer }}> Link at the bottom of every page</label>
+        {% else %}<input type="hidden" name="published" value="{{ '1' if page.published else '' }}"><input type="hidden" name="in_footer" value="{{ '1' if page.in_footer else '' }}">{% endif %}
+        <p class="actions"><button class="btn btn-orange">Save</button>
+            {% if not new and page.id %}<button class="btn btn-outline" name="action" value="delete" onclick="return confirm('Remove this text?')">{{ 'Remove the page' if lang == 'en' else 'Remove this translation' }}</button>{% endif %}</p>
+    </form>
+</section>
+<div>
+    {% if english %}<section class="panel"><h2>English text</h2><div class="preview-box small" tabindex="0" role="region" aria-label="English text"><b>{{ english.title }}</b><pre style="white-space:pre-wrap;font-family:inherit">{{ english.body }}</pre></div>
+        <p class="small muted">A visitor who reads the shop in {{ LANGS[lang] }} sees your translation; without one, the English text.</p></section>{% endif %}
+    {% if preview %}<section class="panel"><h2>How it looks now</h2><div class="preview-box site-page" tabindex="0" role="region" aria-label="Preview of the page">{{ preview|safe }}</div></section>{% endif %}
+    {% if versions %}<section class="panel"><h2>Earlier versions</h2>
+        <table class="at small"><tbody>{% for v in versions %}<tr><td translate="no">{{ v.saved_at[:16] }}</td><td translate="no">{{ v.saved_by_name or 'first text' }}</td><td>{{ v.body|length }} <span>characters</span></td>
+            <td><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="lang" value="{{ lang }}"><input type="hidden" name="version" value="{{ v.id }}"><button class="btn btn-sm btn-outline" name="action" value="restore">Bring back</button></form></td></tr>{% endfor %}</tbody></table>
+        <p class="small muted">The last 20 versions are kept. Bringing one back keeps today's text as a version too.</p></section>{% endif %}
+</div>
+</div>
+{% endblock %}

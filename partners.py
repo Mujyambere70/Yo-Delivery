@@ -189,7 +189,7 @@ class PartnersMixin:
         if kind not in EVENTS:
             return {"event_id": event_id, "result": "unknown type"}
         place, note = " ".join(str(e.get("place", "")).split())[:80], " ".join(str(e.get("note", "")).split())[:200]
-        when = at.isoformat(timespec="seconds")
+        when = at.isoformat(sep=" ", timespec="seconds")
         with self.db() as conn:
             if conn.execute("SELECT 1 FROM partner_events WHERE partner_id = ? AND event_id = ?",
                             (partner["id"], event_id)).fetchone():

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }}{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <article class="panel site-page">
+        {# a page is content written by the staff, in its own language: one text per language in the admin panel #}
+        <div translate="no" {% if page.lang != LANG %}lang="{{ page.lang }}"{% endif %}><h1>{{ page.title }}</h1>
+        {{ body|safe }}</div>
+        <p class="small muted" translate="yes"><span>Last change</span>: <span translate="no">{{ page.updated_at|nicedate }}</span></p>
+    </article>
+    <p class="small"><a href="{{ url_for('contact_page') }}">Contact us</a> &middot; <a href="{{ url_for('help_page') }}">Help Centre</a></p>
+</div>
+{% endblock %}

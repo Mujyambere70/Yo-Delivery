@@ -34,6 +34,7 @@
                 &middot; <a class="small" href="{{ url_for('driver_job', number=s.number) }}">Open the job</a></li>
         {% endfor %}
         </ol>
+        {% if plan.speed_note %}<p class="small muted">&#128200; {{ plan.speed_note }}</p>{% endif %}
         {% if plan.late %}<p class="flash info">{{ plan.late }} stop(s) cannot be reached in the time the receiver chose. Please call them.</p>{% endif %}
         <section class="nav-steps" id="nav-steps" data-points="{{ ([plan.start] + plan.stops|map(attribute='point')|list)|tojson|forceescape }}">
             <h2>&#129517; <span>Turn by turn</span></h2>

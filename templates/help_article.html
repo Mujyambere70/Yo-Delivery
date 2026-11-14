@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ a.question }}{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <p class="small"><a href="{{ url_for('help_page') }}">Help Centre</a> &rsaquo; <a href="{{ url_for('help_page') }}#{{ a.topic|lower }}">{{ a.topic }}</a></p>
+    <article class="panel site-page">
+        <h1>{{ a.question }}</h1>
+        {{ answer|safe }}
+        <form method="post" class="kb-vote">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <b>Was this answer helpful?</b>
+            <button class="btn btn-sm btn-outline" name="helpful" value="1">&#128077; <span>Yes</span></button>
+            <button class="btn btn-sm btn-outline" name="helpful" value="0">&#128078; <span>No</span></button>
+            <a class="small" href="{{ url_for('support_home') }}">Still need help? Ask our support team</a>
+        </form>
+    </article>
+    {% if more %}<section class="panel"><h2><span>More about</span>: <span>{{ a.topic }}</span></h2>
+        <ul>{% for x in more %}<li><a href="{{ url_for('help_article', slug=x.slug) }}">{{ x.question }}</a></li>{% endfor %}</ul></section>{% endif %}
+</div>
+{% endblock %}

@@ -108,5 +108,14 @@ def save_category_image(file, slug, store):
     return f"categories/{slug}.jpg"
 
 
+def save_site_banner(file, store):
+    """Version 8: a banner of the first page (wide picture). Returns the picture's name."""
+    import secrets
+    img = _open(file)
+    name = f"site/banner-{secrets.token_hex(6)}.jpg"
+    store.save_media(name, "image/jpeg", _jpeg(ImageOps.fit(img, (1600, 600), Image.LANCZOS), 84))
+    return name
+
+
 def delete_product_images(slug, store):
     store.delete_media(f"products/{slug}-")

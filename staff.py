@@ -115,6 +115,8 @@ ABILITIES = {
     "risk.review": ("Trust", "Release or cancel orders held by the safety check"),
     "analytics.view": ("General", "See analytics and hub forecasts of my branch"),
     "privacy.manage": ("System", "See the privacy register and the data requests"),
+    # version 8
+    "site.manage": ("Content", "Edit the contacts, pages, banners and help articles of the website"),
 }
 ALL = "all"                                      # every ability; only the administrator gives it
 
@@ -126,7 +128,7 @@ ROLES = {
     "finance": ("Finance", ["dashboard.view", "orders.view", "returns.manage", "yopay.view", "sellers.manage",
                             "tax.manage", "payroll.manage", "invoices.view", "payments.manage"]),
     "catalog": ("Catalog and content", ["products.manage", "reviews.manage", "coupons.manage", "blog.manage",
-                                        "rewards.manage", "board.use"]),
+                                        "rewards.manage", "board.use", "site.manage"]),
     "moderator": ("Trust and safety", ["chat.moderate", "photos.review", "reviews.manage", "blog.manage"]),
     "hub": ("Hub / warehouse worker", ["hub.scan", "shipments.view", "board.use"]),
     "courier_lead": ("Courier team lead", ["shipments.view", "shipments.manage", "couriers.manage", "hub.scan",
@@ -207,6 +209,11 @@ ABILITY_FOR_PATH = [
     ("/admin/forecast", "analytics.view", "analytics.view"),
     ("/admin/experiments", "model.manage", "model.manage"),
     ("/admin/privacy", "privacy.manage", "privacy.manage"),
+    # version 8
+    ("/admin/site", "site.manage", "site.manage"),
+    ("/admin/kb", "site.manage", "site.manage"),
+    ("/admin/find", "self", "self"),
+    ("/admin/staff/leave-rules", "staff.view", "payroll.manage"),
     ("/admin/staff", "staff.view", "staff.manage"),
     ("/admin/offices", "staff.view", "offices.manage"),
 ]

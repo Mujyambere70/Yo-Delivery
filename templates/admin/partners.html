@@ -34,4 +34,19 @@
     <table class="at small"><tbody>{% for e in log %}<tr><td translate="no">{{ e.partner }}</td><td translate="no">{{ e.number }}</td><td><code>{{ e.kind }}</code></td><td translate="no">{{ e.at[:16] }}</td><td>{{ e.place }}</td><td>{{ e.result }}</td></tr>
     {% else %}<tr><td class="muted">No events yet.</td></tr>{% endfor %}</tbody></table>
 </section>
+<section class="panel" id="webhooks">
+    <h2>Webhooks: we tell the partner</h2>
+    <p class="small">With a webhook address a partner does not have to ask for his parcels again and again: we send a signed message when a parcel is handed to him or cancelled (<code>shipment.assigned</code>, <code>shipment.cancelled</code>). A message that is not answered with 2xx is tried again after 1, 4, 9, 16 and 25 minutes. Addresses of made-up companies (<code>*.example</code>) are never called.</p>
+    <table class="at"><thead><tr><th>Company</th><th>Webhook address (https)</th><th></th></tr></thead><tbody>
+    {% for p in partners %}<tr><td translate="no">{{ p.name }}</td><td colspan="2"><form method="post" class="actions" action="{{ url_for('admin_partner_webhook', partner_id=p.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="url" name="webhook_url" value="{{ p.webhook_url or '' }}" placeholder="https://partner.example/yo-webhook" maxlength="300" aria-label="Webhook address of {{ p.name }}" style="min-width:320px;flex:1">
+        <button class="btn btn-sm btn-outline">Save</button>{% if p.webhook_url %} <button class="btn btn-sm btn-outline" name="action" value="ping">Send a test</button>{% endif %}</form></td></tr>
+    {% else %}<tr><td colspan="3" class="muted">No partner yet.</td></tr>{% endfor %}</tbody></table>
+    <h3>Last messages</h3>
+    <table class="at small"><thead><tr><th>#</th><th>Partner</th><th>Event</th><th>Parcel</th><th>Status</th><th>Tries</th><th>Answer</th><th>Made</th><th></th></tr></thead><tbody>
+    {% for d in webhook_deliveries() %}<tr><td translate="no">whd_{{ d.id }}</td><td translate="no">{{ d.partner }}</td><td><code>{{ d.event }}</code></td><td translate="no">{{ d.number or '-' }}</td>
+        <td><span class="status-pill {{ 'ok' if d.status == 'Sent' else 'bad' if d.status == 'Failed' else 'warn' }}">{{ d.status }}</span></td><td>{{ d.tries }}</td><td class="small">{{ d.last_code or '' }} {{ d.last_error }}</td><td translate="no">{{ d.created_at[:16] }}</td>
+        <td>{% if d.status == 'Failed' %}<form method="post" action="{{ url_for('admin_partner_webhook', partner_id=d.partner_id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="delivery" value="{{ d.id }}"><button class="btn btn-sm btn-outline" name="action" value="resend">Send again</button></form>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="9" class="muted">No messages yet.</td></tr>{% endfor %}</tbody></table>
+</section>
 {% endblock %}

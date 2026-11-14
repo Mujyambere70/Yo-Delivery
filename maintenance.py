@@ -40,7 +40,11 @@ DATA_TABLES = ["users", "addresses", "categories", "sellers", "products", "media
                "staff_contracts", "income_tax_rules", "payroll_runs", "payslips", "approvals", "staff_trainings",
                "staff_offices", "tax_category_rates", "invoice_counters", "invoices", "payment_events",
                "reconciliations", "partners", "partner_events", "support_tickets", "support_messages",
-               "parcel_claims", "privacy_requests", "experiments", "exp_events", "fact_daily"]
+               "parcel_claims", "privacy_requests", "experiments", "exp_events", "fact_daily",
+               # version 8 - site content, holidays, webhooks, live data
+               "site_contacts", "site_pages", "site_page_versions", "site_slides", "kb_articles", "staff_news",
+               "staff_news_seen", "public_holidays", "leave_rules", "webhook_deliveries", "speed_profile", "gtfs_alerts",
+               "gtfs_vehicles", "inbound_emails"]
 
 
 class MaintenanceMixin:
@@ -123,7 +127,7 @@ class MaintenanceMixin:
     # ===== backups =====
 
     def export_data(self):
-        data = {"app": "Yo Delivery", "version": 7, "created_at": now(), "tables": {}}
+        data = {"app": "Yo Delivery", "version": 8, "created_at": now(), "tables": {}}
         with self.db() as conn:
             for t in DATA_TABLES:
                 rows = conn.execute(f"SELECT * FROM {t}").fetchall()
@@ -159,7 +163,8 @@ class MaintenanceMixin:
                 if "id" in have:
                     conn.reset_sequence(t)
         self.refresh_categories()
-        for fill in ("ensure_tax_rules", "ensure_chat_model"):     # version 6: a backup of an older version
+        for fill in ("ensure_tax_rules", "ensure_chat_model",      # version 6: a backup of an older version
+                     "ensure_site_content", "ensure_holidays"):    # version 8: pages, banners, help articles, holidays
             if hasattr(self, fill):
                 getattr(self, fill)()
         return {t: len(tables.get(t, [])) for t in DATA_TABLES}

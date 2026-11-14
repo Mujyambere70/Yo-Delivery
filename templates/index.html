@@ -3,38 +3,16 @@
 {% block content %}
 <section class="hero">
     <div class="slides" id="slides">
-        <div class="slide active" style="background-image:url('{{ url_for('static', filename='images/photos/courier.jpg') }}')">
+        {% for sl in slides %}
+        <div class="slide {{ 'active' if loop.first }}" style="background-image:url('{{ picture(sl.image) }}')">
             <div class="wrap slide-text">
-                <span class="pill">Yo Express</span>
-                <h1>Delivered in <span>2 hours</span><br>across Ambala</h1>
-                <p>Groceries, snacks and daily needs at your door. Free delivery over {{ FREE_DELIVERY_FROM|rupees }}.</p>
-                <a href="{{ url_for('category', category='grocery') }}" class="btn btn-orange btn-lg">Shop Grocery</a>
+                {% if sl.label %}<span class="pill">{{ sl.label }}</span>{% endif %}
+                <{{ 'h1' if loop.first else 'h2' }} class="slide-h">{{ sl.title_html|safe }}</{{ 'h1' if loop.first else 'h2' }}>
+                {% if sl.subtitle %}<p>{{ fill(sl.subtitle) }}</p>{% endif %}
+                {% if sl.button %}<a href="{{ sl.link }}" class="btn btn-orange btn-lg">{{ sl.button }}</a>{% endif %}
             </div>
         </div>
-        <div class="slide" style="background-image:url('{{ url_for('static', filename='images/photos/fashion-wide.jpg') }}')">
-            <div class="wrap slide-text">
-                <span class="pill">Fashion Days</span>
-                <h1>Up to <span>60% off</span><br>on top styles</h1>
-                <p>T-shirts, jeans, dresses and hoodies from {{ (399*100)|rupees }}.</p>
-                <a href="{{ url_for('category', category='fashion') }}" class="btn btn-orange btn-lg">Shop Fashion</a>
-            </div>
-        </div>
-        <div class="slide" style="background-image:url('{{ url_for('static', filename='images/photos/watches-wide.jpg') }}')">
-            <div class="wrap slide-text">
-                <span class="pill">Watch Festival</span>
-                <h1>Premium watches<br>from <span>{{ (1499*100)|rupees }}</span></h1>
-                <p>Analog, chronograph and smartwatches. 2-year warranty.</p>
-                <a href="{{ url_for('category', category='watches') }}" class="btn btn-orange btn-lg">Explore Watches</a>
-            </div>
-        </div>
-        <div class="slide" style="background-image:url('{{ url_for('static', filename='images/photos/shoes-wide.jpg') }}')">
-            <div class="wrap slide-text">
-                <span class="pill">Sneaker Store</span>
-                <h1>Run further.<br>Pay <span>less.</span></h1>
-                <p>Running shoes, sneakers and formals - extra 10% off with code YO10.</p>
-                <a href="{{ url_for('category', category='footwear') }}" class="btn btn-orange btn-lg">Shop Footwear</a>
-            </div>
-        </div>
+        {% endfor %}
         <button class="slide-btn prev" type="button" aria-label="Previous" onclick="go(-1)">&#10094;</button>
         <button class="slide-btn next" type="button" aria-label="Next" onclick="go(1)">&#10095;</button>
         <div class="dots" id="dots"></div>

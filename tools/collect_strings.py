@@ -191,6 +191,27 @@ for url in ["/seller/tax", "/seller/invoices"]:
 courier.get("/driver/route")
 courier.get(f"/driver/job/{numbers[-1]}")
 
+# version 8: the menu with the profile, contact and help pages, pages written by the staff, the worker's pages
+# (my work with news and holidays, colleagues, year statement, clock-in code), live help desk, e-invoice on the invoice
+for url in ["/menu", "/menu?drawer=1", "/menu?q=track", "/menu?q=zzzzzz", "/contact", "/help", "/help?q=refund", "/help?q=zzzzzz",
+            "/help/a/can-i-cancel-my-order", "/about", "/"]:
+    guest.get(url)
+    ravi.get(url)
+neha = client("neha.gill@example.com", "Staff@2026")
+for c8 in (hub, neha, eric, boss):
+    for url in ["/staff", "/menu", "/menu?drawer=1", "/account", "/staff/directory", "/staff/statement", "/staff/clock-code?c=123456",
+                "/staff/me", "/"]:
+        c8.get(url)
+for url in ["/support"] + [f"/support/{t}" for t in tickets] + [f"/invoices/{i}" for i in invs] + \
+           [f"/tickets/b/{p}" for p in pnrs] + ["/account"]:
+    ravi.get(url)
+with store.db() as conn:
+    gt = [r[0] for r in conn.execute("SELECT b.pnr FROM ticket_bookings b JOIN ticket_trips t ON t.id = b.trip_id JOIN "
+                                     "ticket_services s ON s.id = t.service_id WHERE s.code LIKE 'GT%'")]
+for p in gt:
+    ravi.get(f"/tickets/b/{p}")
+courier.get("/driver/route")
+
 # messages written in the Python code of the new modules
 pattern = re.compile(r'(?:ShopError|WrongCode|flash|notify\([^,]+,[^,]+,)\(?\s*(f?)"((?:[^"\\]|\\.)+)"')
 files = ["courier.py", "courier_views.py", "yopay.py", "pay_views.py", "rewards.py", "rewards_views.py", "blog.py",
@@ -199,7 +220,8 @@ files = ["courier.py", "courier_views.py", "yopay.py", "pay_views.py", "rewards.
          "staff.py", "staff_views.py", "workforce.py", "workforce_views.py", "v6_views.py", "v6b_views.py",
          "mobilemoney.py", "customs.py", "bankpay.py", "addresscheck.py", "idcheck.py", "translate.py",
          "people.py", "invoices.py", "providers.py", "partners.py", "courierplus.py", "gtfsrt.py", "helpdesk.py",
-         "v7_views.py", "v7b_views.py", "routeplan.py"]
+         "v7_views.py", "v7b_views.py", "routeplan.py",
+         "services.py", "sitecontent.py", "holidays.py", "einvoice.py", "webhooks.py", "v8extra.py", "v8_views.py"]
 for name in files if ONLY_V3 else [f for f in os.listdir(ROOT) if f.endswith(".py")]:
     src = open(os.path.join(ROOT, name), encoding="utf-8").read()
     for f, text in pattern.findall(src):
@@ -242,6 +264,18 @@ for v in list(PE.LEAVE_KINDS) + [c[0] for c in PE.COURSES.values()] + ["Open", "
                                                                        "Refused", "Safety check", "Tax invoice",
                                                                        "Bill of supply", "Credit note"]:
     record(v)
+import holidays as HO  # noqa: E402
+import services as SV  # noqa: E402
+import sitecontent as SC  # noqa: E402
+import staff as ST  # noqa: E402
+import v8extra as V8  # noqa: E402
+for v in [x[2] for x in SV.NAV] + [x[2] for x in SV.WORKER_PAGES] + [x[2] for x in SV.PUBLIC] + [x[2] for x in SV.ACCOUNT] + \
+        list(SV.HOME_LABELS.values()) + list(SC.KB_TOPICS) + list(HO.HOLIDAY_KINDS.values()) + list(V8.ALERT_EFFECTS.values()) + \
+        list(V8.VEHICLE_STATUS.values()) + [v[0] for v in ST.ROLES.values()] + list(ST.WORKER_KINDS.values()) + \
+        ["My work", "My shop", "Yo services", "Shop by category", "My account", "Found", "Administrator", "Admin panel",
+         "Order", "Parcel", "Question", "Ticket", "Customer", "Worker", "Page"] + \
+        [a[1] for a in SC.DEFAULT_ARTICLES]:
+    record(v)
 import geo  # noqa: E402
 for v in list(TK.WORLD_CLASS_NAMES.values()) + list(geo.KIND_NAMES.values()) + [TK.WAITLISTED, "Nearby region",
                                                                                 "Whole country", "Waiting list"]:
@@ -258,6 +292,11 @@ with store.db() as conn:
     content += " ".join(" ".join(r) for r in conn.execute("SELECT name, code FROM ticket_operators"))
     content += " ".join(r[0] for r in conn.execute("SELECT name FROM ticket_passengers"))
     content += " ".join(" ".join(r) for r in conn.execute("SELECT name, about FROM product_texts"))
+    content += " ".join(" ".join(r) for r in conn.execute("SELECT title, body FROM staff_news"))          # version 8
+    content += " ".join(" ".join(r) for r in conn.execute("SELECT title, body FROM site_pages WHERE slug != 'about'"))
+    content += " ".join(" ".join(r) for r in conn.execute("SELECT header, details FROM gtfs_alerts"))
+    content += " ".join(" ".join(r) for r in conn.execute("SELECT name, value FROM site_contacts"))
+    content += " " + " ".join(d[2] for d in SC.CONTACT_FIELDS.values())
     content += " ".join(r[0] for r in conn.execute("SELECT body FROM chat_messages"))
 content = " ".join(content.replace("*", "").replace("#", "").split())
 seen = [t for t in seen if t not in content]

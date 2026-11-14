@@ -17,6 +17,7 @@ import demo_v4
 import demo_v5
 import demo_v6
 import demo_v7
+import demo_v8
 
 DEMO_EMAIL = "demo@example.com"
 DEMO_MOBILE = "9876543210"
@@ -81,6 +82,7 @@ def seed(store):
         demo_v5.ensure_v5(store)            # and the whole-world demo content (version 5) once
         demo_v6.ensure_v6(store)            # and the staff of Yo Delivery (version 6) once
         demo_v7.ensure_v7(store)            # and pay, invoices, partners, help desk and numbers (version 7) once
+        demo_v8.ensure_v8(store)            # and site content, news, webhooks and live data (version 8) once
         return
     store.load_catalog()
     rng = random.Random(11)
@@ -246,3 +248,4 @@ def seed(store):
     demo_v5.ensure_v5(store)            # version 5: the whole world (quiz languages, chat, product texts, ...)
     demo_v6.ensure_v6(store)            # version 6: offices, workers, shifts and tasks
     demo_v7.ensure_v7(store)            # version 7: pay, invoices, partners, help desk and numbers
+    demo_v8.ensure_v8(store)            # version 8: site content, news, webhooks, speed profile, live data

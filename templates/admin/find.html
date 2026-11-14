@@ -1,0 +1,19 @@
+{% extends "admin/layout.html" %}
+{% block title %}Quick find{% endblock %}
+{% block heading %}Quick find{% endblock %}
+{% block content %}
+<section class="panel">
+    <form method="get" class="staff-find" role="search" style="margin:0 0 12px">
+        <input type="search" name="q" value="{{ find_q }}" autofocus placeholder="Order OD..., parcel YC..., question S000001, ticket code, name, e-mail, or a page" aria-label="Find">
+        <button class="btn btn-orange">Find</button>
+    </form>
+    {% if find_q %}
+    <div class="find-list">
+        {% for r in rows %}<a href="{{ r.url }}"><span class="pill-status">{{ r.kind }}</span><span><b translate="no">{{ r.label }}</b><br><small class="muted">{{ r.sub }}</small></span></a>
+        {% else %}<p class="muted">Nothing found for &ldquo;{{ find_q }}&rdquo;. You see only what your abilities allow.</p>{% endfor %}
+    </div>
+    {% else %}
+    <p class="muted">Type an order number, a parcel number, the number of a question, a ticket code, a name or e-mail, or the name of a page. You see only what your abilities allow.</p>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+{# version 8: every tax rate can be checked by a second person, with the days it is valid #}
+{% set rv = rates_review() %}
+<section class="panel" id="review">
+    <h2>Review of the rates</h2>
+    <p class="small">The rates were typed in as examples. A person with the ability to change tax rules - not the person who typed the rate - marks a rate as checked and says from which day until which day it is valid.
+        {% for status, n in rv.counts.items() %}<span class="status-pill {{ 'ok' if status == 'Checked' else 'bad' if status == 'Expired' else 'warn' }}">{{ status }}: {{ n }}</span> {% endfor %}</p>
+    <div class="tw"><table class="at small"><thead><tr><th>Rate</th><th>Status</th><th>Checked by</th><th>Valid</th><th>Mark as checked</th></tr></thead><tbody>
+    {% for r in (rv.countries if review_kind == 'country' else rv.categories) %}
+    <tr><td translate="no">{% if review_kind == 'country' %}<b>{{ r.country }}</b> {{ r.name }} &middot; {{ '%g'|format(r.services_pct) }} % / {{ '%g'|format(r.goods_pct) }} %{% else %}<b>{{ r.country }}</b> {{ r.category }} &middot; {{ '%g'|format(r.rate) }} %{% if r.max_unit_price %} &le; {{ r.max_unit_price|rupees }}{% endif %}{% endif %}</td>
+        <td><span class="status-pill {{ 'ok' if r.status == 'Checked' else 'bad' if r.status == 'Expired' else 'warn' }}">{{ r.status }}</span></td>
+        <td>{% if r.checked_at %}<span translate="no">{{ r.checked_name }} &middot; {{ r.checked_at[:10] }}</span>{% if r.check_note %}<br><small>{{ r.check_note }}</small>{% endif %}{% else %}-{% endif %}</td>
+        <td translate="no">{{ r.valid_from or '...' }} &rarr; {{ r.valid_to or '...' }}</td>
+        <td>{% if can('tax.manage') %}<form method="post" class="actions" action="{{ url_for('admin_rate_check') if review_kind == 'country' else '/admin/tax-categories/check' }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="key" value="{{ r.country if review_kind == 'country' else r.id }}">
+            <input type="date" name="valid_from" value="{{ r.valid_from }}" aria-label="Valid from" style="width:150px"><input type="date" name="valid_to" value="{{ r.valid_to }}" aria-label="Valid until" style="width:150px">
+            <input type="text" name="note" maxlength="200" placeholder="Source: law, notice..." aria-label="Source" style="width:190px"><button class="btn btn-sm btn-outline">Checked</button></form>{% endif %}</td></tr>
+    {% endfor %}</tbody></table></div>
+</section>

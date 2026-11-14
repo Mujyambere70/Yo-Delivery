@@ -4,6 +4,34 @@
 <div class="wrap acc">
     {% include "_account_nav.html" %}
     <div>
+        {% set job = job_info() %}
+        {% if job %}
+        <section class="panel job-card" id="job">
+            <span class="job-ico" aria-hidden="true">&#128188;</span>
+            <div class="job-main">
+                <p class="job-path">{% for name in job.path %}<span translate="no">{{ name }}</span>{% if not loop.last %} &rsaquo; {% endif %}{% endfor %}</p>
+                <h2>My job at Yo Delivery: <span translate="no">{{ job.position }}</span></h2>
+                <div class="job-facts">
+                    <span><b>Kind of work:</b> {{ job.kind }}</span>
+                    {% if job.role %}<span><b>Role:</b> {{ job.role }}</span>{% endif %}
+                    <span><b>Office:</b> <span translate="no">{{ job.office }}</span></span>
+                    {% if job.manager %}<span><b>My manager:</b> <span translate="no">{{ job.manager.name }} ({{ job.manager.title }})</span></span>{% endif %}
+                    <span><b>Since:</b> <span translate="no">{{ job.since|nicedate }}</span></span>
+                    {% if job.is_manager %}<span class="tag ok-tag">Manager</span>{% endif %}
+                    {% if job.status != 'Active' %}<span class="tag">{{ job.status }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="job-actions">
+                {% if job.home %}<a class="btn btn-orange" href="{{ url_for('my_work_go') }}">&#9654; <span>Open my work</span>: <span>{{ job.home.label }}</span></a>{% endif %}
+                <a class="btn btn-outline btn-sm" href="{{ url_for('staff_home') }}">My work page</a>
+                <a class="btn btn-outline btn-sm" href="{{ url_for('staff_card') }}">My staff ID card</a>
+            </div>
+        </section>
+        {% elif user.is_admin %}
+        <section class="panel job-card" id="job"><span class="job-ico" aria-hidden="true">&#128202;</span>
+            <div class="job-main"><h2>My position: Administrator</h2><p class="small muted">You can open every page of the admin panel.</p></div>
+            <div class="job-actions"><a class="btn btn-orange" href="{{ url_for('admin_dashboard') }}">&#9654; <span>Open the admin panel</span></a></div></section>
+        {% endif %}
         <div class="acc-tiles">
             <a href="{{ url_for('orders') }}" class="panel"><span>&#128230;</span><b>Your Orders</b><small>{{ orders_count }} order{{ 's' if orders_count != 1 }} &middot; track, return, buy again</small></a>
             <a href="{{ url_for('addresses') }}" class="panel"><span>&#128205;</span><b>Your Addresses</b><small>Edit addresses for orders</small></a>

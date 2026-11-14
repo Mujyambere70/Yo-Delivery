@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-{% block title %}About Yo Delivery{% endblock %}
+{% block title %}{{ page.title if page else 'About Yo Delivery' }}{% endblock %}
 {% block content %}
 <div class="wrap narrow about">
-    <section class="panel">
-        <h1>About Yo Delivery</h1>
-        <p>Yo Delivery is an online shop and delivery service written in Python with Flask. Customers from any country can shop in seven languages, see prices in their own currency, pay by card in test mode, follow their parcel step by step and return what they don't want. Independent sellers can open their own shop on the marketplace.</p>
-        <p>It started as a broken PHP website and was rebuilt from the ground up as an academic and portfolio project. Products, brands, sellers and payments are fictional: nothing is really sold, shipped or charged.</p>
+    <section class="panel site-page">
+        <h1>{{ page.title if page else 'About Yo Delivery' }}</h1>
+        {{ body|safe }}
         <div class="about-facts">
             <div><b>7</b><span>languages</span></div><div><b>8</b><span>currencies</span></div><div><b>240+</b><span>countries and territories</span></div><div><b>{{ CATEGORIES|length }}</b><span>categories</span></div>
         </div>
@@ -30,15 +29,5 @@
         </div>
     </section>
 
-    <section class="panel">
-        <h2>How it is built</h2>
-        <ul class="dev-list small">
-            <li>Python 3, Flask, Jinja2 &middot; SQLite on a computer, PostgreSQL online</li>
-            <li>Interface in English, Russian, French, Spanish, Arabic (right to left), Chinese and Kinyarwanda; money and dates formatted with Babel (Unicode CLDR)</li>
-            <li>Card payments with Stripe in test mode, or the built-in test gateway; exchange rates from open.er-api.com</li>
-            <li>Order messages by email (Brevo), SMS (Twilio) and Web Push; recommendations from what customers view and buy</li>
-            <li>Every important rule is checked by automated tests</li>
-        </ul>
-    </section>
 </div>
 {% endblock %}

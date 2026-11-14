@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="20">
+    <meta name="robots" content="noindex">
+    <title>Clock-in code | {{ o.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='v8.css') }}">
+</head>
+<body style="background:#fff">
+<main class="code-screen">
+    <p class="muted">Yo Delivery &middot; <span translate="no">{{ o.name }}</span></p>
+    <h1>Clock-in code</h1>
+    <div class="code-box" aria-live="polite">{{ code[:3] }} {{ code[3:] }}</div>
+    <div class="code-bar" aria-hidden="true"><i id="bar"></i></div>
+    <div class="qr" id="qr" data-text="{{ link }}" role="img" aria-label="QR code with the clock-in link"></div>
+    <p>Type the six digits on "My work", or scan the picture with the camera of your phone.</p>
+    <p class="small muted">The code changes every minute and is right for this office only. This page reloads by itself.</p>
+    <p class="small no-print"><a href="{{ url_for('admin_offices') }}">&#8592; Offices</a></p>
+</main>
+<script src="{{ url_for('static', filename='vendor/qrcode.js') }}"></script>
+<script>
+(function () {
+  var el = document.getElementById("qr");
+  try { var q = qrcode(0, "M"); q.addData(el.getAttribute("data-text")); q.make(); el.innerHTML = q.createSvgTag(5, 8); } catch (e) {}
+  var bar = document.getElementById("bar"), step = {{ step }};
+  function tick() { var left = step - (Date.now() / 1000) % step; bar.style.width = (left / step * 100) + "%"; if (left < 1) setTimeout(function () { location.reload(); }, 1200); }
+  tick(); setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

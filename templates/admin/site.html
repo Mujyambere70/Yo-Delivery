@@ -1,0 +1,75 @@
+{% extends "admin/layout.html" %}
+{% block title %}Site content{% endblock %}
+{% block heading %}Site content{% endblock %}
+{% block content %}
+<div class="site-tabs"><a href="#contacts" class="on">&#9742; Contacts</a><a href="#pages">&#128196; Pages</a><a href="#banners">&#128444; Banners</a>
+    <a href="{{ url_for('admin_kb') }}">&#128218; Help articles ({{ articles }})</a><a href="{{ url_for('admin_settings') }}#announcement">&#128227; Announcement bar</a>
+    <a href="{{ url_for('contact_page') }}" target="_blank">&#8599; See the Contact page</a></div>
+
+<section class="panel" id="contacts">
+    <h2>Contacts</h2>
+    <p class="small muted">Shown at the bottom of every page, on the Contact page, in the Help Centre and inside texts as {phone}, {email} and {hours}.</p>
+    <form method="post" action="{{ url_for('admin_site_contacts') }}" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% for name, (label, kind, default) in fields.items() %}
+        <div class="{{ 'full' if kind == 'lines' or name in ('footer_note', 'tagline') }}"><label for="c_{{ name }}">{{ label }}</label>
+            {% if kind == 'lines' or name == 'footer_note' %}<textarea id="c_{{ name }}" name="{{ name }}" rows="{{ 3 if kind == 'lines' else 2 }}" maxlength="400">{{ c[name] }}</textarea>
+            {% else %}<input id="c_{{ name }}" type="{{ 'email' if kind == 'email' else 'url' if kind == 'url' else 'text' }}" name="{{ name }}" value="{{ c[name] }}" maxlength="160" {% if kind == 'url' %}placeholder="https://"{% endif %} {% if name in ('company', 'email') %}required{% endif %}>{% endif %}</div>
+        {% endfor %}
+        <div class="full"><button class="btn btn-orange">Save the contacts</button></div>
+    </form>
+</section>
+
+<section class="panel" id="pages">
+    <h2>Pages</h2>
+    <table class="at"><thead><tr><th>Page</th><th>Address</th><th>Languages</th><th>Shown</th><th>Last change</th><th></th></tr></thead><tbody>
+    {% for p in pages %}<tr><td><b>{{ p.title }}</b></td><td translate="no"><a href="{{ url_for('about') if p.slug == 'about' else url_for('site_page', slug=p.slug) }}" target="_blank">{{ '/about' if p.slug == 'about' else '/page/' ~ p.slug }}</a></td>
+        <td translate="no">{% for l in p.langs %}<a class="status-pill {{ 'ok' if l == 'en' }}" href="{{ url_for('admin_site_page', slug=p.slug, lang=l) }}">{{ l }}</a> {% endfor %}</td>
+        <td>{% if p.published %}<span class="status-pill ok">Published</span>{% else %}<span class="status-pill warn">Hidden</span>{% endif %}{% if p.in_footer and p.published %} <span class="status-pill">footer</span>{% endif %}</td>
+        <td translate="no">{{ p.updated_at[:16] }}</td><td><a class="btn btn-sm btn-outline" href="{{ url_for('admin_site_page', slug=p.slug) }}">Edit</a></td></tr>{% endfor %}
+    </tbody></table>
+    <p><a class="btn btn-orange btn-sm" href="{{ url_for('admin_site_page', slug='new') }}">+ New page</a></p>
+</section>
+
+<section class="panel" id="banners">
+    <h2>Banners of the first page</h2>
+    <p class="small muted">Big text: put *stars* around the words to highlight and " / " where a new line starts. The text under it can use {free_delivery_from} and the other placeholders.</p>
+    {% for sl in slides %}
+    <form method="post" action="{{ url_for('admin_site_slides') }}" enctype="multipart/form-data" class="slide-card {{ 'off' if not sl.shown }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ sl.id }}">
+        <div><div class="slide-thumb" style="background-image:url('{{ picture(sl.image) }}')"></div>
+            <p class="small">{% if sl.shown %}<span class="status-pill ok">Shown now</span>{% else %}<span class="status-pill warn">Not shown</span>{% endif %}</p></div>
+        <div class="form-grid">
+            <div><label for="sl{{ sl.id }}l">Small label</label><input id="sl{{ sl.id }}l" type="text" name="label" value="{{ sl.label }}" maxlength="30"></div>
+            <div><label for="sl{{ sl.id }}o">Order</label><input id="sl{{ sl.id }}o" type="number" name="sort_no" value="{{ sl.sort_no }}" min="0" max="99"></div>
+            <div class="full"><label for="sl{{ sl.id }}t">Big text</label><input id="sl{{ sl.id }}t" type="text" name="title" value="{{ sl.title }}" maxlength="90" required></div>
+            <div class="full"><label for="sl{{ sl.id }}s">Text under it</label><input id="sl{{ sl.id }}s" type="text" name="subtitle" value="{{ sl.subtitle }}" maxlength="160"></div>
+            <div><label for="sl{{ sl.id }}b">Button</label><input id="sl{{ sl.id }}b" type="text" name="button" value="{{ sl.button }}" maxlength="30"></div>
+            <div><label for="sl{{ sl.id }}k">Button opens</label><input id="sl{{ sl.id }}k" type="text" name="link" value="{{ sl.link }}" maxlength="200" placeholder="/c/grocery"></div>
+            <div><label for="sl{{ sl.id }}i">Picture</label><select id="sl{{ sl.id }}i" name="image">{% if sl.image not in photos %}<option value="{{ sl.image }}" selected>uploaded picture</option>{% endif %}{% for ph in photos %}<option value="{{ ph }}" {{ 'selected' if ph == sl.image }}>{{ ph.split('/')[-1] }}</option>{% endfor %}</select></div>
+            <div><label for="sl{{ sl.id }}f">or a new picture (wide)</label><input id="sl{{ sl.id }}f" type="file" name="picture" accept=".jpg,.jpeg,.png,.webp"></div>
+            <div><label for="sl{{ sl.id }}a">From (day)</label><input id="sl{{ sl.id }}a" type="date" name="from_day" value="{{ sl.from_day }}"></div>
+            <div><label for="sl{{ sl.id }}z">Until (day)</label><input id="sl{{ sl.id }}z" type="date" name="to_day" value="{{ sl.to_day }}"></div>
+            <div class="full actions"><label class="check"><input type="checkbox" name="active" value="1" {{ 'checked' if sl.active }}> Switched on</label>
+                <button class="btn btn-sm btn-orange">Save</button>
+                <button class="btn btn-sm btn-outline" name="action" value="delete" onclick="return confirm('Remove this banner?')">Remove</button></div>
+        </div>
+    </form>
+    {% endfor %}
+    <details class="panel" style="background:#f8fafc"><summary><b>+ New banner</b></summary>
+    <form method="post" action="{{ url_for('admin_site_slides') }}" enctype="multipart/form-data" class="form-grid" style="margin-top:10px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div><label for="nl">Small label</label><input id="nl" type="text" name="label" maxlength="30"></div>
+        <div><label for="no">Order</label><input id="no" type="number" name="sort_no" value="{{ slides|length + 1 }}" min="0" max="99"></div>
+        <div class="full"><label for="nt">Big text</label><input id="nt" type="text" name="title" maxlength="90" required placeholder="Free delivery / on *every* order"></div>
+        <div class="full"><label for="ns">Text under it</label><input id="ns" type="text" name="subtitle" maxlength="160"></div>
+        <div><label for="nb">Button</label><input id="nb" type="text" name="button" maxlength="30"></div>
+        <div><label for="nk">Button opens</label><input id="nk" type="text" name="link" maxlength="200" value="/"></div>
+        <div><label for="ni">Picture</label><select id="ni" name="image">{% for ph in photos %}<option value="{{ ph }}">{{ ph.split('/')[-1] }}</option>{% endfor %}</select></div>
+        <div><label for="nf">or a new picture (wide)</label><input id="nf" type="file" name="picture" accept=".jpg,.jpeg,.png,.webp"></div>
+        <div><label for="na">From (day)</label><input id="na" type="date" name="from_day"></div>
+        <div><label for="nz">Until (day)</label><input id="nz" type="date" name="to_day"></div>
+        <div class="full"><label class="check"><input type="checkbox" name="active" value="1" checked> Switched on</label> <button class="btn btn-orange btn-sm">Add the banner</button></div>
+    </form></details>
+</section>
+{% endblock %}

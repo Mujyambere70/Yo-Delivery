@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Contact us{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <h1>Contact us</h1>
+    <p class="muted" translate="no">{{ c.tagline }}</p>
+    <div class="contact-grid">
+        {% if c.phone %}<section class="panel"><h2>&#9742; <span>Phone</span></h2><a class="big" href="tel:{{ c.phone|replace(' ', '') }}" translate="no">{{ c.phone }}</a><span class="small muted" translate="no">{{ c.hours }}</span></section>{% endif %}
+        <section class="panel"><h2>&#9993; <span>E-mail</span></h2><a class="big" href="mailto:{{ c.email }}" translate="no">{{ c.email }}</a><span class="small muted">We answer within one working day.</span></section>
+        {% if c.whatsapp %}<section class="panel"><h2 translate="no">&#128172; WhatsApp</h2><span class="big" translate="no">{{ c.whatsapp }}</span></section>{% endif %}
+        <section class="panel"><h2>&#128205; <span>Registered office</span></h2><p translate="no"><b>{{ c.company }}</b><br>{% for line in c.address_lines %}{{ line }}<br>{% endfor %}</p>
+            {% if c.map_link %}<a href="{{ c.map_link }}" target="_blank" rel="noopener">Open the map</a>{% endif %}</section>
+    </div>
+    <section class="panel" style="margin-top:14px">
+        <h2>The fastest way: ask our support team</h2>
+        <p>Write your question once and follow the answers on one page. You see new answers at once, without loading the page again.</p>
+        <p><a class="btn btn-orange" href="{{ url_for('support_home') }}">&#127911; <span>Ask a question</span></a>
+           <a class="btn btn-outline" href="{{ url_for('help_page') }}">&#10067; <span>Help Centre</span></a>
+           <a class="btn btn-outline" href="{{ url_for('track') }}">&#128205; <span>Track a parcel</span></a></p>
+    </section>
+    <div class="contact-grid">
+        {% if c.sales_email %}<section class="panel"><h2>Sellers and partners</h2><a href="mailto:{{ c.sales_email }}" translate="no">{{ c.sales_email }}</a><p class="small"><a href="{{ url_for('sell') }}">Sell on Yo Delivery</a> &middot; <a href="{{ url_for('partner_api_page') }}">Partner API</a></p></section>{% endif %}
+        {% if c.press_email %}<section class="panel"><h2>Press</h2><a href="mailto:{{ c.press_email }}" translate="no">{{ c.press_email }}</a></section>{% endif %}
+        <section class="panel"><h2>Security</h2><a href="mailto:{{ c.security_email or c.email }}" translate="no">{{ c.security_email or c.email }}</a><p class="small">How to report a problem: <a href="{{ url_for('security_txt') }}" translate="no">security.txt</a></p></section>
+        {% if c.social %}<section class="panel"><h2>Follow us</h2>{% for key, label, url in c.social %}<a href="{{ url }}" target="_blank" rel="noopener me" style="display:block" translate="no">{{ label }}</a>{% endfor %}</section>{% endif %}
+    </div>
+    {% if pages %}<p class="small muted" style="margin-top:14px">{% for p in pages %}<a href="{{ url_for('site_page', slug=p.slug) }}" translate="no">{{ p.title }}</a>{% if not loop.last %} &middot; {% endif %}{% endfor %}</p>{% endif %}
+</div>
+{% endblock %}

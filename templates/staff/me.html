@@ -25,7 +25,7 @@
             <div class="kpis"><div class="kpi"><small>Earned so far</small><b>{{ '%g'|format(balance.earned) }}</b></div>
                 <div class="kpi"><small>Used or asked</small><b>{{ balance.used }}</b></div>
                 <div class="kpi"><small>Left</small><b>{{ '%g'|format(balance.left) }}</b></div></div>
-            <p class="small muted">Days are earned month by month ({{ balance.per_year }} a year). Holidays count working days (Monday to Friday). Sick days and unpaid days do not use the balance.</p>
+            <p class="small muted">Days are earned month by month ({{ balance.per_year }} a year). {% if balance.unit == 'calendar' %}Holidays count calendar days; public holidays inside your time off are not counted.{% else %}Holidays count working days (Monday to Friday); public holidays are not counted.{% endif %} Sick days and unpaid days do not use the balance.</p>
             {% else %}<p class="muted">No contract, so no balance yet.</p>{% endif %}
         </section>
         <section class="panel">
@@ -44,6 +44,7 @@
         <table class="at"><thead><tr><th>Month</th><th>Gross</th><th>Tax and contributions</th><th>Net</th><th></th></tr></thead><tbody>
         {% for s in slips %}<tr><td translate="no">{{ s.month }}</td><td translate="no">{{ minor_money(s.gross, s.currency) }}</td><td translate="no">{{ minor_money(s.tax + s.social, s.currency) }}</td><td translate="no"><b>{{ minor_money(s.net, s.currency) }}</b></td><td><a href="{{ url_for('staff_payslip', slip_id=s.id) }}">Open</a></td></tr>
         {% else %}<tr><td colspan="5" class="muted">No payslips yet.</td></tr>{% endfor %}</tbody></table>
+        <p><a class="btn btn-outline btn-sm" href="{{ url_for('staff_statement') }}">&#128196; <span>My year statement</span></a></p>
     </section>
 </div>
 {% endblock %}

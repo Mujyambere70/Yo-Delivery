@@ -1,0 +1,27 @@
+{% extends "admin/layout.html" %}
+{% block title %}Staff notices{% endblock %}
+{% block heading %}News for the workers{% endblock %}
+{% block content %}
+<div class="v7-grid">
+<section class="panel">
+    <h2>Write a notice</h2>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="nt">Title</label><input id="nt" type="text" name="title" maxlength="100" required>
+        <label for="nb">Text</label><textarea id="nb" name="body" rows="4" maxlength="1500"></textarea>
+        <label for="no">For</label><select id="no" name="office_id">{% if everybody %}<option value="">Everybody at Yo Delivery</option>{% endif %}{% for o in offices %}<option value="{{ o.id }}">{{ o.name }} (and the offices under it)</option>{% endfor %}</select>
+        <label for="nu">Show until (day, empty = always)</label><input id="nu" type="date" name="until_day">
+        <label class="check"><input type="checkbox" name="pinned" value="1"> Keep at the top</label>
+        <p><button class="btn btn-orange">Post</button></p>
+    </form>
+    <p class="small muted">Workers see the notice on "My work", marked "new" until they have opened the page once.</p>
+</section>
+<section class="panel">
+    <h2>Posted</h2>
+    {% for n in news %}<div class="news-item"><b>{% if n.pinned %}&#128204; {% endif %}{{ n.title }}</b>{% if n.body %}<p>{{ n.body }}</p>{% endif %}
+        <small class="muted" translate="no">{{ n.author or '-' }} &middot; {{ n.office or 'Everybody' }} &middot; {{ n.created_at[:16] }}{% if n.until_day %} &middot; until {{ n.until_day }}{% endif %} &middot; <span translate="yes">seen by</span> {{ n.seen_by }}</small>
+        <form method="post" style="margin-top:4px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ n.id }}"><button class="btn btn-sm btn-outline" name="action" value="delete">Remove</button></form></div>
+    {% else %}<p class="muted">No notices yet.</p>{% endfor %}
+</section>
+</div>
+{% endblock %}

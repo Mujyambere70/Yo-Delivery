@@ -70,6 +70,12 @@ from gtfsrt import GtfsRtMixin
 from analytics import ANALYTICS_SCHEMA, AnalyticsMixin
 from helpdesk import SUPPORT_SCHEMA, SupportMixin
 from privacy import PRIVACY_SCHEMA, PrivacyMixin
+from services import ServicesMixin                     # version 8
+from sitecontent import SITE_SCHEMA, SiteContentMixin
+from holidays import HOLIDAY_SCHEMA, HolidaysMixin
+from einvoice import EInvoiceMixin
+from webhooks import WEBHOOK_SCHEMA, WebhooksMixin
+from v8extra import EXTRA_V8_SCHEMA, V8ExtraMixin
 from rewards import POINTS_REVIEW
 
 # Default shop settings (the admin can change them on the Settings page)
@@ -320,7 +326,9 @@ EXTRA_SCHEMA = (YOPAY_SCHEMA + COURIER_SCHEMA + BLOG_SCHEMA + REWARDS_SCHEMA + B
                 MOBILE_SCHEMA + WORKFORCE_SCHEMA + TAX_SCHEMA + BANK_SCHEMA + GTFS_SCHEMA + CHATMODEL_SCHEMA + CONTENT_SCHEMA + IDCHECK_SCHEMA + CACHE_SCHEMA +
                 # version 7
                 PEOPLE_SCHEMA + INVOICE_SCHEMA + PROVIDERS_SCHEMA + PARTNERS_SCHEMA + ANALYTICS_SCHEMA + SUPPORT_SCHEMA +
-                PRIVACY_SCHEMA)
+                PRIVACY_SCHEMA +
+                # version 8
+                SITE_SCHEMA + HOLIDAY_SCHEMA + WEBHOOK_SCHEMA + EXTRA_V8_SCHEMA)
 MIGRATIONS = {
     "users": [("is_admin", "INTEGER NOT NULL DEFAULT 0"), ("blocked", "INTEGER NOT NULL DEFAULT 0"),
               ("country", "TEXT NOT NULL DEFAULT 'IN'"), ("lang", "TEXT NOT NULL DEFAULT 'en'"),
@@ -368,9 +376,20 @@ for _t, _cols in {
                ("risk_status", "TEXT NOT NULL DEFAULT ''"), ("risk_released_at", "TEXT NOT NULL DEFAULT ''")],
 }.items():
     MIGRATIONS.setdefault(_t, []).extend(_cols)
+# version 8: new columns of old tables
+_CHECK = [("checked_by", "INTEGER"), ("checked_at", "TEXT NOT NULL DEFAULT ''"), ("valid_from", "TEXT NOT NULL DEFAULT ''"),
+          ("valid_to", "TEXT NOT NULL DEFAULT ''"), ("check_note", "TEXT NOT NULL DEFAULT ''")]
+for _t, _cols in {
+    "offices": [("net_ranges", "TEXT NOT NULL DEFAULT ''")],
+    "staff_shifts": [("in_proof", "TEXT NOT NULL DEFAULT ''")],
+    "partners": [("webhook_url", "TEXT NOT NULL DEFAULT ''")],
+    "tax_rules": _CHECK, "tax_category_rates": _CHECK,
+}.items():
+    MIGRATIONS.setdefault(_t, []).extend(_cols)
 
 
-class Store(PeopleMixin, InvoiceMixin, ProvidersMixin, PartnersMixin, CourierPlusMixin, GtfsRtMixin, AnalyticsMixin,
+class Store(ServicesMixin, SiteContentMixin, HolidaysMixin, EInvoiceMixin, WebhooksMixin, V8ExtraMixin,
+            PeopleMixin, InvoiceMixin, ProvidersMixin, PartnersMixin, CourierPlusMixin, GtfsRtMixin, AnalyticsMixin,
             SupportMixin, PrivacyMixin,
             PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMixin, MaintenanceMixin,
             YoPayMixin, CourierMixin, BlogMixin, RewardsMixin, TaskBoardMixin, PhotoCheckMixin, TicketsMixin,
@@ -425,6 +444,9 @@ class Store(PeopleMixin, InvoiceMixin, ProvidersMixin, PartnersMixin, CourierPlu
             self.ensure_office_locations()
         except Exception:                                  # the places file is optional for the shop itself
             pass
+        # version 8
+        self.ensure_site_content()
+        self.ensure_holidays()
 
     def _replace_old_database(self):
         """If the file was made by an older version of Yo Delivery (different tables),

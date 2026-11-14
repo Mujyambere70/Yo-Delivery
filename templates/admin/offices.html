@@ -32,6 +32,13 @@
                     <label class="small"><input type="checkbox" name="remote_ok" value="1" {{ 'checked' if o.remote_ok }}> remote work allowed</label>
                     <button class="btn btn-sm btn-outline">Save the place</button>
                 </form>
+                <form method="post" class="actions" action="{{ url_for('admin_office_network', office_id=o.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <small>Office network:</small>
+                    <input type="text" name="net_ranges" value="{{ o.net_ranges or '' }}" aria-label="IP ranges of the office network" placeholder="203.0.113.0/24" maxlength="200" style="min-width:220px">
+                    <button class="btn btn-sm btn-outline">Save the network</button>
+                    <a class="btn btn-sm btn-outline" href="{{ url_for('admin_office_code', office_id=o.id) }}" target="_blank">&#128290; Clock-in code screen</a>
+                </form>
             </details>
             {% endif %}
         </li>

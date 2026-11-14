@@ -19,6 +19,21 @@
         {% for b in inv.by_rate %}<tr><td>Tax {{ '%g'|format(b.rate) }} % on {{ INVOICE_MONEY(b.taxable) }}</td><td class="num" translate="no">{{ INVOICE_MONEY(b.tax) }}</td></tr>{% endfor %}
         <tr><td><b>Total</b></td><td class="num" translate="no"><b>{{ INVOICE_MONEY(inv.total) }}</b></td></tr></tbody></table>
         <p class="small muted">Prices include the tax. Rates are the example rates of the demo (India, GST after 22 September 2025). Demo company, demo tax number.</p>
+        {% set e = einvoice(inv.id) %}
+        {% if e %}
+        <div class="einv" id="einvoice">
+            <div class="qr" id="einvQr" data-text="{{ e.qr }}" role="img" aria-label="QR code of the e-invoice (demo, not signed)"></div>
+            <div>
+                <b>E-invoice (India) <span class="status-pill warn">demo: not registered</span></b>
+                <p class="small" style="margin:4px 0">Invoice Reference Number (IRN) = SHA-256 of <span translate="no">GSTIN + {{ e.fin_year }} + {{ e.doc_type }} + {{ inv.number }}</span></p>
+                <div class="irn-box" translate="no">{{ e.irn }}</div>
+                <details class="small no-print" style="margin-top:6px"><summary>What a real registration still needs</summary><ul>{% for p in e.problems %}<li>{{ p }}</li>{% endfor %}</ul></details>
+                <p class="small no-print" style="margin:6px 0 0"><a href="{{ url_for('invoice_einvoice', invoice_id=inv.id) }}">&#11015; <span>Download the e-invoice JSON</span></a></p>
+            </div>
+        </div>
+        <script src="{{ url_for('static', filename='vendor/qrcode.js') }}"></script>
+        <script>(function () { var el = document.getElementById("einvQr"); try { var q = qrcode(0, "L"); q.addData(el.getAttribute("data-text")); q.make(); el.innerHTML = q.createSvgTag(2, 4); } catch (e) {} })();</script>
+        {% endif %}
     </section>
 </div>
 {% endblock %}

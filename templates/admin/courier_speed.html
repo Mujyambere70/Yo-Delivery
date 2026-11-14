@@ -1,0 +1,23 @@
+{% extends "admin/layout.html" %}
+{% block title %}Courier speed{% endblock %}
+{% block heading %}Real speed of couriers by town and hour{% endblock %}
+{% block content %}
+<section class="panel">
+    <p>The route plan of a courier needs a speed to say when he arrives at every stop. Version 7 used {{ fixed }} km/h everywhere. Now the speed is learned from the couriers' own GPS points of the last 28 days: the middle value (median) of every town and hour with at least 20 measurements. Hours without enough points use the value of the whole day, and towns without data the fixed {{ fixed }} km/h.</p>
+    <form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm">&#8635; Count again now</button> <span class="small muted">It is also counted once a day by the job queue.</span></form>
+</section>
+{% for town, hours in towns.items() %}
+<section class="panel">
+    <h2 translate="no">{{ town or 'Unknown town' }}</h2>
+    {% set day = hours.get(-1) %}
+    {% if day %}<p>Whole day: <b>{{ '%g'|format(day.kmh) }} km/h</b> <span class="muted">from {{ day.samples }} measurements &middot; counted {{ day.built_at[:16] }}</span></p>{% endif %}
+    <div class="hour-grid">
+        {% for hr in range(24) %}{% set r = hours.get(hr) %}<span class="{{ ('has ' ~ ('slow' if day and r.kmh < day.kmh * 0.8 else 'fast' if day and r.kmh > day.kmh * 1.2 else '')) if r }}" title="{{ hr }}:00{% if r %} - {{ r.samples }} measurements{% endif %}"><small>{{ '%02d'|format(hr) }}h</small><br>{{ '%g'|format(r.kmh|round) if r else '-' }}</span>{% endfor %}
+    </div>
+    <p class="small muted">Red: more than 20 % slower than the day. Green: more than 20 % faster.</p>
+</section>
+{% else %}
+<section class="panel"><p class="muted">There are not enough GPS points yet. The table fills when couriers deliver with the courier app.</p></section>
+{% endfor %}
+<p class="small"><a href="{{ url_for('admin_couriers') }}">&#8592; Couriers</a></p>
+{% endblock %}

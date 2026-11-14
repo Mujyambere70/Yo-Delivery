@@ -32,4 +32,12 @@
         {% else %}<tr><td colspan="8" class="muted">No timetable imported yet.</td></tr>{% endfor %}</tbody>
     </table></div>
 </section>
+<section class="panel" id="live">
+    <h2>Live data: vehicles and messages of the operators</h2>
+    <p class="small">A feed with a live address is read every two minutes by the job queue: delays, cancelled trips, where the vehicles are and the messages (alerts) of the operator. Passengers of a trip get a new message once.</p>
+    <form method="post" action="{{ url_for('admin_gtfs_poll') }}" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline">&#8635; Read the live feeds now</button></form>
+    <table class="at small" style="margin-top:10px"><thead><tr><th>Seen</th><th>Feed</th><th>Trip</th><th>Message</th><th>Effect</th><th>Until</th></tr></thead><tbody>
+    {% for a in gtfs_alerts() %}<tr><td translate="no">{{ a.last_seen[:16] }}</td><td>{{ a.feed_id }}</td><td translate="no">{{ a.trip_id or a.route_id or 'all' }}</td><td><b>{{ a.header }}</b>{% if a.details %}<br>{{ a.details }}{% endif %}</td><td>{{ a.effect }}</td><td translate="no">{{ a.ends_at[:16] or '-' }}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No messages of operators yet.</td></tr>{% endfor %}</tbody></table>
+</section>
 {% endblock %}

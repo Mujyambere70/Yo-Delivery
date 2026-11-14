@@ -1,5 +1,5 @@
 """
-tools/a11y_check.py - versions 6 and 7: an accessibility audit of the main pages with axe-core (the open-source checker
+tools/a11y_check.py - versions 6, 7 and 8: an accessibility audit of the main pages with axe-core (the open-source checker
 used by browsers' developer tools), run by the developer before a release:
 
     npm pack axe-core@4.10.2 && tar xzf axe-core-4.10.2.tgz         (once, outside the project)
@@ -34,7 +34,14 @@ PAGES = [("guest", "/"), ("guest", "/search?q=kettle"), ("guest", "/p/homeease-k
          ("admin", "/admin/invoices"), ("admin", "/admin/partners"), ("admin", "/admin/support"),
          ("admin", "/admin/claims"), ("admin", "/admin/risk"), ("admin", "/admin/analytics"),
          ("admin", "/admin/forecast"), ("admin", "/admin/experiments"), ("admin", "/admin/privacy"),
-         ("guest", "/partners/api")]
+         ("guest", "/partners/api"),
+         # version 8
+         ("guest", "/menu"), ("guest", "/contact"), ("guest", "/help"), ("guest", "/help/a/can-i-cancel-my-order"),
+         ("guest", "/page/terms"), ("guest", "/about"), ("staff", "/account"), ("staff", "/staff/directory"),
+         ("staff", "/staff/statement"), ("staff", "/staff/clock-code?c=123456"), ("admin", "/admin/site"),
+         ("admin", "/admin/site/pages/about"), ("admin", "/admin/kb"), ("admin", "/admin/staff/notices"),
+         ("admin", "/admin/staff/holidays"), ("admin", "/admin/couriers/speed"), ("admin", "/admin/find?q=payroll")]
+DRAWER = [("guest", "/"), ("staff", "/")]           # version 8: the open "three lines" menu is checked too
 KEYBOARD = [("guest", "/"), ("demo", "/support"), ("admin", "/admin/payroll")]
 
 
@@ -100,6 +107,24 @@ def main(axe_path, out=None):
                     (n.any[0] || {}).data || {}).slice(0, 120))}))""")
             report[url] = res
             print(f"{url:32} {len(res)} problems", "; ".join(f"{v['id']}({v['nodes']})" for v in res))
+        for who, url in DRAWER:
+            page = pages[who]
+            page.goto(f"http://127.0.0.1:{port}{url}")
+            page.wait_for_load_state("networkidle")
+            page.click("#menuBtn")
+            page.wait_for_selector("#menuDrawer .menu-find input")
+            page.add_script_tag(content=axe)
+            res = page.evaluate("""async () => (await axe.run(document.getElementById('menuDrawer'), {runOnly: {type: 'tag',
+                values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']}})).violations.map(v => ({id: v.id,
+                impact: v.impact, help: v.help, nodes: v.nodes.length,
+                where: v.nodes.slice(0, 3).map(n => n.target.join(' '))}))""")
+            focus_in = page.evaluate("() => document.getElementById('menuDrawer').contains(document.activeElement)")
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(150)
+            back = page.evaluate("() => document.getElementById('menuDrawer').hidden && document.activeElement.id === 'menuBtn'")
+            report[f"menu {who}"] = {"problems": res, "focus_inside": focus_in, "escape_closes": back}
+            print(f"{'menu of ' + who:32} {len(res)} problems", "; ".join(f"{v['id']}({v['nodes']})" for v in res),
+                  "" if focus_in and back else "KEYBOARD PROBLEM")
         for who, url in KEYBOARD:
             ok, info = keyboard_check(pages[who], f"http://127.0.0.1:{port}", url)
             report["keyboard " + url] = info

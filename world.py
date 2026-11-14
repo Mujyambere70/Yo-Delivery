@@ -333,7 +333,7 @@ def format_when(value, with_time=True, lang=None, convert=True):
     lang = lang or _lang.get()
     if not isinstance(value, datetime) and len(str(value)) == 10:        # a date without the time ('2026-11-06')
         value, with_time = datetime.strptime(str(value), "%Y-%m-%d"), False
-    d = value if isinstance(value, datetime) else datetime.strptime(str(value)[:19], "%Y-%m-%d %H:%M:%S")
+    d = value if isinstance(value, datetime) else datetime.strptime(str(value)[:19].replace("T", " "), "%Y-%m-%d %H:%M:%S")
     if with_time and convert:
         d = to_viewer_time(d)
     if lang == "en":

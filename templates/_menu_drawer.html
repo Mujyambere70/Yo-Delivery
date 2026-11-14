@@ -1,0 +1,42 @@
+<div class="menu-box">
+    <div class="menu-me">
+        <button type="button" class="menu-close" aria-label="Close the menu">&#10005;</button>
+        {% if user %}
+        <div class="who"><span class="avatar" aria-hidden="true">{{ user.name[0]|upper }}</span>
+            <div><b translate="no">{{ user.name }}</b><small translate="no">{{ user.email }}</small></div></div>
+        {% if work %}
+        <div class="menu-job">
+            <small>My position</small>
+            <strong translate="no">{{ work.position }}</strong>
+            {% if work.office %}<small translate="no">{{ work.office }}{% if work.manager %} &middot; <i translate="yes">Manager</i>{% endif %}</small>{% endif %}
+            <a class="btn btn-orange" href="{{ url_for('my_work_go') }}">&#9654; <span>{{ work.label }}</span></a>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="who"><span class="avatar" aria-hidden="true">&#128100;</span><div><b>Hello</b><small>Sign in to see your profile and orders</small></div></div>
+        <div class="guest"><a class="btn btn-orange" href="{{ url_for('login') }}">Sign in</a><a class="btn btn-outline" style="background:#fff" href="{{ url_for('signup') }}">Create account</a></div>
+        {% endif %}
+    </div>
+    <form class="menu-find" action="{{ url_for('menu_page') }}" method="get" role="search">
+        <label for="menuQ">Find a service or a page</label>
+        <div class="row"><input type="search" id="menuQ" name="q" value="{{ q }}" placeholder="e.g. payroll, track, parcel number" autocomplete="off">
+            <button class="btn btn-orange btn-sm" aria-label="Find">&#128269;</button></div>
+    </form>
+    <div class="menu-sec found" {% if not found %}hidden{% endif %}>
+        <h3>Found</h3>
+        <div>{% for r in found %}<a href="{{ r.url }}"><span aria-hidden="true">&#128270;</span><span translate="no">{{ r.label }}<small>{{ r.sub }}</small></span><em>{{ r.kind }}</em></a>{% endfor %}</div>
+    </div>
+    <p class="menu-none" {% if sections or found or not q %}hidden{% endif %}>Nothing found. Try another word.</p>
+    <div class="menu-cols">
+    {% for title, items in sections %}
+    <div class="menu-sec">
+        <h3>{{ title }}</h3>
+        {% for it in items %}<a href="{{ it.url }}" data-words="{{ it.words }}"><span aria-hidden="true">{{ it.icon|safe }}</span><span>{{ it.label }}</span></a>{% endfor %}
+    </div>
+    {% endfor %}
+    </div>
+    <div class="menu-foot">
+        {% if user %}<a href="{{ url_for('account') }}">&#128100; <span>My profile</span></a><a href="{{ url_for('logout') }}">&#10162; <span>Sign out</span></a>{% endif %}
+        <a href="{{ url_for('contact_page') }}">&#9742; <span>Contact us</span></a><a href="{{ url_for('help_page') }}">&#10067; <span>Help</span></a>
+    </div>
+</div>

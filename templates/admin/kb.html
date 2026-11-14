@@ -1,0 +1,32 @@
+{% extends "admin/layout.html" %}
+{% block title %}Help articles{% endblock %}
+{% block heading %}Help articles{% endblock %}
+{% block content %}
+<p class="small"><a href="{{ url_for('admin_site') }}">&#8592; Site content</a> &middot; <a href="{{ url_for('help_page') }}" target="_blank">&#8599; See the Help Centre</a></p>
+{% set e = form if form else edit %}
+<section class="panel" id="form">
+    <h2>{{ 'Change the article' if edit else 'New article' }}</h2>
+    <form method="post" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ edit.id if edit else '' }}">
+        <div><label for="kt">Topic</label><select id="kt" name="topic">{% for t in topics %}<option {{ 'selected' if e and e.topic == t }}>{{ t }}</option>{% endfor %}</select></div>
+        <div><label for="ko">Order</label><input id="ko" type="number" name="sort_no" min="0" max="999" value="{{ e.sort_no if e else articles|length + 1 }}"></div>
+        <div class="full"><label for="kq">Question</label><input id="kq" type="text" name="question" maxlength="160" required value="{{ e.question if e else '' }}"></div>
+        <div class="full"><label for="ka">Answer</label><textarea id="ka" name="answer" rows="6" maxlength="4000" required>{{ e.answer if e else '' }}</textarea>
+            <span class="small muted">**bold**, [link](/track), lists with "-". Placeholders: {phone} {email} {hours} {free_delivery_from} {delivery_fee} {cod_limit} {return_days}.</span></div>
+        <div class="full"><label for="kw">Extra search words (what customers type)</label><input id="kw" type="text" name="words" maxlength="200" value="{{ e.words if e else '' }}" placeholder="refund money back late"></div>
+        <div class="full actions"><label class="check"><input type="checkbox" name="published" value="1" {{ 'checked' if not e or e.published }}> Published</label>
+            <button class="btn btn-orange">{{ 'Save' if edit else 'Add the article' }}</button>{% if edit %} <a class="btn btn-outline" href="{{ url_for('admin_kb') }}">Cancel</a>{% endif %}</div>
+    </form>
+</section>
+<section class="panel">
+    <h2>Articles ({{ articles|length }})</h2>
+    <table class="at"><thead><tr><th>Topic</th><th>Question</th><th>Opened</th><th>Helpful</th><th>Shown</th><th></th></tr></thead><tbody>
+    {% for a in articles %}<tr><td>{{ a.topic }}</td><td><a href="{{ url_for('help_article', slug=a.slug) }}" target="_blank">{{ a.question }}</a></td><td>{{ a.opened }}</td>
+        <td translate="no">&#128077; {{ a.helpful }} &middot; &#128078; {{ a.not_helpful }}{% if a.not_helpful > a.helpful and a.not_helpful >= 3 %} <span class="status-pill bad" translate="yes">rewrite</span>{% endif %}</td>
+        <td>{% if a.published %}<span class="status-pill ok">Published</span>{% else %}<span class="status-pill warn">Hidden</span>{% endif %}</td>
+        <td><form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ a.id }}">
+            <a class="btn btn-sm btn-outline" href="{{ url_for('admin_kb', edit=a.id) }}#form">Edit</a>
+            <button class="btn btn-sm btn-outline" name="action" value="delete" onclick="return confirm('Remove this article?')">Remove</button></form></td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No articles yet.</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

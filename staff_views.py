@@ -46,6 +46,11 @@ def register(app, store, h):
                 "branch_offices": [o for o in store.office_tree() if store.branch_of(uid) is None
                                    or o["id"] in store.branch_of(uid)]}
 
+    def _next_holidays(w, days=45):
+        from datetime import date, timedelta
+        hol = store.holiday_map(w["office_country"], date.today(), date.today() + timedelta(days=days))
+        return [dict(h, day=d) for d, h in sorted(hol.items())][:4]
+
     # ------------------------------------------------------------ My work
     @app.route("/staff")
     @worker_page
@@ -69,7 +74,10 @@ def register(app, store, h):
                                tasks=[t for t in store.task_list(uid, mine=True) if t["status"] in ("To do", "In progress")
                                       or (t["done_at"] or "")[:10] == h.now()[:10]],
                                is_conductor=store.staff_of(uid) is not None,
-                               is_courier=bool(store.courier_of(uid)), **common())
+                               is_courier=bool(store.courier_of(uid)),
+                               # version 8: the button to my own tool, staff news, my manager, the next public holidays
+                               work=store.work_home(uid), news=store.staff_news_for(uid, mark_seen=True),
+                               boss=store.manager_of(uid), next_holidays=_next_holidays(w), **common())
 
     @app.route("/staff/clock", methods=["POST"])
     @worker_page
@@ -77,8 +85,14 @@ def register(app, store, h):
         try:
             if request.form.get("action") == "in":
                 f = request.form                          # version 7: the position of the phone
-                flag = store.clock_in_at(h.user_id(), f.get("lat") or None, f.get("lng") or None, f.get("acc") or None)
+                ip = request.headers.get("X-Forwarded-For", request.remote_addr or "").split(",")[0].strip()
+                flag, proof = store.clock_in_proved(h.user_id(), f.get("lat") or None, f.get("lng") or None,
+                                                    f.get("acc") or None, f.get("code", ""), ip)     # version 8
                 flash("You are clocked in. Have a good shift!", "success")
+                if proof == "code":
+                    flash("The office code proved that you are at the office.", "info")
+                elif proof == "network":
+                    flash("The office network proved that you are at the office.", "info")
                 if flag == "no location":
                     flash("We could not read your position, so your manager sees this clock-in as 'no location'.", "info")
                 elif flag == "remote":

@@ -228,13 +228,18 @@ class PeopleMixin:
         amount = _units(data.get("pay_amount"))
         try:
             hours = int(data.get("hours_week") or 40)
-            leave = int(data.get("leave_days") if data.get("leave_days") not in (None, "") else 20)
+            given = data.get("leave_days") not in (None, "")
+            leave = int(data.get("leave_days")) if given else 20
         except ValueError:
             raise ShopError("Please write the hours and the holiday days as numbers.")
         if not 1 <= hours <= 60 or not 0 <= leave <= 60:
             raise ShopError("Hours a week: 1 to 60; holiday days a year: 0 to 60.")
         with self.db() as conn:
             t = self._target(conn, actor_id, staff_id, "staff.manage")
+            rule = self.leave_rule(t["office_country"], conn)        # version 8: the least the law of the country gives
+            if rule and not given:
+                leave = max(leave, rule["min_days"])
+            self.check_contract_leave(staff_id, leave, conn)
             currency = CURRENCY_OF.get(t["office_country"], "INR")
             conn.execute("UPDATE staff_contracts SET status = 'Ended' WHERE staff_id = ? AND status = 'Active'", (staff_id,))
             cur = conn.execute("INSERT INTO staff_contracts (staff_id, kind, start_day, end_day, hours_week, pay_kind, "
@@ -284,10 +289,13 @@ class PeopleMixin:
             months = (end_of_counting.year - start.year) * 12 + end_of_counting.month - start.month + 1
         earned = round(c["leave_days"] * min(months, 12) / 12 * 2) / 2            # to half days
         used = 0
+        country = self.country_of_staff(staff_id)
         for r in used_rows:
             a, b = max(_d(r["from_day"]), date(year, 1, 1)), min(_d(r["to_day"]), date(year, 12, 31))
-            used += sum(1 for i in range((b - a).days + 1) if (a + timedelta(days=i)).weekday() < 5)
-        return {"year": year, "per_year": c["leave_days"], "earned": earned, "used": used, "left": earned - used}
+            used += self.leave_days_count(country, a, b)      # version 8: public holidays are not holiday days
+        rule = self.leave_rule(country)
+        return {"year": year, "per_year": c["leave_days"], "earned": earned, "used": used, "left": earned - used,
+                "unit": rule["unit"] if rule else "working", "country": country}
 
     def request_leave_kind(self, user_id, from_day, to_day, kind="Annual", reason=""):
         """Version 7: time off of a kind; annual leave needs enough holiday days."""
@@ -295,10 +303,11 @@ class PeopleMixin:
             raise ShopError("Please choose the kind of time off.")
         w = self.worker_of(user_id)
         if w and kind == "Annual":
-            bal = self.leave_balance(w["id"], _d(from_day).year)
+            # version 8: time off in the future counts the days earned by its first day (ask now for next spring)
+            bal = self.leave_balance(w["id"], _d(from_day).year, today=max(date.today(), _d(from_day)))
             if bal is not None:
                 a, b = _d(from_day), _d(to_day)
-                need = sum(1 for i in range((b - a).days + 1) if (a + timedelta(days=i)).weekday() < 5) if b >= a else 0
+                need = self.leave_days_count(bal["country"], a, b)
                 if need > bal["left"]:
                     raise ShopError(f"You have {bal['left']:g} holiday days left this year; this asks for {need}.")
         leave_id = self.request_leave(user_id, from_day, to_day, reason)
@@ -396,6 +405,10 @@ class PeopleMixin:
             overtime = 0
             gross = round(c["pay_amount"] * int(worked) / 60)
             lines.append(["Hours worked", f"{int(worked) // 60} h {int(worked) % 60} min", gross])
+        extra = self.holiday_work_line(conn, s, c, first, last)       # version 8
+        if extra:
+            lines.append(extra)
+            gross += extra[2]
         year_start = f"{first.year}-01"
         prev = conn.execute("SELECT COALESCE(SUM(p.gross), 0), COALESCE(SUM(p.tax), 0) FROM payslips p JOIN payroll_runs r "
                             "ON r.id = p.run_id WHERE p.staff_id = ? AND r.status IN ('Approved', 'Paid') AND r.month >= ? "

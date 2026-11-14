@@ -1,0 +1,49 @@
+{% extends "admin/layout.html" %}
+{% block title %}Public holidays{% endblock %}
+{% block heading %}Public holidays and leave rules{% endblock %}
+{% block content %}
+<section class="panel">
+    <form method="get" class="actions" style="margin-bottom:10px">
+        <label for="hc">Country</label><select id="hc" name="country" onchange="this.form.submit()">{% for c in countries %}<option value="{{ c }}" {{ 'selected' if c == country }}>{{ c }} &middot; {{ c|country }}</option>{% endfor %}</select>
+        <label for="hy">Year</label><input id="hy" type="number" name="year" value="{{ year }}" min="2024" max="2040" style="width:90px">
+        <button class="btn btn-sm btn-outline">Show</button>
+    </form>
+    {% if source %}<p class="small muted">{{ source }}</p>{% endif %}
+    <table class="at"><thead><tr><th>Day</th><th>Weekday</th><th>Name</th><th>Kind</th><th></th></tr></thead><tbody>
+    {% for r in rows %}<tr class="{{ 'muted' if r.day < today }}"><td translate="no">{{ r.day }}</td><td>{{ r.day|nicedate('%A') }}</td><td>{{ r.name }}{% if r.by_moon %} <span class="status-pill warn">can move by a day</span>{% endif %}</td>
+        <td><span class="status-pill {{ 'ok' if r.kind == 'public' else 'warn' if r.kind == 'workday' else '' }}">{{ kinds[r.kind] }}</span></td>
+        <td><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ r.id }}"><input type="hidden" name="country" value="{{ country }}"><input type="hidden" name="year" value="{{ year }}"><button class="btn btn-sm btn-outline" name="action" value="delete">Remove</button></form></td></tr>
+    {% else %}<tr><td colspan="5" class="muted">No holidays saved for {{ country }} in {{ year }}. Add them below.</td></tr>{% endfor %}</tbody></table>
+    <h3>Add or change a day</h3>
+    <form method="post" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="year" value="{{ year }}">
+        <div><label for="ac">Country (2 letters)</label><input id="ac" type="text" name="country" value="{{ country }}" maxlength="2" required></div>
+        <div><label for="ad">Day</label><input id="ad" type="date" name="day" required></div>
+        <div><label for="an">Name</label><input id="an" type="text" name="name" maxlength="80" required></div>
+        <div><label for="ak">Kind</label><select id="ak" name="kind">{% for k, label in kinds.items() %}<option value="{{ k }}">{{ label }}</option>{% endfor %}</select></div>
+        <div class="full actions"><label class="check"><input type="checkbox" name="by_moon" value="1"> The date can move by a day (moon)</label> <button class="btn btn-orange btn-sm">Save the day</button></div>
+    </form>
+    <p class="small muted">The calendar is used when holiday days are counted, on "My work", in payroll (work on a public holiday) and in the hub forecast.</p>
+</section>
+<section class="panel" id="rules">
+    <h2>Leave rules of the countries <span class="status-pill warn">examples</span></h2>
+    <p class="small muted">Check every rule with a lawyer or an accountant before real use. A contract with fewer holiday days than the rule is refused.</p>
+    <table class="at"><thead><tr><th>Country</th><th>Least days a year</th><th>Counted as</th><th>Pay for work on a public holiday</th><th>Where it comes from</th><th>Checked</th>{% if may_rules %}<th></th>{% endif %}</tr></thead><tbody>
+    {% for r in rules %}<tr><form method="post" action="{{ url_for('admin_leave_rules') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="country" value="{{ r.country }}">
+        <td translate="no"><b>{{ r.country }}</b></td>
+        <td><input type="number" name="min_days" value="{{ r.min_days }}" min="0" max="60" style="width:70px" aria-label="Least days" {{ 'disabled' if not may_rules }}></td>
+        <td><select name="unit" aria-label="Counted as" {{ 'disabled' if not may_rules }}><option value="working" {{ 'selected' if r.unit == 'working' }}>working days</option><option value="calendar" {{ 'selected' if r.unit == 'calendar' }}>calendar days</option></select></td>
+        <td>x <input type="number" name="holiday_rate" value="{{ '%g'|format(r.holiday_rate) }}" min="1" max="4" step="0.25" style="width:70px" aria-label="Pay rate" {{ 'disabled' if not may_rules }}></td>
+        <td class="small"><input type="text" name="note" value="{{ r.note }}" maxlength="300" aria-label="Where it comes from" {{ 'disabled' if not may_rules }}></td>
+        <td class="small">{% if r.checked_at %}<span class="status-pill ok">{{ r.checked_name or 'checked' }}</span> <span translate="no">{{ r.checked_at[:10] }}</span>{% else %}<span class="status-pill warn">example</span>{% endif %}</td>
+        {% if may_rules %}<td><label class="check small"><input type="checkbox" name="checked" value="1"> I checked it</label> <button class="btn btn-sm btn-outline">Save</button></td>{% endif %}</form></tr>{% endfor %}
+    </tbody></table>
+    {% if may_rules %}<details><summary>Add a country</summary><form method="post" action="{{ url_for('admin_leave_rules') }}" class="form-grid" style="margin-top:8px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div><label for="rc">Country (2 letters)</label><input id="rc" type="text" name="country" maxlength="2" required></div>
+        <div><label for="rd">Least days a year</label><input id="rd" type="number" name="min_days" min="0" max="60" required></div>
+        <div><label for="ru">Counted as</label><select id="ru" name="unit"><option value="working">working days</option><option value="calendar">calendar days</option></select></div>
+        <div><label for="rr">Pay rate on public holidays</label><input id="rr" type="number" name="holiday_rate" min="1" max="4" step="0.25" value="1"></div>
+        <div class="full"><label for="rn">Where it comes from (law, article)</label><input id="rn" type="text" name="note" maxlength="300"></div>
+        <div><button class="btn btn-orange btn-sm">Add</button></div></form></details>{% endif %}
+</section>
+{% endblock %}

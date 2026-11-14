@@ -8,6 +8,7 @@
             <p class="small muted staff-path">{% for o in path %}<span translate="no">{{ o.name }}</span>{% if not loop.last %} &rsaquo; {% endif %}{% endfor %}</p>
             <h1 style="margin:4px 0">&#128188; <span>My work</span></h1>
             <p><b translate="no">{{ w.name }}</b> &middot; <span translate="no">{{ w.title }}</span> &middot; {{ WORKER_KINDS.get(w.kind, w.kind) }}{% if w.is_manager %} &middot; <span class="tag ok-tag">Manager</span>{% endif %}</p>
+            {% if boss %}<p class="small muted"><span>My manager</span>: <span translate="no">{{ boss.name }} ({{ boss.title }})</span></p>{% endif %}
             {% if w.status != 'Active' %}<p class="flash error">Your account is suspended. Please talk to your manager.</p>{% endif %}
             {% if on_leave %}<p class="flash info">You are on time off today.</p>{% endif %}
         </div>
@@ -24,14 +25,45 @@
                 <button class="btn btn-outline">&#9209; Clock out</button>
                 {% else %}
                 <input type="hidden" name="action" value="in">
+                <label class="small" for="officeCode">Office code (if your phone has no GPS)</label>
+                <input type="text" id="officeCode" name="code" inputmode="numeric" pattern="[0-9 ]*" maxlength="7" autocomplete="off" placeholder="6 digits" style="width:110px;text-align:center">
                 <button class="btn btn-orange" {{ 'disabled' if w.status != 'Active' }}>&#9654; Clock in</button>
                 {% endif %}
             </form>
             {% endif %}
             <a class="small" href="{{ url_for('staff_card') }}">&#129706; My staff ID card</a>
             <a class="small" href="{{ url_for('staff_me') }}">&#128196; My contract, holidays and payslips</a>
+            <a class="small" href="{{ url_for('staff_directory') }}">&#128101; <span>Colleagues</span></a>
         </div>
     </section>
+
+    {% if work and w.status == 'Active' %}
+    <div class="work-go" id="go">
+        <p><b>Your work starts here.</b><br><span class="small muted">This button is also at the top of every page and in the menu (&#9776;).</span></p>
+        <a class="btn btn-orange" href="{{ url_for('my_work_go') }}">&#9654; <span>{{ work.label }}</span></a>
+    </div>
+    {% endif %}
+    <form class="staff-find" action="{{ url_for('menu_page') }}" method="get" role="search">
+        <input type="search" name="q" placeholder="Find a service, a page, an order or a parcel number" aria-label="Find a service or a page">
+        <button class="btn btn-outline">&#128269; <span>Find</span></button>
+    </form>
+
+    {% if news or next_holidays %}
+    <div class="staff-grid">
+        <section class="panel" id="news">
+            <h2>News from my managers</h2>
+            {% for n in news %}<div class="news-item {{ 'new' if n.is_new }}"><b>{% if n.pinned %}&#128204; {% endif %}<span translate="no">{{ n.title }}</span>{% if n.is_new %} <span class="tag ok-tag">new</span>{% endif %}</b>
+                {% if n.body %}<p translate="no">{{ n.body }}</p>{% endif %}<small class="muted" translate="no">{{ n.author or 'Yo Delivery' }} &middot; {{ n.office or 'Everybody' }} &middot; {{ n.created_at[:10] }}</small></div>
+            {% else %}<p class="muted">No news.</p>{% endfor %}
+        </section>
+        <section class="panel">
+            <h2>Next public holidays</h2>
+            <ul class="hol-list">{% for d in next_holidays %}<li><span translate="no">{{ d.day|nicedate }}</span><span><span translate="no">{{ d.name }}</span>{% if d.kind == 'workday' %} <span class="tag">working day</span>{% endif %}{% if d.by_moon %} <small class="muted">(the date can move by a day)</small>{% endif %}</span></li>
+            {% else %}<li class="muted">None in the next weeks.</li>{% endfor %}</ul>
+            <p class="small muted">A public holiday inside your time off is not counted as a holiday day.</p>
+        </section>
+    </div>
+    {% endif %}
 
     <div class="staff-grid">
         <section class="panel" id="tasks">
@@ -127,6 +159,7 @@
     if (!f || !navigator.geolocation) return;
     f.addEventListener('submit', function (e) {
         if (f.elements.action.value !== 'in' || f.dataset.sent) return;
+        if (f.elements.code && f.elements.code.value.trim()) return;      /* version 8: the office code needs no GPS */
         e.preventDefault();
         var go = function () { f.dataset.sent = '1'; f.submit(); };
         navigator.geolocation.getCurrentPosition(function (p) {

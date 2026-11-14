@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Clock in with the office code{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap narrow"><section class="panel code-screen">
+    <h1>&#128338; <span>Clock in</span></h1>
+    <p><b translate="no">{{ w.name }}</b> &middot; <span translate="no">{{ w.title }}</span> &middot; <span translate="no">{{ w.office }}</span></p>
+    {% if shift and shift.open %}
+    <p class="flash info">You are clocked in since <span translate="no">{{ shift.open.start_at[11:16] }}</span>.</p>
+    <a class="btn btn-outline" href="{{ url_for('staff_home') }}">My work</a>
+    {% else %}
+    <form method="post" action="{{ url_for('staff_clock') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="in">
+        <label for="cc">Code of the office screen</label>
+        <input id="cc" type="text" name="code" value="{{ code }}" inputmode="numeric" maxlength="7" required style="font-size:28px;text-align:center;width:200px;letter-spacing:4px">
+        <p><button class="btn btn-orange btn-lg">&#9654; <span>Clock in now</span></button></p>
+        <p class="small muted">The code changes every minute. If it is too old, read the screen again.</p>
+    </form>
+    {% endif %}
+</section></div>
+{% endblock %}

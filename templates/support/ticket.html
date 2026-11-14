@@ -8,7 +8,8 @@
         <h1 style="margin-top:0"><span translate="no">{{ t.number }}</span>: {{ t.subject }}</h1>
         <p class="small muted">{{ topics.get(t.topic, t.topic) }}{% if t.about %} &middot; <span translate="no">{{ t.about }}</span>{% endif %} &middot; <span class="pill-status {{ 'ok' if t.status == 'Answered' else 'warn' if t.status == 'Open' else '' }}">{{ t.status }}</span>
             {% if not t.first_answer_at and t.status != 'Closed' %} &middot; answer promised by <span translate="no">{{ t.due_at[:16] }}</span>{% endif %}</p>
-        <div class="msg-thread">{% for m in t.messages %}<div class="msg {{ 'staff' if m.from_staff }}"><small><b translate="no">{{ 'Yo support' if m.from_staff else m.name }}</b> &middot; <span translate="no">{{ m.at[:16] }}</span></small><div>{{ m.body }}</div></div>{% endfor %}</div>
+        <p class="small muted" id="liveState" hidden><span class="live-dot"></span>Live: new answers appear here by themselves.</p>
+        <div class="msg-thread" data-live-thread="{{ url_for('support_messages_json', number=t.number) }}" data-last="{{ t.messages[-1].id if t.messages else 0 }}" data-side="customer" aria-live="polite">{% for m in t.messages %}<div class="msg {{ 'staff' if m.from_staff }}"><small><b translate="no">{{ 'Yo support' if m.from_staff else m.name }}</b> &middot; <span translate="no">{{ m.at[:16] }}</span></small><div>{{ m.body }}</div></div>{% endfor %}</div>
         <form method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="rb">Write more</label><textarea id="rb" name="body" rows="3" maxlength="3000"></textarea>

@@ -1,5 +1,6 @@
 <aside class="acc-nav panel">
-    <div class="acc-user"><span class="avatar">{{ user.name[0] }}</span><div><small>Hello,</small><b>{{ user.name }}</b></div></div>
+    <div class="acc-user"><span class="avatar">{{ user.name[0] }}</span><div><small>Hello,</small><b>{{ user.name }}</b>{% if WORK %}<small translate="no">{{ WORK.position }}</small>{% endif %}</div></div>
+    {% if WORK %}<a href="{{ url_for('my_work_go') }}" class="work-nav">&#128188; My work <small class="muted" translate="no">{{ WORK.position }}</small></a>{% endif %}
     <a href="{{ url_for('orders') }}">&#128230; My Orders</a>
     <a href="{{ url_for('account') }}" {% if request.endpoint == 'account' %}class="on"{% endif %}>&#128100; Profile information</a>
     <a href="{{ url_for('addresses') }}" {% if request.endpoint == 'addresses' %}class="on"{% endif %}>&#128205; Manage addresses</a>

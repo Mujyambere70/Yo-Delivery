@@ -13,6 +13,8 @@ nearest stop is not taken when that would make another stop late; 2-opt keeps a 
 later (fewer late minutes first, then fewer km). With ROUTING_URL (an OSRM server) the km can be real road km.
 """
 
+import contextvars
+
 import places
 import courier as C
 
@@ -45,11 +47,21 @@ STOP_MIN = 5
 WINDOWS = {"": None, "09-12": (540, 720), "12-15": (720, 900), "15-18": (900, 1080), "18-21": (1080, 1260)}
 
 
+_speed = contextvars.ContextVar("route_speed", default=None)
+
+
+def set_speed(function):
+    """Version 8: a function (minute of the day -> km/h) learned from the couriers' GPS points, or None for the fixed
+    speed. Kept in a context variable, so two requests at the same time do not mix their speeds."""
+    _speed.set(function)
+
+
 def timeline(start, order, t0):
     """[(arrival minute, minutes late), ...] and the total late minutes, starting at minute t0 of the day."""
     pos, t, late, out = start, float(t0), 0.0, []
+    speed = _speed.get()
     for s in order:
-        t += _km(pos, s["point"]) / SPEED_KMH * 60
+        t += _km(pos, s["point"]) / (max(3.0, float(speed(t))) if speed else SPEED_KMH) * 60
         w = s.get("window")
         if w and t < w[0]:
             t = float(w[0])                                # too early: wait until the window opens

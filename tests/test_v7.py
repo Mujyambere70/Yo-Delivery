@@ -78,7 +78,7 @@ class TestPeople(People):
     def test_payroll_needs_two_people_and_makes_payslips(self):
         russia = self.s.add_office(self.admin, self.head, "Russia office", "country", "RU", "Krasnoyarsk")
         sid, uid = self.worker(russia, "hub")
-        self.contract(sid, 100000, start=first_of_last_month() - timedelta(days=40))
+        self.contract(sid, 100000, start=first_of_last_month() - timedelta(days=40), leave_days="28")   # Russia: 28 at least
         fin, fin_uid = self.worker(self.india, "finance")
         month = first_of_last_month().strftime("%Y-%m")
         run = self.s.create_payroll(fin_uid, "RU", month)
@@ -769,7 +769,7 @@ class TestScaleAndPrivacy(Base):
 
     def test_backup_has_the_new_tables(self):
         data = self.s.export_data()
-        self.assertEqual(data["version"], 7)
+        self.assertEqual(data["version"], 8)
         for t in ("payslips", "invoices", "partners", "support_tickets", "fact_daily"):
             self.assertIn(t, data["tables"])
 
@@ -786,7 +786,7 @@ class TestDemo(unittest.TestCase):
                                   "partner_events", "invoices", "support_tickets", "parcel_claims", "staff_offices")}
         first = counts()
         self.assertEqual((first["staff_contracts"], first["payroll_runs"], first["partners"], first["support_tickets"],
-                          first["parcel_claims"], first["staff_offices"]), (13, 2, 1, 2, 1, 1))
+                          first["parcel_claims"], first["staff_offices"]), (13, 2, 1, 3, 1, 1))   # 2 + the e-mail of version 8
         self.assertGreater(first["invoices"], 10)
         self.assertEqual([r["status"] for r in s.payroll_runs()], ["Draft", "Paid"])
         self.assertEqual(len(s.risk_queue()), 1)

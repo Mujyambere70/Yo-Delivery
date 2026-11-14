@@ -79,8 +79,8 @@
 
             <fieldset class="box">
                 <legend>4. Service and payment</legend>
-                <div class="form-grid"><div><label for="tw">When is the receiver at home? (his time)</label>
-                    <select id="tw" name="time_window">{% for k, v in DELIVERY_WINDOWS.items() %}<option value="{{ k }}" {{ 'selected' if form.get('time_window') == k }}>{{ v }}</option>{% endfor %}</select></div></div>
+                <div class="form-grid"><div><label for="time_window">When is the receiver at home? (his time)</label>
+                    <select id="time_window" name="time_window">{% for k, v in DELIVERY_WINDOWS.items() %}<option value="{{ k }}" {{ 'selected' if form.get('time_window') == k }}>{{ v }}</option>{% endfor %}</select></div></div>
                 <div class="seg">
                     {% for k, n in SERVICES.items() %}<label><input type="radio" name="service" value="{{ k }}" {{ 'checked' if form.get('service', 'standard') == k }}><span>{{ n }}<small>{{ 'Normal speed' if k == 'standard' else 'About twice as fast' }}</small></span></label>{% endfor %}
                 </div>

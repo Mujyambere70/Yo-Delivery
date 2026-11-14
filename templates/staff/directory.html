@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Colleagues{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:14px">
+    <p class="small"><a href="{{ url_for('staff_home') }}">&#8592; <span>My work</span></a></p>
+    <h1>&#128101; <span>Colleagues</span></h1>
+    <p class="muted">{% if full %}The workers of your branch.{% else %}The people of your office and the managers above you.{% endif %} Only work details are shown.</p>
+    <form class="staff-find" method="get" role="search" style="max-width:520px;margin-bottom:14px">
+        <input type="search" name="q" value="{{ q }}" placeholder="Name, position or office" aria-label="Find a colleague">
+        <button class="btn btn-outline">Find</button>
+    </form>
+    <div class="dir-grid">
+        {% for p in people %}
+        <div class="dir-card {{ 'me' if p.me }}">
+            <span class="avatar" aria-hidden="true">{{ p.name[0]|upper }}</span>
+            <div><b translate="no">{{ p.name }}</b>{% if p.me %} <span class="tag ok-tag">me</span>{% endif %}{% if p.is_manager %} <span class="tag">Manager</span>{% endif %}
+                <small translate="no">{{ p.title }}</small>
+                <small><span translate="no">{{ p.office }}</span> &middot; {{ WORKER_KINDS.get(p.kind, p.kind) }}</small>
+                <small translate="no"><a href="mailto:{{ p.email }}">{{ p.email }}</a>{% if p.mobile %} &middot; {{ p.mobile }}{% endif %}</small></div>
+        </div>
+        {% else %}<p class="muted">Nobody found.</p>{% endfor %}
+    </div>
+</div>
+{% endblock %}

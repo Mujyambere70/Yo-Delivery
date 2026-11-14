@@ -29,6 +29,9 @@
                     <div class="end"><b>{{ b.arrive_local[11:16] }}{% if b.plus_days %}<span class="tk-plus">+{{ b.plus_days }}</span>{% endif %}</b><small translate="no">{{ b.to_city }}{% if b.to_code %} ({{ b.to_code }}){% endif %}</small><small>{{ b.arrive_local[:10]|nicedate }} &middot; {{ b.to_tz }}</small></div>
                 </div>
                 {% if b.delay and b.trip_status == 'Scheduled' %}<div class="tk-note" style="margin-top:12px">&#9888;&#65039; <span>Late by</span> {{ b.delay }} <span>minutes</span>.{% if b.trip_note %} {{ b.trip_note }}{% endif %}</div>{% endif %}
+                {% set live = booking_live(b) %}
+                {% for al in live.alerts %}<div class="trip-alert"><b>&#128226; {{ al.header }}</b>{% if al.effect %} <span class="status-pill warn">{{ al.effect }}</span>{% endif %}{% if al.details %}<br><span class="small">{{ al.details }}</span>{% endif %}</div>{% endfor %}
+                {% if live.vehicle and b.trip_status == 'Scheduled' %}<div class="tk-note" style="margin-top:12px"><span class="live-dot"></span><span>Where it is now</span>: <b translate="no">{{ live.vehicle.city or (live.vehicle.lat ~ ', ' ~ live.vehicle.lng) }}</b>{% if live.vehicle.stop_status %} &middot; {{ live.vehicle.stop_status }}{% endif %} <small class="muted" translate="no">({{ live.vehicle.at[11:16] }}{% if live.vehicle.label %}, {{ live.vehicle.label }}{% endif %})</small></div>{% endif %}
                 {% if b.trip_status == 'Cancelled' %}<div class="flash error" style="margin-top:12px">The operator cancelled this trip{% if b.trip_note %}: {{ b.trip_note }}{% endif %}. All your money was given back.</div>{% endif %}
                 <table class="tk-table" style="margin-top:14px">
                     <thead><tr><th>Passenger</th><th>Age</th><th>Seat</th><th></th></tr></thead>

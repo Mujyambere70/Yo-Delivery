@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Year statement{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="wrap narrow" style="padding-top:14px">
+    <p class="small no-print"><a href="{{ url_for('staff_me') }}">&#8592; <span>My contract, holidays and payslips</span></a></p>
+    <section class="panel">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
+            <div><h1 style="margin:0"><span>Year statement</span> <span translate="no">{{ st.year }}</span></h1>
+                <p><b translate="no">{{ st.worker.name }}</b> &middot; <span translate="no">{{ st.worker.title }}</span> &middot; <span translate="no">{{ st.worker.office }}</span></p></div>
+            <div class="no-print">{% for y in st.years %}<a class="btn btn-sm {{ 'btn-orange' if y == st.year else 'btn-outline' }}" href="{{ url_for('staff_statement', year=y) }}">{{ y }}</a> {% endfor %}
+                <button class="btn btn-sm btn-outline" onclick="window.print()">&#128424; <span>Print</span></button></div>
+        </div>
+        {% if st.months %}
+        <table class="at"><thead><tr><th>Month</th><th>Gross pay</th><th>Income tax</th><th>Social</th><th>Net pay</th><th>Hours</th><th>Paid on</th></tr></thead><tbody>
+        {% for m in st.months %}<tr><td translate="no">{{ m.month }}</td><td translate="no">{{ minor_money(m.gross, st.currency) }}</td><td translate="no">{{ minor_money(m.tax, st.currency) }}</td><td translate="no">{{ minor_money(m.social, st.currency) }}</td><td translate="no"><b>{{ minor_money(m.net, st.currency) }}</b></td><td translate="no">{{ m.worked_min // 60 }} h</td><td translate="no">{{ m.paid_at[:10] }}</td></tr>{% endfor %}
+        </tbody><tfoot><tr><th><span>Total</span> <span translate="no">({{ st.currency }})</span></th><th translate="no">{{ minor_money(st.total.gross, st.currency) }}</th><th translate="no">{{ minor_money(st.total.tax, st.currency) }}</th><th translate="no">{{ minor_money(st.total.social, st.currency) }}</th><th translate="no">{{ minor_money(st.total.net, st.currency) }}</th><th translate="no">{{ st.total.worked_min // 60 }} h</th><th></th></tr></tfoot></table>
+        {% else %}<p class="muted">No paid payslips in this year.</p>{% endif %}
+        <h2 style="margin-top:18px">Time off taken in this year</h2>
+        {% if st.leave %}<ul>{% for kind, days in st.leave.items() %}<li>{{ kind }}: <b>{{ days }}</b> <span>days</span></li>{% endfor %}</ul>
+        {% else %}<p class="muted">No approved time off.</p>{% endif %}
+        <p class="small muted">Tax and social contributions are counted with example rules. This statement is made by a demo system and is not a tax document.</p>
+    </section>
+</div>
+{% endblock %}

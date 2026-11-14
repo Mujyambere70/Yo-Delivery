@@ -1,4 +1,4 @@
-# Yo Delivery 7 — the Yo super app for the whole world and the team that runs it: shop · courier · tickets · pay · rewards · chat · staff · payroll · invoices · help desk (Python + Flask)
+# Yo Delivery 8 — the Yo super app for the whole world and the team that runs it: shop · courier · tickets · pay · rewards · chat · staff · payroll · invoices · help desk (Python + Flask)
 
 **Designed and developed by Jean Michel Mujyambere** — [github.com/Mujyambere70](https://github.com/Mujyambere70)
 
@@ -26,6 +26,21 @@ parcel claims and a safety check of orders. One account and one wallet for every
 
 ---
 
+## What is new in version 8: easy to use, content without code / Что нового в версии 8
+
+| | English | Русский |
+|---|---|---|
+| **My work button** | Every worker sees his **position** in his profile and at the top of every page. After sign-in one orange button opens his own tool (hub worker → scanner, support → help desk, finance → payroll). `/work` | У каждого сотрудника видна **должность** в профиле и вверху страницы. После входа одна оранжевая кнопка открывает его рабочий инструмент. |
+| **☰ menu** | The "three lines" button opens a menu with the profile, a **search of services and pages** (also order / parcel numbers) and all categories. Works without JavaScript too (`/menu`). | Кнопка «три линии» открывает меню: профиль, **поиск сервисов и страниц**, все категории. |
+| **Categories** | All categories in one scrolling row in the header, with arrows. | Все категории в одной прокручиваемой строке в шапке. |
+| **Admin menu** | Grouped (Shop, Courier, Money, People, Content …), with a filter box and a quick find (`/admin/find`). | Меню админ-панели по группам, с фильтром и быстрым поиском. |
+| **Site content** | `/admin/site`: **contacts**, **pages** (About, Terms, Privacy, Returns … with earlier versions and one text per language), **banners** of the first page. `/admin/kb`: help articles. New ability `site.manage`. New pages `/contact`, `/page/<slug>`. | `/admin/site`: **контакты**, **страницы** (О нас, Условия … с версиями и языками), **баннеры**. `/admin/kb`: статьи справки. |
+| **People** | Staff news, colleagues list, public holidays (Rwanda, Russia, India 2027) and leave rules per country, year statement, clock-in with an **office code** (changes every minute, QR) or the office network. | Новости для сотрудников, коллеги, праздничные дни и правила отпусков, годовая справка, отметка прихода по **коду офиса** или сети офиса. |
+| **Money** | India's e-invoice number (IRN = SHA-256) + JSON + QR on every tax invoice — **demo: not registered**. Tax rates can be marked "checked" by a second person with valid-from/until days. | Номер e-invoice (IRN) + JSON + QR — **демо, без регистрации**. Ставки можно отметить «проверено» вторым человеком. |
+| **Partners** | Signed **webhooks** to courier partners with retries (1, 4, 9, 16, 25 min); private addresses refused; made-up addresses never called. | Подписанные **вебхуки** партнёрам с повторами. |
+| **Live data** | Courier arrival times from the real GPS speed by town and hour; GTFS-Realtime vehicles and alerts with a background poll; help-desk messages appear live; e-mails from customers (`/api/inbound-email`, signed); analytics rebuilt every hour; forecast marks holidays. | Время прибытия по реальной скорости курьеров; транспорт и объявления GTFS-Realtime; сообщения поддержки появляются сразу; e-mail от клиентов; аналитика каждый час. |
+| **Checks** | 326 tests on SQLite and PostgreSQL; axe-core: 49 pages + the open menu, 0 problems; bandit: 0 medium/high; `/.well-known/security.txt`. | 325 тестов; доступность: 49 страниц, 0 проблем. |
+
 ## What is new in version 7: the limits of version 6, solved / Что нового в версии 7
 
 | Group | What it does |
@@ -50,7 +65,7 @@ parcel claims and a safety check of orders. One account and one wallet for every
 |---|---|
 | **Office tree** (`/admin/offices`) | Head office → country → region → city / hub / warehouse / support centre / transport company / team. A manager's **branch** = his office and every office under it. Demo: India (Haryana & Punjab region, Ambala hub, Chandigarh support centre), Rwanda (Kigali hub, Gakenke office), Russia (Krasnoyarsk office and warehouse) |
 | **Workers and managers** (`/admin/staff`) | Add a worker (existing account, or a new one with a one-time link to choose a password), move, **suspend**, **remove** — access ends at the next click. Managers do this only inside their branch and never for themselves |
-| **Abilities** | 37 abilities in version 6, 45 since version 7 (e.g. `orders.manage`, `hub.scan`, `tickets.check`, `staff.abilities`, `tax.manage`, `photos.review`) and 13 ready-made roles. **Every admin page checks its ability** (GET = view, POST = manage). A manager gives only abilities he has himself; only the administrator gives **"all"** |
+| **Abilities** | 37 abilities in version 6, 45 since version 7, 46 since version 8 (`site.manage`) (e.g. `orders.manage`, `hub.scan`, `tickets.check`, `staff.abilities`, `tax.manage`, `photos.review`) and 13 ready-made roles. **Every admin page checks its ability** (GET = view, POST = manage). A manager gives only abilities he has himself; only the administrator gives **"all"** |
 | **Staff activity log** (`/admin/staff/log`) | Every change of offices, workers, abilities, shifts, tasks and **every POST on an admin page** (path + field *names*, never values); filters by person, action, office, days, kind |
 | **Shifts & attendance** (`/admin/staff/rota`, `/attendance`) | Shift plan in the **local time of each office** (repeat for several days), clock in / out, **on time / late (10 min) / absent / on leave**, hours per office, time off asked and decided |
 | **Tasks & performance** (`/admin/staff/tasks`, `/performance`) | Managers give tasks (due day, priority); workers start / finish them on *My work* (`/staff`); overdue tasks; tasks done and on time, hours, late days per worker |
@@ -184,7 +199,7 @@ with "When is the receiver at home?". As the courier: the route plan shows the e
 **Test cards:** `4242 4242 4242 4242` (success), `5555 5555 5555 4444` (success),
 `4000 0000 0000 0002` (declined), `4000 0000 0000 9995` (not enough money). Any future date, any CVC.
 
-**Tests / Тесты:** `python -m unittest discover -s tests` — **270 tests** (87 of version 2 + 46 of version 3 + 30 of version 4 + 32 of version 5 + 32 of version 6 + 43 of version 7).
+**Tests / Тесты:** `python -m unittest discover -s tests` — **326 tests** (87 of version 2 + 46 of version 3 + 30 of version 4 + 32 of version 5 + 32 of version 6 + 43 of version 7 + 56 of version 8).
 The same tests on PostgreSQL: `TEST_DATABASE_URL=postgresql://user@host/dbname python -m unittest discover -s tests`
 (the test database is emptied — use a separate one).
 
@@ -212,6 +227,8 @@ The same tests on PostgreSQL: `TEST_DATABASE_URL=postgresql://user@host/dbname p
    secret the callback answers 503); **shared cache** `REDIS_URL` (and `pip install redis`); **outside moderation**
    `MODERATION_URL` + `MODERATION_KEY`; **Android wrapper app** `ANDROID_APP_ID` + `ANDROID_APP_SHA256`.
    Example: `fly secrets set MOMO_WEBHOOK_SECRET="<long random text>"`.
+   *Version 8 (optional):* `INBOUND_EMAIL_SECRET` — the secret that signs e-mails sent to `/api/inbound-email` by an e-mail provider
+   (without it the endpoint answers 401). Set it with `fly secrets set`, never in the code.
    Several Gunicorn workers or machines are fine since version 6: background work goes through the job queue (since version 7 daily jobs are claimed once for all machines).
 5. The machine sleeps when nobody visits (`min_machines_running = 0`) and wakes up on the next visit.
    `YO_FAST_TRACKING = "1"` in `fly.toml` keeps the demo speed; set `"0"` for real-time orders and couriers.
@@ -284,6 +301,9 @@ yo_delivery_py/
 ├── partners.py, courierplus.py, gtfsrt.py   (v7) Courier partner API; signature, customs data, app links; GTFS-Realtime
 ├── analytics.py, helpdesk.py, privacy.py, chat_seed7.py   (v7) Warehouse, forecast, A/B test; help desk, claims, safety check; privacy register; chat examples
 ├── v7_views.py, v7b_views.py   Pages of version 7 (/staff/me, /invoices, /support, /api/partner, /admin/payroll …)
+├── services.py, sitecontent.py   (v8) List of services, first page of a worker, menu, quick find; contacts, pages, banners, help articles, staff news
+├── holidays.py, einvoice.py, webhooks.py, v8extra.py   (v8) Holidays, leave rules, office code; IRN and rate review; partner webhooks; speed profile, live data, live help desk
+├── v8_views.py, demo_v8.py   Pages and demo content of version 8 (/menu, /work, /contact, /admin/site, /admin/kb …)
 ├── data/geo/         places.tsv.gz, airports.tsv.gz, regions.tsv.gz, countries.json (+ tools/make_places.py, tools/add_russia.py)
 ├── data/models/      haarcascade_frontalface_default.xml (OpenCV face model, Intel licence)
 ├── yopay.py          Wallet ledger, top-up, transfers, EMI     rewards.py   quiz, points, personal coupons
@@ -299,10 +319,10 @@ yo_delivery_py/
 ├── tools/            collect_strings.py (missing translations), build_catalogs.py (+ tools/tr/*.tsv), a11y_check.py (axe + keyboard),
 │                     security_check.py (bandit, pip-audit), make_gtfs_rt.py, add_postcodes.py (postal directory)
 ├── Dockerfile, fly.toml   Fly.io deployment with Gunicorn
-└── tests/            270 tests (SQLite and PostgreSQL)
+└── tests/            326 tests (SQLite and PostgreSQL)
 ```
 
-## Database (92 tables + the read-only places file)
+## Database (106 tables + the read-only places file)
 Version 2: users, addresses, products, categories, cart, wishlist, orders, order_items, order_events, reviews,
 coupons, settings, media, activity, sellers, payouts, views, notifications, push_subscriptions, password_resets,
 payments, returns, fx_rates, backups.
@@ -329,26 +349,35 @@ GeoNames postal codes, CC BY 4.0 — "Contains data from GeoNames (www.geonames.
 github.com/zauberware/postal-codes-json-xml-csv (`data/geo/postcode_dir-LICENSE.txt`). **Sample GTFS feed:** made for this
 project (fictional "Sample Highland Coaches").
 
-## Limitations / Ограничения
-- **People:** payroll uses example rules of 3 countries only (no other deductions, filings or year-end statements); one leave rule for all countries; clock-in trusts the position the phone sends.
-- **Money stays in test mode on purpose:** callbacks are signed in this project's way — every real provider has its own signature and certification; invoices follow India's rules as an example but are not sent to the IRP (no IRN / QR); no Russian VAT invoices (счёт-фактура).
-- **Partners & couriers:** no real partner connected yet; customs data is JSON, not UPU ITMATT; routes use 25 km/h and straight lines × 1.3, not traffic; the courier app is a web app.
-- **Places & travel:** the postal directory covers 11 countries (+ Indian PIN codes); GTFS-Realtime is read on request (no continuous poll, no vehicle positions or alerts).
-- **Trust:** the chat model (277 examples) catches about 85 % of bad messages but holds about 1 in 4 good ones at the hold level — a person decides; the live check can be fooled by a video; no moderation provider is chosen.
-- **Data:** the warehouse is in the same database and shows yesterday; one forecast model for all hubs; the 8 weeks of hub history are demo data; A/B tests need real visitors.
-- **Help & safety:** no live chat, email channel or knowledge base in the help desk; the safety check uses fixed points, not a learned model.
-- **Scale & law:** the demo runs on one free machine; a real launch needs employer and GST/VAT registration in each country, Russian users' data stored in Russia (152-FZ) and a security audit.
-- The list of Russian settlements is licensed CC BY-NC-SA 4.0 (non-commercial use only): fine for this academic demo, but a commercial shop would need another source (the FIAS address register or the GeoNames RU dump).
-- Translations were prepared by the developer and should be checked by native speakers; the admin panel stays in English on purpose (the working tool of one team).
+**Version 8:** `site_contacts`, `site_pages`, `site_page_versions`, `site_slides`, `kb_articles`, `staff_news`, `staff_news_seen`,
+`public_holidays`, `leave_rules`, `webhook_deliveries`, `speed_profile`, `gtfs_alerts`, `gtfs_vehicles`, `inbound_emails`.
 
-## Future scope (version 8)
-- Payroll rules for every office country checked by a payroll partner; public holidays and leave rules per country; clock-in with an office QR code or Wi-Fi.
-- Certified sandboxes, then live APIs of the payment providers; e-invoices to India's IRP and Russian EDO; an accountant's check of all rates.
-- The first real courier partner, UPU ITMATT customs messages, a native courier app with offline maps and traffic-aware routes.
-- More postal directories; a background GTFS-Realtime poll with vehicle positions and alerts.
-- A certified identity / liveness provider and a chosen multilingual moderation model.
-- A separate analytics database, forecasts with holidays, a help desk with live chat and a knowledge base, a learned fraud model.
-- Screen-reader user tests, machines in two regions with Redis and a managed queue, a database in Russia for Russian users, an outside security audit.
+**Try version 8:** sign in as `neha.gill@example.com` (Staff@2026) — you land on *My work*; press the orange button, open ☰ and
+search "claim". Sign in as `admin@example.com` — *Site content* (change the phone number, edit the About page), *Help articles*,
+*Public holidays*, *Offices → Clock-in code screen*, *Courier partners → Webhooks*.
+
+## Limitations / Ограничения
+- **Site content:** pages have one text per language; help articles, banners and contacts have one text only (the first texts are translated, a changed text is shown as written). No pictures inside pages, no drafts.
+- **Search:** names, search words and exact numbers only — no typo correction, no search inside products or messages.
+- **People:** calendars hold 2027 for 3 countries and must be filled every year; leave rules and holiday pay are examples; the year statement is not a tax form; the office code proves the screen was seen, not who saw it.
+- **Money stays in test mode on purpose:** the e-invoice is computed but **not registered** at India's IRP (QR not signed, document numbers longer than 16 characters, one example HSN code per category). "Checked" rates are checked by a person in the system, not by an accountant.
+- **Partners & couriers:** no real partner receives the webhooks; no UPU ITMATT, no native app; the speed profile needs 20 GPS measurements per town and hour and knows nothing about today's traffic.
+- **Travel:** no real GTFS-Realtime feed is connected; alerts are matched by trip only.
+- **Help desk:** "live" is a poll every 5 seconds, not a WebSocket chat; e-mail needs a provider; no attachments.
+- **Data:** analytics rebuilt hourly in the same database; holidays change the forecast only after two earlier holidays in the hub's history.
+- **Scale & law:** one free machine; not tested by real workers, accountants or screen-reader users; Russian users' data is not kept in Russia; no outside security audit.
+- The list of Russian settlements is licensed CC BY-NC-SA 4.0 (non-commercial use only).
+- Translations were prepared by the developer and should be checked by native speakers; the admin panel stays in English on purpose.
+
+## Future scope (version 9)
+- Translations of help articles, banners and contacts in the editor; pictures in pages; drafts with a publishing time.
+- One search over products, orders, help and pages that forgives typing mistakes.
+- Holiday calendars from an official source every year; payroll and leave rules checked by a payroll partner.
+- Real registration of e-invoices (sandbox first), Russian EDO, certified payment connections.
+- The first real courier partner with webhooks, UPU ITMATT, a native courier app, live traffic.
+- Real GTFS-Realtime feeds, alerts by line and stop, the vehicle on a map on the ticket.
+- A WebSocket chat, replies by e-mail, a help search that understands meaning, a learned fraud model.
+- A separate analytics database, two regions with Redis, a database in Russia, an outside security audit.
 
 The Kinyarwanda translation was prepared by the developer and should be reviewed by a native speaker
 before real use.
