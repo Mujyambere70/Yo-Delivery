@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Webhook signature check{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <h1>Webhook signature check</h1>
+    <section class="panel">
+        {% if res.ok and res.fresh %}<p class="status-head ok">&#10004; The signature is right for this body and secret.</p>
+        {% elif res.ok %}<p class="status-head warn">&#9888; {{ res.why }}</p>
+        {% else %}<p class="status-head bad">&#10008; {{ res.why }}</p>{% endif %}
+        <p class="small">Header</p><pre class="code-pre" translate="no">{{ header }}</pre>
+        <p class="small">Body ({{ body|length }} <span>characters</span>)</p><pre class="code-pre" translate="no">{{ body[:2000] }}</pre>
+        <p class="small muted">Nothing you typed here was saved. The secret is never written to a log.</p>
+        <p><a class="btn btn-outline" href="{{ url_for('partner_api_page') }}#check">Check another one</a></p>
+    </section>
+</div>
+{% endblock %}

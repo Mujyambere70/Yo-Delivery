@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Too many requests{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <section class="panel"><h1>&#9203; Please wait a little</h1>
+        <p><span>There were too many</span> {{ what }} <span>from you in a short time. Please try again in</span> {{ wait }}.</p>
+        <p class="small muted">The limit protects accounts against guessing of passwords and the shop against robots.</p>
+        <p><a class="btn btn-outline" href="{{ url_for('index') }}">Home</a></p></section>
+</div>
+{% endblock %}

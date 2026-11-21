@@ -209,6 +209,10 @@ ABILITY_FOR_PATH = [
     ("/admin/forecast", "analytics.view", "analytics.view"),
     ("/admin/experiments", "model.manage", "model.manage"),
     ("/admin/privacy", "privacy.manage", "privacy.manage"),
+    # version 9 (before the shorter paths of version 8)
+    ("/admin/staff/swaps", "staff.view", "staff.manage"),
+    ("/admin/monitor/limits", "monitor.view", "monitor.view"),
+    ("/admin/backups/check", "database.view", "database.view"),
     # version 8
     ("/admin/site", "site.manage", "site.manage"),
     ("/admin/kb", "site.manage", "site.manage"),
@@ -228,7 +232,8 @@ SELLER_ABILITIES = {
 }
 SELLER_PATHS = [("/seller/bank", "owner"), ("/seller/tax", "owner"), ("/seller/invoices", "seller.orders"), ("/seller/products", "seller.products"), ("/seller/orders", "seller.orders"),
                 ("/seller/stories", "seller.stories"), ("/seller/payouts", "owner"), ("/seller/settings", "owner"),
-                ("/seller/team", "owner"), ("/board/seller", "seller.board")]
+                ("/seller/team", "owner"), ("/board/seller", "seller.board"),
+                ("/seller/insights", "seller.orders"), ("/seller/import", "seller.products")]
 
 HUB_ACTIONS = {"in": "Scanned in at the hub", "sorted": "Sorted at the hub", "out": "Left the hub",
                "problem": "Problem at the hub"}

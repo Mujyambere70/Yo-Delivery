@@ -67,8 +67,9 @@
             <div class="map-box" data-live="{{ url_for('tickets_live', pnr=b.pnr) }}" aria-label="Map of the trip {{ b.pnr }}">
                 <span hidden data-k="pickup">Departure</span><span hidden data-k="drop">Arrival</span>
                 {% if step == 2 %}<span class="map-live"><i></i>Live</span>{% endif %}
-                <div class="map-legend"><span><i style="background:#16a34a"></i>Departure</span><span><i style="background:#ff6b35"></i>Arrival</span><span><i style="background:#2563eb"></i>{{ MODES[b.mode] }}</span><span>Position from the timetable (demo)</span></div>
+                <div class="map-legend"><span><i style="background:#16a34a"></i>Departure</span><span><i style="background:#ff6b35"></i>Arrival</span><span><i style="background:#2563eb"></i>{{ MODES[b.mode] }}</span></div>
             </div>
+            <p class="small" style="margin:6px 0 0" aria-live="polite"><span data-seen>Position from the timetable (demo)</span><span hidden data-src="timetable">Position from the timetable (demo)</span><span hidden data-src="operator">Live position from the operator</span><span hidden data-ago>last position</span></p>
             {% else %}
             <p class="muted">{{ phase }}</p>
             {% endif %}

@@ -52,6 +52,13 @@ REGISTER = [
      "Legitimate interest", "30 days / 180 days", "monitor.view, model.manage"),
     ("Site messages", "notifications", "Telling the person about orders and parcels", "Contract", "1 year",
      "The person"),
+    # version 9
+    ("Words typed in the search box (no name, only 'signed in yes/no')", "search_log", "Finding missing words and typos",
+     "Legitimate interest", "90 days", "site.manage"),
+    ("Files added to a support question (photos, PDF)", "support_files, media", "Help with a problem",
+     "Contract", "Like the question: 3 years", "The person; support.manage"),
+    ("Network address or account stopped by a limit", "rate_blocks, rate_hits", "Protection against guessing and robots",
+     "Legitimate interest", "30 days (counters: 20 minutes)", "monitor.view"),
 ]
 
 # table, time column, days, what to do ("delete" or an UPDATE that empties personal fields)
@@ -63,6 +70,8 @@ RETENTION = [
     ("staff_log", "at", 3 * 365, "delete"),
     ("partner_events", "received_at", 2 * 365, "delete"),
     ("payment_events", "received_at", 2 * 365, "delete"),
+    ("search_log", "at", 90, "delete"),
+    ("rate_blocks", "at", 30, "delete"),
 ]
 
 RESIDENCY = [("RU", "Federal Law 152-FZ, art. 18 part 5: personal data of Russian citizens must first be recorded, "

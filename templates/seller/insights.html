@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Insights{% endblock %}
+{% block content %}
+<div class="wrap seller">
+    {% include "seller/_nav.html" %}
+    <h1>Insights of the last {{ i.days }} days</h1>
+    <div class="kpis"><div class="kpi"><b>{{ i.sold }}</b><span>items sold (best 8 products)</span></div><div class="kpi"><b>{{ i.money|inr }}</b><span>from these products</span></div>
+        <div class="kpi"><b>{{ i.low|length }}</b><span>products with 5 or fewer in stock</span></div></div>
+    <div class="od-grid two">
+    <section class="panel"><h2>Best products</h2>
+        <table class="mini-table wide"><thead><tr><th>Product</th><th class="num">Sold</th><th class="num">Money</th></tr></thead><tbody>
+        {% set top = (i.best|map(attribute='sold')|max) if i.best else 1 %}
+        {% for b in i.best %}<tr><td>{{ b.name }}<div class="bar"><i style="width:{{ (100 * b.sold / top)|round|int }}%"></i></div></td><td class="num">{{ b.sold }}</td><td class="num">{{ b.money|inr }}</td></tr>
+        {% else %}<tr><td colspan="3" class="muted">No sales in this time.</td></tr>{% endfor %}</tbody></table></section>
+    <section class="panel"><h2>Why customers returned</h2>
+        <table class="mini-table wide"><tbody>{% for r in i.reasons %}<tr><td>{{ r.reason }}</td><td class="num">{{ r.times }}</td></tr>
+        {% else %}<tr><td class="muted">No returns. Good!</td></tr>{% endfor %}</tbody></table>
+        <p class="small muted">Many returns for "size" or "not as described"? Check the size table and the photos of the product.</p></section>
+    <section class="panel"><h2>Low stock</h2>
+        <ul class="plain">{% for p in i.low %}<li>{{ p.name }} &middot; <b>{{ p.stock }}</b> <span>left</span></li>{% else %}<li class="muted">Every product has more than 5.</li>{% endfor %}</ul>
+        {% if i.low %}<p><a class="btn btn-sm btn-outline" href="{{ url_for('seller_products') }}">Change the stock</a></p>{% endif %}</section>
+    <section class="panel"><h2>Not sold in this time</h2>
+        <ul class="plain">{% for p in i.never %}<li>{{ p.name }}</li>{% else %}<li class="muted">Every product was sold at least once.</li>{% endfor %}</ul></section>
+    </div>
+</div>
+{% endblock %}

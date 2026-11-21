@@ -116,9 +116,11 @@ def register(app, store, h):
             flash("Thank you for telling us.", "success")
             return redirect(url_for("help_article", slug=slug))
         store.kb_opened(a["id"])
+        lang = world.current_lang()
+        a = next((x for x in store.kb_articles(a["topic"], lang=lang) if x["id"] == a["id"]), a)   # version 9: translations
         values = store.text_values()
         return render_template("help_article.html", a=a, answer=SC.render_markdown(store.fill_text(a["answer"], values)),
-                               more=[x for x in store.kb_articles(a["topic"]) if x["id"] != a["id"]][:6])
+                               more=[x for x in store.kb_articles(a["topic"], lang=lang) if x["id"] != a["id"]][:6])
 
     @app.route("/help/suggest.json")
     def help_suggest():

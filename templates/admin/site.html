@@ -4,6 +4,7 @@
 {% block content %}
 <div class="site-tabs"><a href="#contacts" class="on">&#9742; Contacts</a><a href="#pages">&#128196; Pages</a><a href="#banners">&#128444; Banners</a>
     <a href="{{ url_for('admin_kb') }}">&#128218; Help articles ({{ articles }})</a><a href="{{ url_for('admin_settings') }}#announcement">&#128227; Announcement bar</a>
+    <a href="{{ url_for('admin_search_misses') }}">&#128269; Searches with no result</a>
     <a href="{{ url_for('contact_page') }}" target="_blank">&#8599; See the Contact page</a></div>
 
 <section class="panel" id="contacts">
@@ -16,7 +17,7 @@
             {% if kind == 'lines' or name == 'footer_note' %}<textarea id="c_{{ name }}" name="{{ name }}" rows="{{ 3 if kind == 'lines' else 2 }}" maxlength="400">{{ c[name] }}</textarea>
             {% else %}<input id="c_{{ name }}" type="{{ 'email' if kind == 'email' else 'url' if kind == 'url' else 'text' }}" name="{{ name }}" value="{{ c[name] }}" maxlength="160" {% if kind == 'url' %}placeholder="https://"{% endif %} {% if name in ('company', 'email') %}required{% endif %}>{% endif %}</div>
         {% endfor %}
-        <div class="full"><button class="btn btn-orange">Save the contacts</button></div>
+        <div class="full actions"><button class="btn btn-orange">Save the contacts</button> <a class="btn btn-outline" href="{{ url_for('admin_translate', kind='contact', ref='site') }}">&#127760; Translate</a></div>
     </form>
 </section>
 
@@ -26,7 +27,7 @@
     {% for p in pages %}<tr><td><b>{{ p.title }}</b></td><td translate="no"><a href="{{ url_for('about') if p.slug == 'about' else url_for('site_page', slug=p.slug) }}" target="_blank">{{ '/about' if p.slug == 'about' else '/page/' ~ p.slug }}</a></td>
         <td translate="no">{% for l in p.langs %}<a class="status-pill {{ 'ok' if l == 'en' }}" href="{{ url_for('admin_site_page', slug=p.slug, lang=l) }}">{{ l }}</a> {% endfor %}</td>
         <td>{% if p.published %}<span class="status-pill ok">Published</span>{% else %}<span class="status-pill warn">Hidden</span>{% endif %}{% if p.in_footer and p.published %} <span class="status-pill">footer</span>{% endif %}</td>
-        <td translate="no">{{ p.updated_at[:16] }}</td><td><a class="btn btn-sm btn-outline" href="{{ url_for('admin_site_page', slug=p.slug) }}">Edit</a></td></tr>{% endfor %}
+        <td translate="no">{{ p.updated_at[:16] }}</td><td><a class="btn btn-sm btn-outline" href="{{ url_for('admin_site_page', slug=p.slug) }}">Edit</a>{% if p.draft %} <span class="status-pill warn">Draft</span>{% endif %}</td></tr>{% endfor %}
     </tbody></table>
     <p><a class="btn btn-orange btn-sm" href="{{ url_for('admin_site_page', slug='new') }}">+ New page</a></p>
 </section>
@@ -52,7 +53,8 @@
             <div><label for="sl{{ sl.id }}z">Until (day)</label><input id="sl{{ sl.id }}z" type="date" name="to_day" value="{{ sl.to_day }}"></div>
             <div class="full actions"><label class="check"><input type="checkbox" name="active" value="1" {{ 'checked' if sl.active }}> Switched on</label>
                 <button class="btn btn-sm btn-orange">Save</button>
-                <button class="btn btn-sm btn-outline" name="action" value="delete" onclick="return confirm('Remove this banner?')">Remove</button></div>
+                <button class="btn btn-sm btn-outline" name="action" value="delete" onclick="return confirm('Remove this banner?')">Remove</button>
+                <a class="btn btn-sm btn-outline" href="{{ url_for('admin_translate', kind='slide', ref=sl.id) }}">&#127760; Translate</a></div>
         </div>
     </form>
     {% endfor %}

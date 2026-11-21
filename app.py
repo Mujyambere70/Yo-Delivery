@@ -34,6 +34,7 @@ import v6b_views
 import v7_views
 import v7b_views
 import v8_views
+import v9_views
 import v6_views
 import blog_views
 import board_views
@@ -194,7 +195,7 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                 # version 8: the button to the worker's own tool, the editable contacts and pages, the admin menu
                 "WORK": store.work_home(uid) if user else None,
                 "job_info": lambda: store.job_info(uid) if user else None,
-                "CONTACTS": store.contacts(),
+                "CONTACTS": store.contacts(world.current_lang()),
                 "FOOTER_PAGES": [] if is_back_office() else store.site_pages(footer_only=True),
                 "ADMIN_NAV": store.nav_for(uid) if user and is_back_office() else [],
                 "can": (lambda ability: store.can(uid, ability)) if user else (lambda ability: False),
@@ -416,7 +417,7 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
             home_books=L(store.products(category="home") + store.products(category="books")),
             new_arrivals=L(store.products(order="new", limit=10)),
             for_you=L(store.recommended(visitor(), user_id(), 10)) if recent or user_id() else [],
-            recent=recent, slides=store.slides(active_only=True), fill=store.fill_text)
+            recent=recent, slides=store.slides(active_only=True, lang=world.current_lang()), fill=store.fill_text)
 
     def listing(category=""):
         a = request.args
@@ -1650,7 +1651,11 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
         import sitecontent
         q = request.args.get("q", "").strip()[:120]
         values = store.text_values()
-        articles = store.kb_search(q, limit=12) if q else store.kb_articles()
+        lang = world.current_lang()
+        articles = store.kb_articles(lang=lang)
+        if q:                                            # version 9: search the English text, show the visitor's language
+            ids = [a["id"] for a in store.kb_search(q, limit=12)]
+            articles = sorted((a for a in articles if a["id"] in ids), key=lambda a: ids.index(a["id"]))
         for a in articles:
             a["html"] = sitecontent.render_markdown(store.fill_text(a["answer"], values))
         topics = {}
@@ -1695,7 +1700,7 @@ def create_app(db_path=None, seed=True, notifier=None, driver=None, env=None, ho
                               seller_required=seller_required, act=act, user_id=user_id, safe_next=safe_next,
                               base_url=base_url, admin_page=admin_page, now=now, visitor=visitor)
     for module in (courier_views, pay_views, rewards_views, blog_views, board_views, admin_v3, tickets_views,
-                   world_views, v5_views, staff_views, v6_views, workforce_views, v6b_views, v7_views, v7b_views, v8_views):
+                   world_views, v5_views, staff_views, v6_views, workforce_views, v6b_views, v7_views, v7b_views, v8_views, v9_views):
         module.register(app, store, helpers)
 
     return app

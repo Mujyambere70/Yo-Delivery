@@ -12,11 +12,19 @@
 <main class="code-screen">
     <p class="muted">Yo Delivery &middot; <span translate="no">{{ o.name }}</span></p>
     <h1>Clock-in code</h1>
-    <div class="code-box" aria-live="polite">{{ code[:3] }} {{ code[3:] }}</div>
+    <div class="clock-code" aria-live="polite">{{ code[:3] }} {{ code[3:] }}</div>
     <div class="code-bar" aria-hidden="true"><i id="bar"></i></div>
     <div class="qr" id="qr" data-text="{{ link }}" role="img" aria-label="QR code with the clock-in link"></div>
     <p>Type the six digits on "My work", or scan the picture with the camera of your phone.</p>
     <p class="small muted">The code changes every minute and is right for this office only. This page reloads by itself.</p>
+    {% set seen = recent_clock_ins(o.id) %}
+    <section class="clock-ins" aria-label="Clocked in during the last 15 minutes">
+        <h2>Clocked in during the last 15 minutes</h2>
+        {% for c in seen %}<p><b translate="no">{{ c.name }}</b> <span class="muted" translate="no">{{ c.title }}</span> &middot; <span translate="no">{{ c.start_at[11:16] }}</span>
+            <small class="muted">{{ {'code': 'office code', 'gps': 'GPS', 'network': 'office network'}.get(c.in_proof, c.in_proof or '-') }}</small></p>
+        {% else %}<p class="muted">Nobody yet.</p>{% endfor %}
+        <p class="small muted">Only first name, job and time are shown, so a manager can see at a glance who used the code.</p>
+    </section>
     <p class="small no-print"><a href="{{ url_for('admin_offices') }}">&#8592; Offices</a></p>
 </main>
 <script src="{{ url_for('static', filename='vendor/qrcode.js') }}"></script>

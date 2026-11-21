@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Add products from a file{% endblock %}
+{% block content %}
+<div class="wrap seller">
+    {% include "seller/_nav.html" %}
+    <h1>Add many products from a CSV file</h1>
+    <div class="od-grid two">
+    <section class="panel">
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="csv">CSV file (UTF-8, up to {{ max_rows }} rows)</label><input id="csv" type="file" name="file" accept=".csv,text/csv" required>
+            <p><button class="btn btn-orange">Upload</button></p>
+        </form>
+        {% if result %}<h2>Result</h2><p><b>{{ result.added }}</b> <span>added</span>, <b>{{ result.errors|length }}</b> <span>rows with a problem</span>.</p>
+            {% if result.errors %}<table class="mini-table wide"><thead><tr><th>Row</th><th>Problem</th></tr></thead><tbody>{% for n, why in result.errors[:50] %}<tr><td>{{ n }}</td><td>{{ why }}</td></tr>{% endfor %}</tbody></table>{% endif %}{% endif %}
+    </section>
+    <section class="panel">
+        <h2>How the file must look</h2>
+        <p>The first row has the names of the columns:</p>
+        <pre class="csv-sample" translate="no">{{ columns|join(',') }}
+Cotton kurta,Ganga Weaves,fashion,799,999,25,Soft cotton | Machine wash,kurta cotton summer</pre>
+        <ul class="small"><li>Needed: name, brand, category, price, stock. The others can be empty.</li>
+            <li>"|" in the text starts a new line.</li>
+            <li>A value may not start with =, + or @ (that would be a formula in a spreadsheet).</li>
+            <li>New products are switched off. Add a picture to each, then they go to the approval of the shop team.</li></ul>
+        <p><a href="{{ url_for('seller_products') }}">&#8592; My products</a></p>
+    </section>
+    </div>
+</div>
+{% endblock %}

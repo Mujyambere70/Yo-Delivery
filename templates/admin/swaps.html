@@ -1,0 +1,15 @@
+{% extends "admin/layout.html" %}
+{% block title %}Shift swaps{% endblock %}
+{% block heading %}Shift swaps{% endblock %}
+{% block content %}
+<section class="panel">
+    <p class="small muted">A worker asks a colleague of the same office to take one shift. When the colleague says yes, a manager approves, and only then the shift moves to the colleague.</p>
+    <table class="at"><thead><tr><th>Shift</th><th>From</th><th>To</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for s in rows %}<tr><td translate="no">{{ s.day }} {{ s.start_hm }}&ndash;{{ s.end_hm }}</td><td translate="no">{{ s.from_name }}</td><td translate="no">{{ s.to_name }}</td>
+        <td><span class="status-pill {{ {'Asked': 'warn', 'Accepted': 'warn', 'Approved': 'ok'}.get(s.status, 'bad') }}">{{ s.status }}</span></td>
+        <td>{% if s.status == 'Accepted' %}<form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="swap_id" value="{{ s.id }}">
+            <button class="btn btn-sm btn-orange" name="action" value="approve">Approve</button><button class="btn btn-sm btn-outline" name="action" value="reject">Reject</button></form>
+            {% elif s.status == 'Asked' %}<span class="small muted">Waiting for the colleague</span>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">No swaps yet.</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

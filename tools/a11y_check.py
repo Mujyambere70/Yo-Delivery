@@ -40,7 +40,12 @@ PAGES = [("guest", "/"), ("guest", "/search?q=kettle"), ("guest", "/p/homeease-k
          ("guest", "/page/terms"), ("guest", "/about"), ("staff", "/account"), ("staff", "/staff/directory"),
          ("staff", "/staff/statement"), ("staff", "/staff/clock-code?c=123456"), ("admin", "/admin/site"),
          ("admin", "/admin/site/pages/about"), ("admin", "/admin/kb"), ("admin", "/admin/staff/notices"),
-         ("admin", "/admin/staff/holidays"), ("admin", "/admin/couriers/speed"), ("admin", "/admin/find?q=payroll")]
+         ("admin", "/admin/staff/holidays"), ("admin", "/admin/couriers/speed"), ("admin", "/admin/find?q=payroll"),
+         # version 9
+         ("guest", "/find?q=sheos"), ("guest", "/status"), ("demo", "/account"), ("demo", "/support/S000001"),
+         ("demo", "/checkout"), ("admin", "/admin/site/searches"), ("admin", "/admin/site/translate/kb/1?lang=ru"),
+         ("admin", "/admin/staff/swaps"), ("admin", "/admin/monitor/limits"), ("admin", "/admin/backups"),
+         ("admin", "/admin/site/pages/returns")]
 DRAWER = [("guest", "/"), ("staff", "/")]           # version 8: the open "three lines" menu is checked too
 KEYBOARD = [("guest", "/"), ("demo", "/support"), ("admin", "/admin/payroll")]
 

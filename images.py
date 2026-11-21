@@ -117,5 +117,15 @@ def save_site_banner(file, store):
     return name
 
 
+def save_page_picture(file, store):
+    """Version 9: a picture inside a page written by the staff (at most 1200 px wide). Returns the picture's name."""
+    import secrets
+    img = _open(file)
+    img.thumbnail((1200, 1200), Image.LANCZOS)
+    name = f"site/pic-{secrets.token_hex(6)}.jpg"
+    store.save_media(name, "image/jpeg", _jpeg(img, 84))
+    return name
+
+
 def delete_product_images(slug, store):
     store.delete_media(f"products/{slug}-")

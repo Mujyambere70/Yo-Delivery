@@ -212,6 +212,19 @@ for p in gt:
     ravi.get(f"/tickets/b/{p}")
 courier.get("/driver/route")
 
+# version 9: one search, the status page, the signature tool, the stars and files of the help desk, my usual way to pay,
+# buy again and a new address, the swaps and first days of a worker, the seller's insights and CSV import
+for url in ["/find", "/find?q=sheos", "/find?q=zzzzzz", "/status", "/partners/api", "/search?q=zzzzzz"]:
+    guest.get(url)
+    ravi.get(url)
+for url in ["/account", "/checkout"] + [f"/support/{t}" for t in tickets] + [f"/orders/{o}" for o in orders] + \
+           [f"/tickets/b/{p}" for p in pnrs[:2]] + [f"/courier/s/{n}" for n in numbers[:2]]:
+    ravi.get(url)
+for c9 in (hub, neha, eric, boss):
+    c9.get("/staff")
+for url in ["/seller/insights", "/seller/import", "/seller/products"]:
+    seller.get(url)
+
 # messages written in the Python code of the new modules
 pattern = re.compile(r'(?:ShopError|WrongCode|flash|notify\([^,]+,[^,]+,)\(?\s*(f?)"((?:[^"\\]|\\.)+)"')
 files = ["courier.py", "courier_views.py", "yopay.py", "pay_views.py", "rewards.py", "rewards_views.py", "blog.py",
@@ -221,7 +234,8 @@ files = ["courier.py", "courier_views.py", "yopay.py", "pay_views.py", "rewards.
          "mobilemoney.py", "customs.py", "bankpay.py", "addresscheck.py", "idcheck.py", "translate.py",
          "people.py", "invoices.py", "providers.py", "partners.py", "courierplus.py", "gtfsrt.py", "helpdesk.py",
          "v7_views.py", "v7b_views.py", "routeplan.py",
-         "services.py", "sitecontent.py", "holidays.py", "einvoice.py", "webhooks.py", "v8extra.py", "v8_views.py"]
+         "services.py", "sitecontent.py", "holidays.py", "einvoice.py", "webhooks.py", "v8extra.py", "v8_views.py",
+         "v9.py", "v9_views.py"]
 for name in files if ONLY_V3 else [f for f in os.listdir(ROOT) if f.endswith(".py")]:
     src = open(os.path.join(ROOT, name), encoding="utf-8").read()
     for f, text in pattern.findall(src):
@@ -276,6 +290,12 @@ for v in [x[2] for x in SV.NAV] + [x[2] for x in SV.WORKER_PAGES] + [x[2] for x 
          "Order", "Parcel", "Question", "Ticket", "Customer", "Worker", "Page"] + \
         [a[1] for a in SC.DEFAULT_ARTICLES]:
     record(v)
+import v9 as V9  # noqa: E402
+for v in [x[1] for x in V9.ONBOARDING] + ["Asked", "Accepted", "Approved", "Rejected", "Working", "Problem", "Test mode",
+                                         "Shop and accounts", "Background work", "Messages and webhooks", "Live timetables",
+                                         "Backups", "Card payments", "No backup yet", "Courier GPS", "Live position from the operator",
+                                         "Position from the timetable (demo)", "last position"]:
+    record(v)
 import geo  # noqa: E402
 for v in list(TK.WORLD_CLASS_NAMES.values()) + list(geo.KIND_NAMES.values()) + [TK.WAITLISTED, "Nearby region",
                                                                                 "Whole country", "Waiting list"]:
@@ -298,6 +318,10 @@ with store.db() as conn:
     content += " ".join(" ".join(r) for r in conn.execute("SELECT name, value FROM site_contacts"))
     content += " " + " ".join(d[2] for d in SC.CONTACT_FIELDS.values())
     content += " ".join(r[0] for r in conn.execute("SELECT body FROM chat_messages"))
+    content += " ".join(r[0] for r in conn.execute("SELECT value FROM content_texts"))                    # version 9
+    content += " ".join(" ".join(r) for r in conn.execute("SELECT draft_title, draft_body FROM site_pages"))
+    content += " ".join(" ".join(r) for r in conn.execute("SELECT q, fixed FROM search_log"))
+    content += " ".join(r[0] for r in conn.execute("SELECT note FROM support_ratings"))
 content = " ".join(content.replace("*", "").replace("#", "").split())
 seen = [t for t in seen if t not in content]
 print("\n".join(seen))

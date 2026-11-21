@@ -168,8 +168,11 @@
             last = Math.max(last, m.id);
             box.scrollIntoView({ block: "nearest" });
           });
+          var tn = document.getElementById("typingNow");            // version 9: "is typing"
+          if (tn) tn.hidden = !data.typing;
+          if (data.typing) quiet = 0;
           quiet = (data.messages || []).length ? 0 : quiet + 1;
-          wait = quiet > 24 ? 20000 : 5000;               // after two quiet minutes ask less often
+          wait = data.typing ? 2500 : quiet > 24 ? 20000 : 5000;               // after two quiet minutes ask less often
           if (state) state.hidden = false;
           var st = document.getElementById("liveStatus");
           if (st && data.status) st.textContent = data.status;
@@ -178,6 +181,18 @@
         .catch(function () { if (state) state.hidden = true; setTimeout(poll, 30000); });
     };
     setTimeout(poll, wait);
+  }
+
+  // ---------------------------------------------------------------- version 9: tell the other side "is typing" (at most every 3 s)
+  var typingForm = document.querySelector("form[data-typing]");
+  if (typingForm && window.fetch) {
+    var sentAt = 0, area = typingForm.querySelector("textarea"), tok = typingForm.querySelector("[name=csrf_token]");
+    if (area && tok) area.addEventListener("input", function () {
+      if (Date.now() - sentAt < 3000 || !area.value.trim()) return;
+      sentAt = Date.now();
+      fetch(typingForm.getAttribute("data-typing"), { method: "POST", credentials: "same-origin",
+            body: new URLSearchParams({ csrf_token: tok.value }) }).catch(function () {});
+    });
   }
 
   // ---------------------------------------------------------------- support form: articles that may answer

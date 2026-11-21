@@ -10,12 +10,26 @@
             {% if not t.first_answer_at and t.status != 'Closed' %} &middot; answer promised by <span translate="no">{{ t.due_at[:16] }}</span>{% endif %}</p>
         <p class="small muted" id="liveState" hidden><span class="live-dot"></span>Live: new answers appear here by themselves.</p>
         <div class="msg-thread" data-live-thread="{{ url_for('support_messages_json', number=t.number) }}" data-last="{{ t.messages[-1].id if t.messages else 0 }}" data-side="customer" aria-live="polite">{% for m in t.messages %}<div class="msg {{ 'staff' if m.from_staff }}"><small><b translate="no">{{ 'Yo support' if m.from_staff else m.name }}</b> &middot; <span translate="no">{{ m.at[:16] }}</span></small><div>{{ m.body }}</div></div>{% endfor %}</div>
-        <form method="post">
+        <p class="small muted typing-now" id="typingNow" hidden aria-live="polite"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> <span>Yo support is typing</span></p>
+        <form method="post" data-typing="{{ url_for('support_typing', number=t.number) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="rb">Write more</label><textarea id="rb" name="body" rows="3" maxlength="3000"></textarea>
             <div class="actions"><button class="btn btn-orange">Send</button>
                 {% if t.status != 'Closed' %}<button class="btn btn-outline" name="close" value="1">My problem is solved - close</button>{% endif %}</div>
         </form>
+        {% set fl = support_files(t.number) %}
+        <div class="sup-files">{% if fl %}<p class="small"><b>Files</b></p><ul class="plain small">{% for f in fl %}<li>&#128206; <a href="{{ url_for('support_file_get', number=t.number, file_id=f.id) }}" target="_blank" rel="noopener" translate="no">{{ f.name }}</a> <span class="muted">({{ (f.size / 1024)|round|int }} KB &middot; {{ 'Yo support' if f.from_staff else 'you' }})</span></li>{% endfor %}</ul>{% endif %}
+        {% if t.status != 'Closed' %}<form method="post" action="{{ url_for('support_file_add', number=t.number) }}" enctype="multipart/form-data" class="file-add">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="sf" class="small">Add a photo or PDF (2 MB at most)</label>
+            <input id="sf" type="file" name="file" accept=".jpg,.jpeg,.png,.pdf" required><button class="btn btn-sm btn-outline">Attach</button></form>{% endif %}</div>
+        {% if t.status in ('Answered', 'Solved', 'Closed') %}{% set rt = support_rating(t.number) %}
+        <form method="post" action="{{ url_for('support_rate', number=t.number) }}" class="star-form" id="rate">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <fieldset><legend>{{ 'Your stars for our answer' if rt else 'Was our answer helpful? Give stars' }}</legend>
+            <div class="stars-in">{% for n in range(5, 0, -1) %}<input type="radio" id="st{{ n }}" name="stars" value="{{ n }}" {{ 'checked' if rt and rt.stars == n }} required><label for="st{{ n }}" title="{{ n }}">&#9733;<span class="sr-only">{{ n }} stars</span></label>{% endfor %}</div>
+            <label for="sn" class="small">What could be better? (optional)</label><input id="sn" type="text" name="note" maxlength="300" value="{{ rt.note if rt else '' }}">
+            <button class="btn btn-sm btn-outline">{{ 'Change' if rt else 'Send' }}</button></fieldset>
+        </form>{% endif %}
     </section>
 </div>
 {% endblock %}

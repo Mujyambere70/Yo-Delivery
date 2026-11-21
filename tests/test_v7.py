@@ -769,7 +769,7 @@ class TestScaleAndPrivacy(Base):
 
     def test_backup_has_the_new_tables(self):
         data = self.s.export_data()
-        self.assertEqual(data["version"], 8)
+        self.assertGreaterEqual(data["version"], 8)                                 # 9 since version 9
         for t in ("payslips", "invoices", "partners", "support_tickets", "fact_daily"):
             self.assertIn(t, data["tables"])
 

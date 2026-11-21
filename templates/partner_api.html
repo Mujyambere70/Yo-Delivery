@@ -18,5 +18,18 @@
         <p translate="no"><code>GET /api/partner/v1/shipments</code> and <code>GET /api/partner/v1/shipments/&lt;number&gt;</code> (signed with an empty body). Addresses and phone numbers are shown only while you have the parcel.</p>
         <p><a class="btn btn-outline" href="{{ url_for('partner_openapi') }}">&#8681; OpenAPI 3.0 description (JSON)</a></p>
     </section>
+    {% set ex = sample_signature() %}
+    <section class="panel" id="check">
+        <h2>Sandbox: check a webhook signature</h2>
+        <p>Our webhooks carry the header <code translate="no">X-Yo-Signature</code>, made the same way as above with your webhook secret. Paste what your server received; we tell you if the signature fits. Nothing is saved.</p>
+        <form method="post" action="{{ url_for('partner_check') }}" autocomplete="off">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="cs">Webhook secret</label><input id="cs" type="text" name="secret" value="{{ ex.secret }}" maxlength="200" required translate="no" spellcheck="false">
+            <label for="ch">X-Yo-Signature header</label><input id="ch" type="text" name="header" value="{{ ex.header }}" maxlength="300" required translate="no" spellcheck="false">
+            <label for="cb">Body (exactly as received)</label><textarea id="cb" name="body" rows="4" maxlength="20000" translate="no" spellcheck="false">{{ ex.body }}</textarea>
+            <p><button class="btn btn-orange">Check</button></p>
+        </form>
+        <p class="small muted">The example in the form is fresh (made when this page opened) and uses a sandbox secret that opens nothing. Change one letter of the body to see a failure.</p>
+    </section>
 </div>
 {% endblock %}

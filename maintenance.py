@@ -44,7 +44,10 @@ DATA_TABLES = ["users", "addresses", "categories", "sellers", "products", "media
                # version 8 - site content, holidays, webhooks, live data
                "site_contacts", "site_pages", "site_page_versions", "site_slides", "kb_articles", "staff_news",
                "staff_news_seen", "public_holidays", "leave_rules", "webhook_deliveries", "speed_profile", "gtfs_alerts",
-               "gtfs_vehicles", "inbound_emails"]
+               "gtfs_vehicles", "inbound_emails",
+               # version 9
+               "content_texts", "search_log", "shift_swaps", "onboarding_done", "support_files", "support_ratings",
+               "rate_blocks", "backup_checks"]
 
 
 class MaintenanceMixin:
@@ -127,7 +130,7 @@ class MaintenanceMixin:
     # ===== backups =====
 
     def export_data(self):
-        data = {"app": "Yo Delivery", "version": 8, "created_at": now(), "tables": {}}
+        data = {"app": "Yo Delivery", "version": 9, "created_at": now(), "tables": {}}
         with self.db() as conn:
             for t in DATA_TABLES:
                 rows = conn.execute(f"SELECT * FROM {t}").fetchall()

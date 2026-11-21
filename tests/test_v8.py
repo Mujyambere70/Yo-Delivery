@@ -811,7 +811,7 @@ class TestBackup(Base):
         self.s.save_site_page(self.admin, "terms", "en", "Terms of use", "The terms before the backup was made.")
         self.s.post_staff_news(self.admin, "Before the backup", "")
         data = self.s.unpack(self.s.pack(self.s.export_data()))
-        self.assertEqual(data["version"], 8)
+        self.assertGreaterEqual(data["version"], 8)                                 # 9 since version 9
         self.s.save_contacts(self.admin, {"phone": "+250 788 000 333"})
         self.s.save_site_page(self.admin, "terms", "en", "Terms of use", "The terms after the backup was made.")
         self.s.import_data(data)

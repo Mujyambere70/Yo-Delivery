@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "macros.html" import card with context %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<div class="wrap">
+    <h1>Search everything</h1>
+    <form method="get" class="find-form" role="search">
+        <input type="search" name="q" value="{{ q }}" maxlength="80" autofocus aria-label="Search products, help and pages" placeholder="Shoes, refund, track my parcel, OD2611...">
+        <button class="btn btn-orange">Search</button>
+    </form>
+    {% if r.fixed %}<p class="find-fixed">&#9997;&#65039; <span>Showing results for</span> <b translate="no">{{ r.fixed }}</b>. <span>You typed</span> <span translate="no">&ldquo;{{ q }}&rdquo;</span>.</p>{% endif %}
+    {% if q and r.total == 0 %}
+    <section class="panel"><h2>Nothing found</h2><p>We wrote this search down, so the team can add the missing words. Try fewer words, or:</p>
+        <p><a class="btn btn-outline" href="{{ url_for('help_page') }}">Help Centre</a> <a class="btn btn-outline" href="{{ url_for('support_home') }}">Ask a question</a> <a class="btn btn-outline" href="{{ url_for('track') }}">Track a parcel</a></p></section>
+    {% endif %}
+    {% if r.found %}<section class="panel"><h2>Your orders, parcels and questions</h2><div class="find-list">
+        {% for f in r.found %}{% if f.url %}<a href="{{ f.url }}"><span class="pill-status">{{ f.kind }}</span><span><b translate="no">{{ f.label }}</b><br><small class="muted">{{ f.sub }}</small></span></a>{% endif %}{% endfor %}
+    </div></section>{% endif %}
+    {% if r.articles %}<section class="panel"><h2>Help articles</h2>
+        {% for a in r.articles %}<p><a href="{{ url_for('help_article', slug=a.slug) }}"><b>{{ a.question }}</b></a></p>{% endfor %}</section>{% endif %}
+    {% if r.pages %}<section class="panel"><h2>Pages</h2>
+        {% for p in r.pages %}<p><a href="{{ url_for('site_page', slug=p.slug) }}">{{ p.title }}</a></p>{% endfor %}</section>{% endif %}
+    {% if r.products %}<section class="shelf"><div class="shelf-head"><h2>Products</h2><a class="see-all" href="{{ url_for('search', q=r.fixed or q) }}">See all &rsaquo;</a></div>
+        <div class="grid">{% for p in r.products %}{{ card(p, wish_ids) }}{% endfor %}</div></section>{% endif %}
+    {% if not q %}<p class="muted">One box for everything: products, answers of the Help Centre, pages like returns or privacy, and (when you are signed in) your own orders, parcels and questions. Small typing mistakes are corrected.</p>{% endif %}
+</div>
+{% endblock %}

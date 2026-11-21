@@ -26,6 +26,7 @@
         <td>{% if a.published %}<span class="status-pill ok">Published</span>{% else %}<span class="status-pill warn">Hidden</span>{% endif %}</td>
         <td><form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ a.id }}">
             <a class="btn btn-sm btn-outline" href="{{ url_for('admin_kb', edit=a.id) }}#form">Edit</a>
+            <a class="btn btn-sm btn-outline" href="{{ url_for('admin_translate', kind='kb', ref=a.id) }}">&#127760; Translate</a>
             <button class="btn btn-sm btn-outline" name="action" value="delete" onclick="return confirm('Remove this article?')">Remove</button></form></td></tr>
     {% else %}<tr><td colspan="6" class="muted">No articles yet.</td></tr>{% endfor %}</tbody></table>
 </section>

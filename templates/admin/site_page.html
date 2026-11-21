@@ -25,6 +25,28 @@
     </form>
 </section>
 <div>
+    {% if not new and page.id %}
+    <section class="panel" id="draft"><h2>Draft{% if page.draft_body %} <span class="status-pill warn">not published</span>{% endif %}</h2>
+        <p class="small muted">Write the next text here. Visitors keep seeing the published text until you publish the draft, or until the time you choose.</p>
+        <form method="post" action="{{ url_for('admin_page_draft', slug=page.slug) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="lang" value="{{ lang }}">
+            <label for="dt">Title</label><input id="dt" type="text" name="title" maxlength="120" value="{{ page.draft_title or page.title }}">
+            <label for="db">Text</label><textarea id="db" name="body" rows="8" maxlength="20000">{{ page.draft_body or page.body }}</textarea>
+            <label for="da">Publish by itself at (empty = only with the button)</label><input id="da" type="datetime-local" name="publish_at" value="{{ (page.publish_at or '')[:16]|replace(' ', 'T') }}">
+            <p class="actions"><button class="btn btn-outline" name="action" value="save">Save the draft</button>
+                {% if page.draft_body %}<a class="btn btn-outline" href="{{ url_for('admin_page_preview', slug=page.slug, lang=lang) }}" target="_blank">&#128065; Preview as a customer</a>
+                <button class="btn btn-orange" name="action" value="publish" onclick="return confirm('Publish the draft now?')">Publish now</button>{% endif %}</p>
+            {% if page.publish_at %}<p class="small">&#9200; <span>Will be published at</span> <b translate="no">{{ page.publish_at[:16] }}</b></p>{% endif %}
+        </form>
+    </section>
+    <section class="panel"><h2>Pictures</h2>
+        <form method="post" action="{{ url_for('admin_site_upload') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="back" value="{{ url_for('admin_site_page', slug=page.slug, lang=lang) }}#draft">
+            <label for="pp">Picture (JPG or PNG, up to 5 MB)</label><input id="pp" type="file" name="picture" accept=".jpg,.jpeg,.png,.webp" required>
+            <p><button class="btn btn-sm btn-outline">Upload</button></p></form>
+        <p class="small muted">After the upload you get one line like <code translate="no">![words](/img/site/pic-....jpg)</code>. Put it into the text where the picture should stand. The words are read aloud to blind visitors.</p>
+    </section>
+    {% endif %}
     {% if english %}<section class="panel"><h2>English text</h2><div class="preview-box small" tabindex="0" role="region" aria-label="English text"><b>{{ english.title }}</b><pre style="white-space:pre-wrap;font-family:inherit">{{ english.body }}</pre></div>
         <p class="small muted">A visitor who reads the shop in {{ LANGS[lang] }} sees your translation; without one, the English text.</p></section>{% endif %}
     {% if preview %}<section class="panel"><h2>How it looks now</h2><div class="preview-box site-page" tabindex="0" role="region" aria-label="Preview of the page">{{ preview|safe }}</div></section>{% endif %}

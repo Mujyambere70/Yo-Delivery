@@ -1,0 +1,20 @@
+{% extends "admin/layout.html" %}
+{% block title %}Translate{% endblock %}
+{% block heading %}Translate: {{ {'kb': 'help article', 'slide': 'banner', 'contact': 'contact details'}[kind] }}{% endblock %}
+{% block content %}
+<p class="small"><a href="{{ url_for('admin_kb') if kind == 'kb' else url_for('admin_site') }}">&#8592; Back</a></p>
+<nav class="site-tabs" aria-label="Language">{% for code, name in LANGS.items() if code != 'en' %}<a href="{{ url_for('admin_translate', kind=kind, ref=ref, lang=code) }}" class="{{ 'on' if code == lang }}" translate="no">{{ name }}{% if code in done %} &#10004;{% endif %}</a>{% endfor %}</nav>
+<section class="panel">
+    <form method="post" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="lang" value="{{ lang }}">
+        {% for f in fields %}
+        <div class="full tr-row"><label for="f_{{ f }}">{{ f|replace('_', ' ')|capitalize }}</label>
+            <div class="tr-src small muted" translate="no">English: {{ src[f] or '-' }}</div>
+            {% if f in ('answer', 'address', 'footer_note', 'subtitle') %}<textarea id="f_{{ f }}" name="{{ f }}" rows="{{ 6 if f == 'answer' else 3 }}" maxlength="4000" lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'auto' }}">{{ have.get((lang, f), '') }}</textarea>
+            {% else %}<input id="f_{{ f }}" type="text" name="{{ f }}" maxlength="300" lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'auto' }}" value="{{ have.get((lang, f), '') }}">{% endif %}</div>
+        {% endfor %}
+        <div class="full actions"><button class="btn btn-orange">Save the {{ LANGS[lang] }} text</button></div>
+    </form>
+    <p class="small muted">An empty field keeps the English text for this language. Placeholders like {phone} work in every language.</p>
+</section>
+{% endblock %}

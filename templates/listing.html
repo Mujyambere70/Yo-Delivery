@@ -76,7 +76,8 @@
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="">
                 <h2>Sorry, no results found!</h2>
                 <p>Please check the spelling or try searching for something else.</p>
-                <a href="{{ url_for('index') }}" class="btn btn-orange">Continue shopping</a>
+                {% if q %}<a href="{{ url_for('find_page', q=q) }}" class="btn btn-orange">Search again with spelling help</a>{% endif %}
+                <a href="{{ url_for('index') }}" class="btn btn-outline">Continue shopping</a>
             </div>
         {% endif %}
     </section>

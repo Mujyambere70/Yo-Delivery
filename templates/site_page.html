@@ -2,6 +2,8 @@
 {% block title %}{{ page.title }}{% endblock %}
 {% block content %}
 <div class="wrap narrow">
+    {% if preview %}<div class="preview-bar" role="note">&#128065; <b>Preview</b> &middot; <span>This is how visitors will see the draft. It is not published yet.</span>
+        <a class="btn btn-sm btn-outline" href="{{ url_for('admin_site_page', slug=page.slug, lang=page.lang) }}#draft">Back to the editor</a></div>{% endif %}
     <article class="panel site-page">
         {# a page is content written by the staff, in its own language: one text per language in the admin panel #}
         <div translate="no" {% if page.lang != LANG %}lang="{{ page.lang }}"{% endif %}><h1>{{ page.title }}</h1>

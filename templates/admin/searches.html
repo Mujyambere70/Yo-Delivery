@@ -1,0 +1,22 @@
+{% extends "admin/layout.html" %}
+{% block title %}Searches with no result{% endblock %}
+{% block heading %}Searches with no result{% endblock %}
+{% block content %}
+<p class="small"><a href="{{ url_for('admin_site') }}">&#8592; Site content</a> &middot; <a href="{{ url_for('admin_kb') }}">Help articles</a></p>
+<div class="v7-grid">
+<section class="panel">
+    <h2>Nothing found (last 30 days)</h2>
+    <p class="small muted">{{ s.total }} <span>searches in 30 days.</span> <span>Add the missing word to a help article ("Extra search words") or to the tags of a product.</span></p>
+    <table class="at"><thead><tr><th>Words</th><th>Times</th><th>Last time</th></tr></thead><tbody>
+    {% for m in s.missed %}<tr><td translate="no"><b>{{ m.q }}</b></td><td>{{ m.times }}</td><td translate="no">{{ m.last[:16] }}</td></tr>
+    {% else %}<tr><td colspan="3" class="muted">Every search found something.</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="panel">
+    <h2>Typing mistakes that were corrected</h2>
+    <table class="at"><thead><tr><th>Typed</th><th>Searched for</th><th>Times</th></tr></thead><tbody>
+    {% for m in s.fixed %}<tr><td translate="no">{{ m.q }}</td><td translate="no">{{ m.fixed }}</td><td>{{ m.times }}</td></tr>
+    {% else %}<tr><td colspan="3" class="muted">No corrections yet.</td></tr>{% endfor %}</tbody></table>
+    <p class="small muted">The words of a search are kept without the name of the person, for 90 days.</p>
+</section>
+</div>
+{% endblock %}

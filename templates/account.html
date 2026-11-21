@@ -61,6 +61,16 @@
             <button type="submit" class="btn btn-outline">Save</button>
         </form>
 
+        {% set pp = pay_pref() %}
+        <form method="post" action="{{ url_for('account_pay_pref') }}" class="panel" id="pay">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h2>My usual way to pay</h2>
+            <p class="small muted">Chosen for you at the checkout. You can still pick another way for one order. No card number is saved here.</p>
+            <div class="pay-pref">{% for v, label in [('', 'Ask me every time'), ('card', 'Card'), ('upi', 'UPI'), ('wallet', 'Yo Pay wallet'), ('cod', 'Cash on delivery')] %}
+                <label class="check"><input type="radio" name="method" value="{{ v }}" {{ 'checked' if pp == v }}> {{ label }}</label>{% endfor %}</div>
+            <button type="submit" class="btn btn-outline">Save</button>
+        </form>
+
         <section class="panel" id="notify">
             <h2>Notifications about your orders</h2>
             <p class="small muted">You get a message when an order is placed, packed, shipped, out for delivery and delivered, and about returns and refunds. Messages are always kept on the <a href="{{ url_for('notifications') }}">Notifications</a> page too.</p>

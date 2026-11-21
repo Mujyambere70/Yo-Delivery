@@ -76,6 +76,7 @@ from holidays import HOLIDAY_SCHEMA, HolidaysMixin
 from einvoice import EInvoiceMixin
 from webhooks import WEBHOOK_SCHEMA, WebhooksMixin
 from v8extra import EXTRA_V8_SCHEMA, V8ExtraMixin
+from v9 import V9_SCHEMA, V9Mixin                       # version 9
 from rewards import POINTS_REVIEW
 
 # Default shop settings (the admin can change them on the Settings page)
@@ -328,7 +329,8 @@ EXTRA_SCHEMA = (YOPAY_SCHEMA + COURIER_SCHEMA + BLOG_SCHEMA + REWARDS_SCHEMA + B
                 PEOPLE_SCHEMA + INVOICE_SCHEMA + PROVIDERS_SCHEMA + PARTNERS_SCHEMA + ANALYTICS_SCHEMA + SUPPORT_SCHEMA +
                 PRIVACY_SCHEMA +
                 # version 8
-                SITE_SCHEMA + HOLIDAY_SCHEMA + WEBHOOK_SCHEMA + EXTRA_V8_SCHEMA)
+                SITE_SCHEMA + HOLIDAY_SCHEMA + WEBHOOK_SCHEMA + EXTRA_V8_SCHEMA +
+                V9_SCHEMA)
 MIGRATIONS = {
     "users": [("is_admin", "INTEGER NOT NULL DEFAULT 0"), ("blocked", "INTEGER NOT NULL DEFAULT 0"),
               ("country", "TEXT NOT NULL DEFAULT 'IN'"), ("lang", "TEXT NOT NULL DEFAULT 'en'"),
@@ -384,11 +386,15 @@ for _t, _cols in {
     "staff_shifts": [("in_proof", "TEXT NOT NULL DEFAULT ''")],
     "partners": [("webhook_url", "TEXT NOT NULL DEFAULT ''")],
     "tax_rules": _CHECK, "tax_category_rates": _CHECK,
+    # version 9
+    "site_pages": [("draft_title", "TEXT NOT NULL DEFAULT ''"), ("draft_body", "TEXT NOT NULL DEFAULT ''"),
+                   ("publish_at", "TEXT NOT NULL DEFAULT ''")],
+    "users": [("pay_pref", "TEXT NOT NULL DEFAULT ''")],
 }.items():
     MIGRATIONS.setdefault(_t, []).extend(_cols)
 
 
-class Store(ServicesMixin, SiteContentMixin, HolidaysMixin, EInvoiceMixin, WebhooksMixin, V8ExtraMixin,
+class Store(V9Mixin, ServicesMixin, SiteContentMixin, HolidaysMixin, EInvoiceMixin, WebhooksMixin, V8ExtraMixin,
             PeopleMixin, InvoiceMixin, ProvidersMixin, PartnersMixin, CourierPlusMixin, GtfsRtMixin, AnalyticsMixin,
             SupportMixin, PrivacyMixin,
             PaymentsMixin, NoticesMixin, SellersMixin, RecommendMixin, ReturnsMixin, MaintenanceMixin,

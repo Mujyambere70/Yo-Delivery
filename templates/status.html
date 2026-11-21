@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}System status{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+    <h1>System status</h1>
+    <p class="status-head {{ 'ok' if all_ok else 'bad' }}">{% if all_ok %}&#10004; <span>All parts are working.</span>{% else %}&#9888; <span>Some parts have a problem. We are working on it.</span>{% endif %}</p>
+    <section class="panel"><table class="at"><tbody>
+        {% for p in parts %}<tr><td>{{ p.part }}</td><td>{% if p.ok %}<span class="status-pill ok">Working</span>{% else %}<span class="status-pill bad">Problem</span>{% endif %}</td><td class="small muted">{{ p.note }}</td></tr>{% endfor %}
+    </tbody></table></section>
+    <p class="small muted">This page checks the parts each time it is opened. It shows no personal data and no numbers of customers. Card payments, e-invoices and partner messages of this demo run in test mode on purpose.</p>
+</div>
+{% endblock %}

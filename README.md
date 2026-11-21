@@ -1,4 +1,4 @@
-# Yo Delivery 8 — the Yo super app for the whole world and the team that runs it: shop · courier · tickets · pay · rewards · chat · staff · payroll · invoices · help desk (Python + Flask)
+# Yo Delivery 9 — the Yo super app for the whole world and the team that runs it: shop · courier · tickets · pay · rewards · chat · staff · payroll · invoices · help desk (Python + Flask)
 
 **Designed and developed by Jean Michel Mujyambere** — [github.com/Mujyambere70](https://github.com/Mujyambere70)
 
@@ -13,7 +13,11 @@ administrator, shifts, attendance, tasks and an activity log — and works throu
 **Version 7 works through the limitations and future scope of version 6**: contracts, holidays and payroll with
 dual control, tax invoices and e-invoices, signed payment callbacks, a courier partner API, time windows and
 signatures for couriers, live delays, a live check for ID photos, analytics, forecasts and A/B tests, a help desk,
-parcel claims and a safety check of orders. One account and one wallet for everything.
+parcel claims and a safety check of orders. **Version 8** makes it easy to use (a "My work" button, a menu with search,
+site content edited without code) and **version 9** finishes the 21 steps found in the review of version 8: translated
+help texts, page drafts, one search that forgives typos, shift swaps, help-desk files and stars, "buy again", seller
+insights, a status page, limits per person and a nightly backup that is restored to prove it works.
+One account and one wallet for everything.
 
 **Live demo:** https://yo-delivery.fly.dev
 
@@ -25,6 +29,27 @@ parcel claims and a safety check of orders. One account and one wallet for every
 > картой работает в **тестовом режиме** (без реальных денег), ничего не доставляется, настоящие билеты не продаются.
 
 ---
+
+## What is new in version 9: the 21 steps after the review of version 8 / Что нового в версии 9
+
+| | English | Русский |
+|---|---|---|
+| **Content** | Help articles, banners and contact lines in the other 6 languages (`/admin/site/translate/...`). Page **drafts** with a publishing time, **pictures** inside pages (`![words](/img/site/...)`) and **preview as a customer**. | Перевод статей справки, баннеров и контактов; **черновики** страниц с временем публикации, **картинки** и **предпросмотр**. |
+| **Search** | `/find`: one box for products, help articles, pages and (signed in) own orders, parcels and questions; small **typing mistakes are corrected** ("sheos" → "shoes"). `/admin/site/searches`: what people searched and did not find. | `/find`: один поиск с **исправлением опечаток**; список запросов без результата. |
+| **Workers** | Number tiles of one's own job on *My work*; **shift swap** (colleague says yes, manager approves); **first-days checklist** (3 steps checked by the system); the clock-in code screen lists who clocked in (first name only). | Плитки с цифрами своей работы; **обмен сменами**; **чек-лист первых дней**; список отметившихся на экране кода. |
+| **Help desk** | "**is typing**" on both sides, **files** (JPG, PNG, PDF ≤ 2 MB, checked by their first bytes, private), **stars** for an answer (summary for the team). | «**печатает…**», **файлы**, **звёзды** за ответ. |
+| **Customers** | Saved **usual way to pay** (chosen at the checkout), **Buy again**, **change the address** of an order before it is shipped (same country). | Обычный способ оплаты, «Купить снова», смена адреса до отправки. |
+| **Sellers** | `/seller/insights`: best products, return reasons, low stock, products not sold. `/seller/import`: many products from one **CSV** (formula cells refused, products off until approved). | Аналитика продавца; **импорт CSV**. |
+| **Maps & partners** | The ticket map shows the **operator's live bus** (GTFS-Realtime) instead of the timetable place; the parcel map tells the age of the courier's GPS point. `/partners/api#check`: **webhook signature sandbox**. | Живое положение автобуса на карте билета; проверка подписи вебхука. |
+| **Quality** | `tools/release_check.py` (crawler of 11 users + browser click test, exit code for CI); `/status`; **limits per person** in the database (search, sign-in, uploads) with `/admin/monitor/limits`; **nightly backup restored** into an empty database and compared table by table (`/admin/backups#restore-test`). | Проверка перед выпуском, страница состояния, лимиты, ночная копия с тестом восстановления. |
+| **Fixed** | Quick find of an **order number** crashed (orders have no status column) — found by the new tests. | Исправлена ошибка быстрого поиска по номеру заказа. |
+| **Checks (v9)** | 362 tests on SQLite and PostgreSQL; `tools/release_check.py`: 7,730 pages as 11 users, 16 browser checks, 0 problems; axe-core: 60 pages + the open menu, 0 problems (the restore form of the Backups page got joined labels); bandit: 0 medium/high. | 362 теста; проверка выпуска: 0 проблем; доступность: 60 страниц, 0 проблем. |
+| **Fixed** | The **delivery code** on the parcel page was drawn 64 px high (the v8 clock-in screen reused the class `code-box`); a search with two corrected words showed nothing when no product had both words. | Исправлены размер кода доставки и поиск из двух слов. |
+
+**Try version 9:** open `/find?q=sheos`, `/status` and `/partners/api#check` without signing in. As `demo@example.com`: a question in
+*Support* (files, stars, "is typing" when an agent writes), *Your Account → My usual way to pay*, an order → *Buy again*.
+As `seller@example.com`: *Insights* and *My products → add from CSV*. As `admin@example.com`: *Site content → Translate*,
+*Searches with no result*, *Shift swaps*, *Rate limits*, *Backups → Test the newest backup now*.
 
 ## What is new in version 8: easy to use, content without code / Что нового в версии 8
 
@@ -199,8 +224,12 @@ with "When is the receiver at home?". As the courier: the route plan shows the e
 **Test cards:** `4242 4242 4242 4242` (success), `5555 5555 5555 4444` (success),
 `4000 0000 0000 0002` (declined), `4000 0000 0000 9995` (not enough money). Any future date, any CVC.
 
-**Tests / Тесты:** `python -m unittest discover -s tests` — **326 tests** (87 of version 2 + 46 of version 3 + 30 of version 4 + 32 of version 5 + 32 of version 6 + 43 of version 7 + 56 of version 8).
+**Tests / Тесты:** `python -m unittest discover -s tests` — **362 tests** (87 of version 2 + 46 of version 3 + 30 of version 4 + 32 of version 5 + 32 of version 6 + 43 of version 7 + 56 of version 8 + 36 of version 9).
 The same tests on PostgreSQL: `TEST_DATABASE_URL=postgresql://user@host/dbname python -m unittest discover -s tests`
+
+**Before every release / Перед каждым выпуском (v9):** `python tools/release_check.py` — signs in as 11 kinds of users, opens
+every page they can reach (about 7,700 requests) and clicks through the main ways of the shop in Chromium. Exit code 0 = nothing
+found. `--crawl-only` works without a browser.
 (the test database is emptied — use a separate one).
 
 ---
@@ -304,6 +333,7 @@ yo_delivery_py/
 ├── services.py, sitecontent.py   (v8) List of services, first page of a worker, menu, quick find; contacts, pages, banners, help articles, staff news
 ├── holidays.py, einvoice.py, webhooks.py, v8extra.py   (v8) Holidays, leave rules, office code; IRN and rate review; partner webhooks; speed profile, live data, live help desk
 ├── v8_views.py, demo_v8.py   Pages and demo content of version 8 (/menu, /work, /contact, /admin/site, /admin/kb …)
+├── v9.py, v9_views.py, demo_v9.py   (v9) Translations, drafts, search with typos, swaps, onboarding, help-desk files and stars, buy again, seller insights and CSV, live maps, signature sandbox, status, limits, restore test
 ├── data/geo/         places.tsv.gz, airports.tsv.gz, regions.tsv.gz, countries.json (+ tools/make_places.py, tools/add_russia.py)
 ├── data/models/      haarcascade_frontalface_default.xml (OpenCV face model, Intel licence)
 ├── yopay.py          Wallet ledger, top-up, transfers, EMI     rewards.py   quiz, points, personal coupons
@@ -317,12 +347,13 @@ yo_delivery_py/
 ├── static/           style.css, superapp.css, tickets.css, world.css, admin.css, yo-map.js, places.js, courier.js,
 │                     tickets.js, vendor/jsQR.js, pictures, PWA
 ├── tools/            collect_strings.py (missing translations), build_catalogs.py (+ tools/tr/*.tsv), a11y_check.py (axe + keyboard),
-│                     security_check.py (bandit, pip-audit), make_gtfs_rt.py, add_postcodes.py (postal directory)
+│                     security_check.py (bandit, pip-audit), make_gtfs_rt.py, add_postcodes.py (postal directory),
+│                     release_check.py (v9: crawler of 11 users + browser click test before every release)
 ├── Dockerfile, fly.toml   Fly.io deployment with Gunicorn
-└── tests/            326 tests (SQLite and PostgreSQL)
+└── tests/            362 tests (SQLite and PostgreSQL)
 ```
 
-## Database (106 tables + the read-only places file)
+## Database (116 tables + the read-only places file)
 Version 2: users, addresses, products, categories, cart, wishlist, orders, order_items, order_events, reviews,
 coupons, settings, media, activity, sellers, payouts, views, notifications, push_subscriptions, password_resets,
 payments, returns, fx_rates, backups.
@@ -351,33 +382,34 @@ project (fictional "Sample Highland Coaches").
 
 **Version 8:** `site_contacts`, `site_pages`, `site_page_versions`, `site_slides`, `kb_articles`, `staff_news`, `staff_news_seen`,
 `public_holidays`, `leave_rules`, `webhook_deliveries`, `speed_profile`, `gtfs_alerts`, `gtfs_vehicles`, `inbound_emails`.
+**Version 9:** `content_texts`, `search_log`, `shift_swaps`, `onboarding_done`, `support_files`, `support_typing`, `support_ratings`,
+`rate_hits`, `rate_blocks`, `backup_checks` (+ new columns: draft title, text and publishing time of pages, `users.pay_pref`).
 
 **Try version 8:** sign in as `neha.gill@example.com` (Staff@2026) — you land on *My work*; press the orange button, open ☰ and
 search "claim". Sign in as `admin@example.com` — *Site content* (change the phone number, edit the About page), *Help articles*,
 *Public holidays*, *Offices → Clock-in code screen*, *Courier partners → Webhooks*.
 
 ## Limitations / Ограничения
-- **Site content:** pages have one text per language; help articles, banners and contacts have one text only (the first texts are translated, a changed text is shown as written). No pictures inside pages, no drafts.
-- **Search:** names, search words and exact numbers only — no typo correction, no search inside products or messages.
-- **People:** calendars hold 2027 for 3 countries and must be filled every year; leave rules and holiday pay are examples; the year statement is not a tax form; the office code proves the screen was seen, not who saw it.
-- **Money stays in test mode on purpose:** the e-invoice is computed but **not registered** at India's IRP (QR not signed, document numbers longer than 16 characters, one example HSN code per category). "Checked" rates are checked by a person in the system, not by an accountant.
-- **Partners & couriers:** no real partner receives the webhooks; no UPU ITMATT, no native app; the speed profile needs 20 GPS measurements per town and hour and knows nothing about today's traffic.
-- **Travel:** no real GTFS-Realtime feed is connected; alerts are matched by trip only.
-- **Help desk:** "live" is a poll every 5 seconds, not a WebSocket chat; e-mail needs a provider; no attachments.
-- **Data:** analytics rebuilt hourly in the same database; holidays change the forecast only after two earlier holidays in the hub's history.
+- **Content:** translations of help texts, banners and contacts are typed by the staff (no translation service); a page picture has no automatic resizing for phones beyond 1200 px and no gallery; a draft has one scheduled time, no review by a second person.
+- **Search:** typo correction works word by word on the shop's own words (difflib, no meaning, no synonyms, Latin letters only); the search log keeps words for 90 days without the name of the person.
+- **Workers:** a swap moves one whole shift (no part shifts, no automatic check of working-time law); the onboarding list is the same for every job.
+- **Help desk:** "is typing" and new messages are a poll every 2.5–5 seconds, not a WebSocket; files are kept in the database (2 MB each, 10 per question) and are not scanned by an antivirus.
+- **Customers:** the usual way to pay is a choice only — no card is stored (tokens of a real provider are needed for one-click card payments); a new address must be in the same country.
+- **Sellers:** CSV import adds products only (no update of existing ones, no pictures from the file).
+- **Maps:** the live bus needs a real GTFS-Realtime feed of the operator (the demo uses a made-up one); the parcel map shows the last GPS point, not a prediction.
+- **Quality:** the status page checks the parts of this one machine; limits count per account or network address and can be passed by many addresses; the restore test uses SQLite even when the shop runs on PostgreSQL.
+- **Money stays in test mode on purpose:** card payments, the e-invoice (not registered at India's IRP), partner webhooks and payroll are demos; tax and leave rules are examples.
 - **Scale & law:** one free machine; not tested by real workers, accountants or screen-reader users; Russian users' data is not kept in Russia; no outside security audit.
 - The list of Russian settlements is licensed CC BY-NC-SA 4.0 (non-commercial use only).
 - Translations were prepared by the developer and should be checked by native speakers; the admin panel stays in English on purpose.
 
-## Future scope (version 9)
-- Translations of help articles, banners and contacts in the editor; pictures in pages; drafts with a publishing time.
-- One search over products, orders, help and pages that forgives typing mistakes.
-- Holiday calendars from an official source every year; payroll and leave rules checked by a payroll partner.
-- Real registration of e-invoices (sandbox first), Russian EDO, certified payment connections.
-- The first real courier partner with webhooks, UPU ITMATT, a native courier app, live traffic.
-- Real GTFS-Realtime feeds, alerts by line and stop, the vehicle on a map on the ticket.
-- A WebSocket chat, replies by e-mail, a help search that understands meaning, a learned fraud model.
-- A separate analytics database, two regions with Redis, a database in Russia, an outside security audit.
+## Future scope (version 10)
+- A WebSocket help desk with replies by e-mail and an antivirus check of files; a help search that understands meaning.
+- Card tokens from a certified provider for true one-click payment; real registration of e-invoices (sandbox first), Russian EDO.
+- The first real courier partner and a real GTFS-Realtime feed; a prediction of the arrival time on the map; a native courier app.
+- Search with synonyms and Cyrillic / Devanagari typo correction; CSV update of existing products and pictures by link.
+- Working-time rules per country for swaps; a second-person review of page drafts; a picture gallery.
+- Status page and limits shared by several machines (Redis), restore test on PostgreSQL, a separate analytics database, a database in Russia, an outside security audit.
 
 The Kinyarwanda translation was prepared by the developer and should be reviewed by a native speaker
 before real use.

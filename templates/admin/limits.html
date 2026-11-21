@@ -1,0 +1,19 @@
+{% extends "admin/layout.html" %}
+{% block title %}Rate limits{% endblock %}
+{% block heading %}Rate limits{% endblock %}
+{% block content %}
+<p class="small"><a href="{{ url_for('admin_monitor') }}">&#8592; Monitoring</a></p>
+<div class="v7-grid">
+<section class="panel"><h2>The limits</h2>
+    <table class="at"><thead><tr><th>Action</th><th>At most</th><th>Stopped in 7 days</th></tr></thead><tbody>
+    {% for name, (n, per) in r.limits.items() %}<tr><td>{{ {'search': 'Searches and signature checks', 'login': 'Sign-in tries', 'upload': 'File uploads'}[name] }}</td>
+        <td>{{ n }} <span>in</span> {{ (per // 60) ~ ' min' if per >= 60 else per ~ ' s' }}</td><td>{{ r.by.get(name, 0) }}</td></tr>{% endfor %}</tbody></table>
+    <p class="small muted">A signed-in person is counted by account, a visitor by network address. The counters work on every machine because they are kept in the database.</p>
+</section>
+<section class="panel"><h2>Who was stopped</h2>
+    <table class="at"><thead><tr><th>Action</th><th>Who</th><th>When</th></tr></thead><tbody>
+    {% for b in r.rows %}<tr><td>{{ b.what }}</td><td translate="no">{{ b.who }}</td><td translate="no">{{ b.at[:16] }}</td></tr>
+    {% else %}<tr><td colspan="3" class="muted">Nobody was stopped in the last 7 days.</td></tr>{% endfor %}</tbody></table>
+</section>
+</div>
+{% endblock %}

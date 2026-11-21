@@ -43,6 +43,10 @@
         <a class="btn btn-orange" href="{{ url_for('my_work_go') }}">&#9654; <span>{{ work.label }}</span></a>
     </div>
     {% endif %}
+    {% set tiles = role_numbers(w.user_id) %}
+    {% if tiles %}<div class="role-tiles" aria-label="Numbers of my work">
+        {% for label, n, ep in tiles %}<a class="role-tile {{ 'zero' if not n }}" href="{{ url_for(ep) }}"><b>{{ n }}</b><span>{{ label }}</span></a>{% endfor %}
+    </div>{% endif %}
     <form class="staff-find" action="{{ url_for('menu_page') }}" method="get" role="search">
         <input type="search" name="q" placeholder="Find a service, a page, an order or a parcel number" aria-label="Find a service or a page">
         <button class="btn btn-outline">&#128269; <span>Find</span></button>
@@ -88,6 +92,40 @@
             {% else %}<tr><td class="muted">No shifts planned yet.</td></tr>{% endfor %}</tbody></table>
             <p class="small muted">Times are in the time of your office. Please clock in when you start.</p>
         </section>
+    </div>
+
+    {% set ob = onboarding_of(w.id) %}
+    <div class="staff-grid">
+        <section class="panel" id="swaps">
+            <h2>Swap a shift</h2>
+            {% set sw = my_swaps() %}
+            {% for s in sw %}<div class="swap-item"><span translate="no">{{ s.day }} {{ s.start_hm }}&ndash;{{ s.end_hm }}</span> &middot;
+                {% if s.to_me %}<span><span translate="no">{{ s.from_name }}</span> <span>asks you to take this shift</span></span>{% else %}<span><span>asked</span> <span translate="no">{{ s.to_name }}</span></span>{% endif %}
+                <span class="status-pill {{ 'ok' if s.status == 'Approved' else 'warn' if s.status in ('Asked', 'Accepted') else 'bad' }}">{{ s.status }}</span>
+                {% if s.to_me and s.status == 'Asked' %}<form method="post" action="{{ url_for('staff_swap') }}" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="swap_id" value="{{ s.id }}">
+                    <button class="btn btn-sm btn-orange" name="action" value="yes">Yes, I take it</button><button class="btn btn-sm btn-outline" name="action" value="no">No</button></form>{% endif %}</div>
+            {% endfor %}
+            {% set mates = swap_colleagues() %}
+            {% if rota and mates %}
+            <form method="post" action="{{ url_for('staff_swap') }}" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="offer">
+                <div><label for="swr">My shift</label><select id="swr" name="rota_id">{% for r in rota %}<option value="{{ r.id }}" translate="no">{{ r.day }} {{ r.start_hm }}&ndash;{{ r.end_hm }}</option>{% endfor %}</select></div>
+                <div><label for="swt">Colleague</label><select id="swt" name="to_staff">{% for m in mates %}<option value="{{ m.id }}" translate="no">{{ m.name }} ({{ m.title }})</option>{% endfor %}</select></div>
+                <div class="full"><button class="btn btn-sm btn-outline">Ask</button></div>
+            </form>
+            <p class="small muted">Your colleague says yes or no; then your manager approves. Until then the shift stays yours.</p>
+            {% elif not sw %}<p class="muted">You have no coming shift to swap.</p>{% endif %}
+        </section>
+        {% if not ob.complete %}
+        <section class="panel" id="first-days">
+            <h2>My first days ({{ ob.done }} / {{ ob.total }})</h2>
+            <div class="bar"><i style="width:{{ (100 * ob.done / ob.total)|round|int }}%"></i></div>
+            <ul class="check-list">{% for i in ob['items'] %}<li class="{{ 'done' if i.done }}">
+                {% if i.auto %}<span aria-hidden="true">{{ '&#9989;'|safe if i.done else '&#11036;'|safe }}</span> {{ i.text }} <small class="muted">(checked by the system)</small>
+                {% else %}<form method="post" action="{{ url_for('staff_onboarding') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="item" value="{{ i.key }}"><input type="hidden" name="done" value="{{ '0' if i.done else '1' }}">
+                    <button class="linklike" aria-pressed="{{ 'true' if i.done else 'false' }}">{{ '&#9989;'|safe if i.done else '&#11036;'|safe }} {{ i.text }}</button></form>{% endif %}</li>{% endfor %}</ul>
+        </section>
+        {% endif %}
     </div>
 
     <div class="staff-grid">

@@ -8,10 +8,17 @@
     {% if t.status != 'Closed' %}<form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline" name="action" value="take">Take it</button></form>{% endif %}
     <p class="small muted" id="liveState" hidden><span class="live-dot"></span>Live: new messages of the customer appear here by themselves.</p>
     <div class="msg-thread" data-live-thread="{{ url_for('support_messages_json', number=t.number) }}" data-last="{{ t.messages[-1].id if t.messages else 0 }}" data-side="staff" aria-live="polite">{% for m in t.messages %}<div class="msg {{ 'staff' if m.from_staff }}"><small><b translate="no">{{ m.name }}</b> &middot; <span translate="no">{{ m.at[:16] }}</span></small><div>{{ m.body }}</div></div>{% endfor %}</div>
-    <form method="post">
+    <p class="small muted typing-now" id="typingNow" hidden aria-live="polite"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> <span>The customer is typing</span></p>
+    <form method="post" data-typing="{{ url_for('support_typing', number=t.number) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label for="ab">Answer</label><textarea id="ab" name="body" rows="4" maxlength="3000"></textarea>
         <div class="actions"><button class="btn btn-orange" name="action" value="answer">Send the answer</button><button class="btn btn-outline" name="action" value="close">Send and close</button></div>
     </form>
+        {% set fl = support_files(t.number) %}
+        <div class="sup-files">{% if fl %}<p class="small"><b>Files</b></p><ul class="plain small">{% for f in fl %}<li>&#128206; <a href="{{ url_for('support_file_get', number=t.number, file_id=f.id) }}" target="_blank" rel="noopener" translate="no">{{ f.name }}</a> <span class="muted">({{ (f.size / 1024)|round|int }} KB &middot; {{ 'staff' if f.from_staff else 'customer' }})</span></li>{% endfor %}</ul>{% endif %}
+        {% if t.status != 'Closed' %}<form method="post" action="{{ url_for('support_file_add', number=t.number) }}" enctype="multipart/form-data" class="file-add">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="sf" class="small">Add a photo or PDF (2 MB at most)</label>
+            <input id="sf" type="file" name="file" accept=".jpg,.jpeg,.png,.pdf" required><button class="btn btn-sm btn-outline">Attach</button></form>{% endif %}</div>
+    {% set rt = support_rating(t.number) %}{% if rt %}<p class="small"><span>Stars of the customer</span>: <b translate="no">{{ '&#9733;'|safe * rt.stars }}{{ '&#9734;'|safe * (5 - rt.stars) }}</b>{% if rt.note %} &middot; &ldquo;<span translate="no">{{ rt.note }}</span>&rdquo;{% endif %}</p>{% endif %}
 </section>
 {% endblock %}

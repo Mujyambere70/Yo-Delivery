@@ -51,8 +51,10 @@ NAV = [
     ("admin_training", "&#127891;", "Training & contracts", ["admin_training", "admin_staff_people"], "", "staff.view", "People", "course certificate contract"),
     ("admin_holidays", "&#127958;", "Public holidays", ["admin_holidays"], "", "staff.view", "People", "holiday calendar leave rules country"),
     ("admin_notices", "&#128227;", "Staff notices", ["admin_notices"], "", "staff.view", "People", "announcement news for workers"),
-    ("admin_site", "&#128221;", "Site content", ["admin_site", "admin_site_page", "admin_site_contacts", "admin_site_slides"], "", "site.manage", "Content", "about contact pages banners footer edit text"),
+    ("admin_swaps", "&#128260;", "Shift swaps", ["admin_swaps"], "", "staff.view", "People", "swap exchange shift colleague approve"),
+    ("admin_site", "&#128221;", "Site content", ["admin_site", "admin_site_page", "admin_site_contacts", "admin_site_slides", "admin_translate", "admin_page_preview"], "", "site.manage", "Content", "about contact pages banners footer edit text"),
     ("admin_kb", "&#128218;", "Help articles", ["admin_kb"], "", "site.manage", "Content", "knowledge base faq help centre"),
+    ("admin_search_misses", "&#128269;", "Searches with no result", ["admin_search_misses"], "", "site.manage", "Content", "search log missing words typo"),
     ("admin_blog", "&#128240;", "Blog & News", ["admin_blog", "admin_post_edit"], "posts", "blog.manage", "Content", "story post article"),
     ("admin_rewards", "&#127873;", "Rewards & Quiz", ["admin_rewards"], "", "rewards.manage", "Content", "points quiz questions"),
     ("admin_photos", "&#128247;", "Photo checks", ["admin_photos"], "", "photos.review", "Trust", "picture blur check"),
@@ -63,6 +65,7 @@ NAV = [
     ("admin_model", "&#129504;", "Recommendations", ["admin_model"], "", "model.manage", "Data", "similar products model"),
     ("admin_experiments", "&#128300;", "A/B tests", ["admin_experiments"], "", "model.manage", "Data", "experiment variant"),
     ("admin_monitor", "&#128200;", "Monitoring", ["admin_monitor"], "alerts", "monitor.view", "System", "health jobs queue alerts cache"),
+    ("admin_limits", "&#9203;", "Rate limits", ["admin_limits"], "", "monitor.view", "System", "too many requests blocked account login"),
     ("admin_activity", "&#128221;", "Activity Log", ["admin_activity"], "", "activity.view", "System", "log who did what"),
     ("admin_database", "&#128451;", "Database", ["admin_database"], "", "database.view", "System", "tables rows"),
     ("admin_backups", "&#128190;", "Backups", ["admin_backups"], "", "database.view", "System", "backup restore export"),
@@ -253,7 +256,8 @@ class ServicesMixin:
         kind = next((k for k, rx in _NUMBER if rx.match(code)), "")
         with self.db() as conn:
             if kind == "order" and user:
-                r = conn.execute("SELECT number, user_id, total, status FROM orders WHERE number = ?", (code,)).fetchone()
+                r = conn.execute("SELECT * FROM orders WHERE number = ?", (code,)).fetchone()   # (version 9: orders have no status column)
+                r = dict(r, status=self.status(dict(r))) if r else None
                 if r and may("orders.view"):
                     out.append({"kind": "Order", "label": r["number"], "sub": r["status"], "endpoint": "admin_order",
                                 "args": {"number": r["number"]}})

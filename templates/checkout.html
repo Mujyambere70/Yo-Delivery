@@ -102,6 +102,11 @@
     box.style.display = upi.checked ? 'block' : 'none';
     document.getElementById('upi_id').required = upi.checked;
   }
+  (function () {            // version 9: the way to pay that the customer saved in the account
+    const pref = {{ (pay_pref() or '')|tojson }};
+    const r = pref && document.querySelector('input[name=payment][value=' + pref + ']');
+    if (r && !r.disabled) r.checked = true;
+  })();
   payChange();
   document.querySelector('.add-addr summary').addEventListener('click', e => {
     e.preventDefault(); document.getElementById('newAddress').scrollIntoView({behavior: 'smooth'});

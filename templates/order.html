@@ -10,6 +10,8 @@
             {% if o.payment_status in ('Paid', 'COD') %}<a href="{{ url_for('invoice', number=o.number) }}" class="btn btn-outline btn-sm">&#128462; Invoice</a>
             <a href="{{ url_for('order_invoices', number=o.number) }}" class="btn btn-outline btn-sm">&#129534; Tax invoices</a>{% endif %}
             <a href="{{ url_for('support_home', topic='order', about=o.number) }}" class="btn btn-outline btn-sm">&#127911; Help</a>
+            {% if o.status != 'Awaiting payment' %}<form method="post" action="{{ url_for('order_again', number=o.number) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm">&#128260; Buy again</button></form>{% endif %}
             {% if o.can_cancel %}
             <form method="post" action="{{ url_for('cancel', number=o.number) }}" onsubmit="return confirmCancel(this)">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -60,6 +62,14 @@
         <section class="panel">
             <h3>Shipping address</h3>
             <p><b>{{ o.ship_name }}</b><br>{{ o.ship_address }}<br>Phone: <span translate="no">{{ o.ship_mobile }}</span></p>
+            {% if o.can_cancel %}{% set addrs = [] %}{% for a in my_addresses()|selectattr('country', 'equalto', o.country or 'IN') %}{% if a.line1 not in (o.ship_address or '') %}{% set _ = addrs.append(a) %}{% endif %}{% endfor %}
+            {% if addrs %}<details class="addr-change"><summary class="small">Change the address (before it is shipped)</summary>
+                <form method="post" action="{{ url_for('order_address', number=o.number) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label for="na" class="small">Another saved address</label>
+                    <select id="na" name="address_id">{% for a in addrs %}<option value="{{ a.id }}">{{ a.name }}, {{ a.line1 }}, {{ a.city }} {{ a.pincode }}</option>{% endfor %}</select>
+                    <button class="btn btn-sm btn-outline">Use this address</button></form>
+                <p class="small muted">Only addresses in the same country: the tax and the delivery fee were counted for it.</p></details>{% endif %}{% endif %}
         </section>
         <section class="panel">
             <h3>Payment method</h3>

@@ -145,6 +145,22 @@
     }
   };
 
+  /* version 9: how old the position of the vehicle is, and where it comes from (operator feed, courier GPS, timetable) */
+  function seenNote(box, d) {
+    var out = box.parentNode.querySelector("[data-seen]");
+    if (!out) return;
+    var src = box.parentNode.querySelector('[data-src="' + (d.source || "") + '"]');
+    var text = src ? src.textContent.trim() : "";
+    if (d.seen) {
+      var t = new Date(d.seen.replace(" ", "T"));
+      var min = Math.max(0, Math.round((Date.now() - t.getTime()) / 60000));
+      var ago = box.parentNode.querySelector("[data-ago]");
+      text += (text ? " · " : "") + (ago ? ago.textContent.trim() : "last position") + " " + d.seen.slice(11, 16) +
+              (isNaN(min) || min > 600 ? "" : " (" + min + " min)");
+    }
+    out.textContent = text;
+  }
+
   Map.prototype.load = function () {
     var self = this;
     if (self.stopped) return;                     // a street map that was replaced by the drawn map
@@ -154,6 +170,7 @@
         if (!d.ok) return;
         if (self.status === null) self.draw(d); else self.move(d);
         self.steps(d);
+        seenNote(self.box, d);
         if (self.status !== null && self.status !== d.status) {
           // a new step: reload once to show the new history (keeps the page simple)
           setTimeout(function () { location.reload(); }, 1200);
